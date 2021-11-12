@@ -26,7 +26,7 @@ class State:
     # callback
     def data_handler(self, ctx, data):
         xyz = parse_value(data)
-        print("%s -> %s" % (self.device.address, xyz))
+        # print("%s -> %s" % (self.device.address, xyz))
 
         self.x.append(xyz.x)
         self.y.append(xyz.y)
