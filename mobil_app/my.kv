@@ -1,0 +1,93 @@
+WindowManager:
+    MainWindow:
+    NewWindow:
+    ConnectionWindow:
+
+<MainWindow>:
+    name: "main"
+
+    GridLayout:
+        cols:1
+
+        Button:
+            text: "New"
+            on_release:
+                app.root.current = "new"
+                root.manager.transition.direction = "left"
+
+        Button:
+            text: "Connection"
+            on_release:
+                app.root.current = "connection"
+                root.manager.transition.direction = "left"
+
+        Button:
+            id: btnExit
+            text: "Exit"
+            on_press:
+                root.disconnect()
+                app.stop()
+
+
+<NewWindow>:
+    name: "new"
+
+    GridLayout:
+        cols:1
+
+        Label:
+            size_hint: (0.2, 0.2)
+            text: root.measurement
+            font_size: 30
+            halign: "center"
+            valign: "middle"
+
+        Button:
+            text: "Start"
+            on_release:
+                root.start_measure()
+
+        Button:
+            text: "Stop"
+            on_release:
+                root.stop_measure()
+
+        Button:
+            text: "Back"
+            on_release:
+                app.root.current = "main"
+                root.manager.transition.direction = "right"
+
+
+<ConnectionWindow>:
+    name: "connection"
+    id: connection
+    container: container
+
+    GridLayout:
+        cols:1
+
+        Label:
+            size_hint: (0.2, 0.2)
+            text: root.log
+            font_size: 30
+            halign: "center"
+            valign: "middle"
+
+        Button:
+            text: "Bluetooth"
+            on_release:
+                root.connect_to_device()
+
+        BoxLayout:
+            id: container
+            orientation: 'vertical'
+
+        Button:
+            text: "Back"
+            on_release:
+                app.root.current = "main"
+                root.manager.transition.direction = "right"
+
+
+
