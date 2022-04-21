@@ -11,6 +11,7 @@ class Measurement(object):
         self.row_id = row_id
         self.synchronizing = synchronizing
         self.lightweight = lightweight
+        self.set_type = None
         self.valid = False
 
         self.valid_start_time = None
@@ -87,12 +88,9 @@ class Measurement(object):
     def check_measurement_path_dict(self):
         for k, v in self.measurement_path_dict.items():
             if v is None:
-                print(colored("{} measurement_path_dict is not full (it will be deleted)".format(self.measurement_name),
+                print(colored("{} key is missing by {} measurement_path_dict".format(k, self.measurement_name),
                               "red"))
                 self.valid = False
-                return False
-        print(colored("{} measurement_path_dict is OK".format(self.measurement_name), "green"))
-        return True
 
     def check_five_class(self):
         for class_value in self.class_value_dict.values():

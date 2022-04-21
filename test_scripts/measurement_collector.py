@@ -5,8 +5,8 @@ import random
 from termcolor import colored
 from tqdm import tqdm
 
-from accdb_reading import get_measure_df
-from measurement import Measurement
+from .accdb_reading import get_measure_df
+from .measurement import Measurement
 
 
 class MeasurementCollector(object):
@@ -14,48 +14,68 @@ class MeasurementCollector(object):
         self.lightweight = lightweight
         self.synchronizing = synchronizing
         self.dict_of_df = get_measure_df(db_path, write=False)
+        self.meas_names_to_collect = set(self.dict_of_df["Z_1ÁLTALÁNOS"]["VizsgAz"].values)
         self.aux_data = pd.read_excel(m_path)
         self.aux_data["Measure ID"] = pd.to_numeric(self.aux_data["Measure ID"], downcast='integer')
         # self.aux_data["The last sensor is on the patient"] = pd.to_datetime(self.aux_data["The last sensor is on the patient"],
         #                                                                     format='%Y-%m-%dT%H:%M:%S.%f')
         # self.aux_data["Take off the first sensor"] = pd.to_datetime(self.aux_data["Take off the first sensor"],
         #                                                             format='%Y-%m-%dT%H:%M:%S.%f')
-        self.measurement_dict = dict()
-        self.collect_measurment(base_path)
+        self.measurement_dict = {"train": dict(),
+                                 "test": dict()
+                                 }
+        self.collect_measurment(os.path.join(base_path, "train"), "train")
+        self.collect_measurment(os.path.join(base_path, "test"), "test")
         self.print_statistics()
 
-    def collect_measurment(self, base_path):
-        # TODO: from one drive
-        for row_id, measurement_name in enumerate(self.dict_of_df["Z_1ÁLTALÁNOS"]["VizsgAz"]):
-            self.measurement_dict[measurement_name] = Measurement(measurement_name, row_id,
-                                                                  self.dict_of_df["Z_3NEUROLÓGIA"],
-                                                                  synchronizing=self.synchronizing,
-                                                                  lightweight=self.lightweight)
+    def collect_measurment(self, base_path, type_of_set="train"):
+        used_meas_names = set()
+        # print in the measurment like log and print after in the a new write logs function
+        for row_id, measurement_name in enumerate(self.meas_names_to_collect):
+            used_meas_names.add(measurement_name)
+            self.measurement_dict[type_of_set][measurement_name] = Measurement(measurement_name, row_id,
+                                                                               self.dict_of_df["Z_3NEUROLÓGIA"],
+                                                                               synchronizing=self.synchronizing,
+                                                                               lightweight=self.lightweight)
             for path in glob.glob(base_path + "/*/*.csv"):
                 if path.split('/')[-1].find(str(measurement_name)) == 0:
-                    self.measurement_dict[measurement_name].add_measurement_path(path)
+                    self.measurement_dict[type_of_set][measurement_name].add_measurement_path(path)
 
             if measurement_name in self.aux_data["Measure ID"].values:
-                self.measurement_dict[measurement_name].add_aux_data(self.aux_data.loc[self.aux_data["Measure ID"] == measurement_name])
+                self.measurement_dict[type_of_set][measurement_name].add_aux_data(
+                    self.aux_data.loc[self.aux_data["Measure ID"] == measurement_name])
             else:
                 print(colored("{} is not found in aux data".format(measurement_name), "red"))
 
-            self.measurement_dict[measurement_name].check_measurement_path_dict()
-            self.measurement_dict[measurement_name].check_five_class()
+            self.measurement_dict[type_of_set][measurement_name].check_measurement_path_dict()
+            self.measurement_dict[type_of_set][measurement_name].check_five_class()
 
-            if not self.measurement_dict[measurement_name].valid:
+            if not self.measurement_dict[type_of_set][measurement_name].valid:
                 print(colored("{} is not valid (deleted)".format(measurement_name), "red"))
-                del self.measurement_dict[measurement_name]
+                del self.measurement_dict[type_of_set][measurement_name]
+            else:
+                print(colored("{} measurement_path_dict is OK".format(measurement_name), "green"))
+
+        self.meas_names_to_collect = self.meas_names_to_collect - used_meas_names
 
     def print_statistics(self):
-        print(colored("Number of measurements {}".format(len(self.measurement_dict)), "blue"))
+        for type_of_set, meas_dict in self.measurement_dict.items():
+            print(colored("\nType of set: {}".format(type_of_set), "blue"))
+            print(colored("Number of measurements {}".format(len(meas_dict)), "blue"))
 
-        stat_dict = {i: 0 for i in range(6)}
-        for meas in self.measurement_dict.values():
-            stat_dict[meas.get_absolute_class_value()] = stat_dict[meas.get_absolute_class_value()] + 1
+            if len(meas_dict) > 0:
+                stat_dict = {i: 0 for i in range(6)}
+                for meas in meas_dict.values():
+                    stat_dict[meas.get_absolute_class_value()] = stat_dict[meas.get_absolute_class_value()] + 1
 
-        for k, v in stat_dict.items():
-            print(colored("Number of {}: {} ({:.2f} %)".format(k, v, 100 * v / len(self.measurement_dict)), "blue"))
+                for k, v in stat_dict.items():
+                    print(colored("Number of {}: {} ({:.2f} %)".format(k, v, 100 * v / len(meas_dict)), "blue"))
+
+
+    ##############
+    # deprecated #
+    ##############
+
 
     def get_measurement_df(self, measurement_name, key=None, only_valid=True):
         if key is None:
@@ -212,11 +232,8 @@ class MeasurementCollector(object):
                 start_idx = start_idx + step_size
 
 
-
-
-
 if __name__ == "__main__":
-    _db_path = "/home/levcsi/projects/stroke_prediction/data/WUS-v4meresek 20220202.accdb"
+    _db_path = "/home/levcsi/projects/stroke_prediction/data/WUS-v4meresek 20220302.accdb"
     _m_path = "/home/levcsi/projects/stroke_prediction/data/biocal.xlsx"
     mc = MeasurementCollector('/home/levcsi/projects/stroke_prediction/data', _db_path, _m_path,
                               synchronizing=True)
@@ -229,7 +246,7 @@ if __name__ == "__main__":
     num_sample = 50
     time_length = 25 * 60 * 90
 
-    mc.get_measurement_df(202201310, only_valid=True)
+    #mc.get_measurement_df(202201310, only_valid=True)
     # meas_df = mc.get_random_ratio_mean_with_class_all(length=time_length, mean_first=False)
     # print(meas_df)
     # for _k, _df in meas_df.items():
