@@ -37,8 +37,8 @@ def get_measure_df(db_path, write=False):
 
 
 if __name__ == "__main__":
-    _db_path = "./data/WUS-v4meresek_20211220.accdb"
-    _dict_of_df = get_measure_df(_db_path, write=False)
+    _db_path = "/home/levcsi/projects/stroke_prediction/data/WUS-v4meresek 20220202.accdb"
+    _dict_of_df = get_measure_df(_db_path, write=True)
 
 
 
