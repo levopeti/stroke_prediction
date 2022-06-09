@@ -1,6 +1,5 @@
 import pandas as pd
 import numpy as np
-import datetime
 from termcolor import colored
 from random import randint
 

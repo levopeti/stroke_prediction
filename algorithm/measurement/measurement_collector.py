@@ -3,10 +3,9 @@ import os
 import glob
 import random
 from termcolor import colored
-from tqdm import tqdm
 
-from accdb_reading import get_measure_df
-from measurement import Measurement
+from .accdb_reading import get_measure_df
+from .measurement import Measurement
 
 
 class MeasurementCollector(object):
@@ -267,8 +266,8 @@ class MeasurementCollector(object):
 
 if __name__ == "__main__":
     _db_path = "/home/levcsi/projects/stroke_prediction/data/WUS-v4meresek 20220302.accdb"
-    _m_path = "/home/levcsi/projects/stroke_prediction/data/biocal.xlsx"
-    mc = MeasurementCollector('/home/levcsi/projects/stroke_prediction/data', _db_path, _m_path,
+    _m_path = "/data/biocal.xlsx"
+    mc = MeasurementCollector('/data', _db_path, _m_path,
                               synchronizing=True)
 
     # df = mc.get_measurement_df("1meresjenei", ("right", "leg", "acc"))
