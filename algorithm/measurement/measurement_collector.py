@@ -2,6 +2,7 @@ import pandas as pd
 import os
 import glob
 import random
+import traceback
 from termcolor import colored
 
 from .accdb_reading import get_measure_df
@@ -107,24 +108,30 @@ class MeasurementCollector(object):
                          ("leg", "gyr"))
         meas = random.choice(list(self.measurement_dict[type_of_set].values()))
 
-        random_mean_dict = dict()
-        for key in keys_in_order:
-            if limb != "all" and key[0] != limb:
-                continue
+        try:
+            random_mean_dict = dict()
+            for key in keys_in_order:
+                if limb != "all" and key[0] != limb:
+                    continue
 
-            if mean_type == 'diff':
-                diff_mean, _ = meas.get_limb_diff_mean(key[0], key[1], length)
-                random_mean_dict[key] = diff_mean
-            elif mean_type == 'ratio':
-                ratio_mean, _ = meas.get_limb_ratio_mean(key[0], key[1], length, mean_first=mean_first)
-                random_mean_dict[key] = ratio_mean
-            else:
-                diff_mean, _ = meas.get_limb_diff_mean(key[0], key[1], length)
-                ratio_mean_first, _ = meas.get_limb_ratio_mean(key[0], key[1], length, mean_first=True)
-                ratio_mean, _ = meas.get_limb_ratio_mean(key[0], key[1], length, mean_first=False)
-                random_mean_dict[key] = [diff_mean, ratio_mean_first, ratio_mean]
+                if mean_type == 'diff':
+                    diff_mean, _ = meas.get_limb_diff_mean(key[0], key[1], length)
+                    random_mean_dict[key] = diff_mean
+                elif mean_type == 'ratio':
+                    ratio_mean, _ = meas.get_limb_ratio_mean(key[0], key[1], length, mean_first=mean_first)
+                    random_mean_dict[key] = ratio_mean
+                else:
+                    diff_mean, _ = meas.get_limb_diff_mean(key[0], key[1], length)
+                    ratio_mean_first, _ = meas.get_limb_ratio_mean(key[0], key[1], length, mean_first=True)
+                    ratio_mean, _ = meas.get_limb_ratio_mean(key[0], key[1], length, mean_first=False)
+                    random_mean_dict[key] = [diff_mean, ratio_mean_first, ratio_mean]
 
-        class_value = meas.get_absolute_class_value()
+            class_value = meas.get_absolute_class_value()
+        except Exception as e:
+            traceback.print_exc()
+            print(e)
+            print(meas.info)
+            exit()
         return random_mean_dict, class_value
 
     def sweep_mean_with_class_generator(self, mean_type='all', limb='all', length=None, step_size=1, mean_first=True,
