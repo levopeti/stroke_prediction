@@ -106,7 +106,8 @@ def start_training(_param_dict):
     _db_path = _param_dict["db_path"]
     _m_path = _param_dict["m_path"]
     _base_path = _param_dict["base_path"]
-    mc = MeasurementCollector(_base_path, _db_path, _m_path)
+    _ucanaccess_path = _param_dict["ucanaccess_path"]
+    mc = MeasurementCollector(_base_path, _db_path, _m_path, _ucanaccess_path)
 
     X_train, X_test, y_train, y_test = get_data(mc, _param_dict)
     model = define_model(input_shape=X_train.shape[1])
@@ -124,6 +125,7 @@ if __name__ == "__main__":
         "base_path": '/home/levcsi/projects/stroke_prediction/data',
         "db_path": "/home/levcsi/projects/stroke_prediction/data/WUS-v4m.accdb",
         "m_path": "/home/levcsi/projects/stroke_prediction/data/biocal.xlsx",
+        "ucanaccess_path": "/home/levcsi/projects/stroke_prediction/ucanaccess",
     }
 
     start_training(param_dict)

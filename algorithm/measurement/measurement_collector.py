@@ -10,10 +10,10 @@ from .measurement import Measurement
 
 
 class MeasurementCollector(object):
-    def __init__(self, base_path, db_path, m_path, synchronizing=True, lightweight=False):
+    def __init__(self, base_path, db_path, m_path, ucanaccess_path, synchronizing=True, lightweight=False):
         self.lightweight = lightweight
         self.synchronizing = synchronizing
-        self.dict_of_df = get_measure_df(db_path, write=False)
+        self.dict_of_df = get_measure_df(ucanaccess_path, db_path, write=False)
         self.aux_data = pd.read_excel(m_path)
         self.aux_data["Measure ID"] = pd.to_numeric(self.aux_data["Measure ID"], downcast='integer')
         # self.aux_data["The last sensor is on the patient"] = pd.to_datetime(self.aux_data["The last sensor is on the patient"],
