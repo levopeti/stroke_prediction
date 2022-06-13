@@ -128,9 +128,9 @@ class MeasurementCollector(object):
 
             class_value = meas.get_absolute_class_value()
         except Exception as e:
+            print(meas.info)
             traceback.print_exc()
             print(e)
-            print(meas.info)
             exit()
         return random_mean_dict, class_value
 
