@@ -19,8 +19,8 @@ class Measurement(object):
         self.ratio = ratio
         self.length = None
 
-        self.info = measurement_name + " + " + row_id
         self.log_list = list()
+        self.info = measurement_name + " + " + row_id
 
         self.measurement_path_dict = {
             ("left", "arm", "acc"): None,
