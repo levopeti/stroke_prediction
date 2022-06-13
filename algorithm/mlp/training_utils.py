@@ -70,8 +70,9 @@ def define_model(input_shape):
     return _model
 
 
-def fit_model(_model, X_train, X_test, y_train, y_test):
-    checkpoint_filepath = '/tmp/checkpoint'
+def fit_model(_model, X_train, X_test, y_train, y_test, checkpoint_filepath=None):
+    if checkpoint_filepath is None:
+        checkpoint_filepath = '/tmp/checkpoint'
     cp = ModelCheckpoint(
         filepath=checkpoint_filepath,
         save_weights_only=True,
@@ -111,7 +112,7 @@ def start_training(_param_dict):
 
     X_train, X_test, y_train, y_test = get_data(mc, _param_dict)
     model = define_model(input_shape=X_train.shape[1])
-    model, history = fit_model(model, X_train, X_test, y_train, y_test)
+    model, history = fit_model(model, X_train, X_test, y_train, y_test, _param_dict["checkpoint_path"])
     get_accuracy_and_cm(model, X_train, X_test, y_train, y_test)
 
     return model, history
@@ -126,6 +127,7 @@ if __name__ == "__main__":
         "db_path": "/home/levcsi/projects/stroke_prediction/data/WUS-v4m.accdb",
         "m_path": "/home/levcsi/projects/stroke_prediction/data/biocal.xlsx",
         "ucanaccess_path": "/home/levcsi/projects/stroke_prediction/ucanaccess",
+        "checkpoint_path": "/tmp/chpts",
     }
 
     start_training(param_dict)
