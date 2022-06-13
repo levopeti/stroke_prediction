@@ -7,11 +7,11 @@ pd.set_option('display.max_rows', None)
 
 def get_measure_df(db_path, write=False):
     ucanaccess_jars = [
-        "./ucanaccess/ucanaccess-5.0.1.jar",
-        "./ucanaccess/lib/commons-lang3-3.8.1.jar",
-        "./ucanaccess/lib/commons-logging-1.2.jar",
-        "./ucanaccess/lib/hsqldb-2.5.0.jar",
-        "./ucanaccess/lib/jackcess-3.0.1.jar",
+        "./strike_prediction/ucanaccess/ucanaccess-5.0.1.jar",
+        "./strike_prediction/ucanaccess/lib/commons-lang3-3.8.1.jar",
+        "./strike_prediction/ucanaccess/lib/commons-logging-1.2.jar",
+        "./strike_prediction/ucanaccess/lib/hsqldb-2.5.0.jar",
+        "./strike_prediction/ucanaccess/lib/jackcess-3.0.1.jar",
     ]
     classpath = ":".join(ucanaccess_jars)
     cnxn = jaydebeapi.connect(
