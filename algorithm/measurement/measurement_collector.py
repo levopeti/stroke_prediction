@@ -128,7 +128,7 @@ class MeasurementCollector(object):
 
             class_value = meas.get_absolute_class_value()
         except Exception as e:
-            print(meas.info)
+            print(meas.measurement_name)
             traceback.print_exc()
             print(e)
             exit()
