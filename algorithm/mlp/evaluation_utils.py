@@ -148,46 +148,47 @@ def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_s
 
     cm = confusion_matrix(~np.concatenate(is_healty_list), ~np.concatenate(pred_is_healthy_list))
 
-    # if ratio == 1 and is_healty:
-    #    cm = np.array([[0, 0],
-    #                   [0, 1]])
-    # elif ratio == 1 and not is_healty:
-    #    cm = np.array([[1, 0],
-    #                   [0, 0]])
+    if len(cm) == 2:
+        # if ratio == 1 and is_healty:
+        #    cm = np.array([[0, 0],
+        #                   [0, 1]])
+        # elif ratio == 1 and not is_healty:
+        #    cm = np.array([[1, 0],
+        #                   [0, 0]])
 
-    print(cm)
-    sensitivity = cm[0, 0] / (cm[0, 0] + cm[0, 1])
-    print(sensitivity)
-    specificity = cm[1, 1] / (cm[1, 0] + cm[1, 1])
-    print(specificity)
+        print(cm)
+        sensitivity = cm[0, 0] / (cm[0, 0] + cm[0, 1])
+        print(sensitivity)
+        specificity = cm[1, 1] / (cm[1, 0] + cm[1, 1])
+        print(specificity)
 
-    color_list = ['blue', 'red']
+        color_list = ['blue', 'red']
 
-    fig = plt.figure(facecolor="w")
-    ax = fig.add_axes([0, 0, 1, 1])
-    langs = ['sensitivity', 'specificity']
-    students = [sensitivity * 100, specificity * 100]
-    graph = ax.bar(langs, students, color=color_list)
+        fig = plt.figure(facecolor="w")
+        ax = fig.add_axes([0, 0, 1, 1])
+        langs = ['sensitivity', 'specificity']
+        students = [sensitivity * 100, specificity * 100]
+        graph = ax.bar(langs, students, color=color_list)
 
-    for p in graph:
-        height = p.get_height()
-        print(type(height))
-        ax.text(x=p.get_x() + p.get_width() / 2, y=height + 1,
-                s="{:.2f} %".format(height),
-                ha='center')
+        for p in graph:
+            height = p.get_height()
+            print(type(height))
+            ax.text(x=p.get_x() + p.get_width() / 2, y=height + 1,
+                    s="{:.2f} %".format(height),
+                    ha='center')
 
-    ax.legend(["sensitivity - specificity"], loc='best')
-    ax.grid(True)
+        ax.legend(["sensitivity - specificity"], loc='best')
+        ax.grid(True)
 
-    if save_path is not None:
-        os.makedirs(os.path.join(save_path, "/plots/plots_{}m_{}step_{}/{}/".format(minutes, step_size,
-                                                                                    datetime.now().strftime(
-                                                                                        '%Y-%m-%d-%H'),
-                                                                                    type_of_set)), exist_ok=True)
-        plt.savefig(os.path.join(save_path, "/plots/plots_{}m_{}step_{}/{}/sens_spec.png".format(minutes, step_size,
-                                                                                                 datetime.now().strftime(
-                                                                                                     '%Y-%m-%d-%H'),
-                                                                                                 type_of_set)))
+        if save_path is not None:
+            os.makedirs(os.path.join(save_path, "/plots/plots_{}m_{}step_{}/{}/".format(minutes, step_size,
+                                                                                        datetime.now().strftime(
+                                                                                            '%Y-%m-%d-%H'),
+                                                                                        type_of_set)), exist_ok=True)
+            plt.savefig(os.path.join(save_path, "/plots/plots_{}m_{}step_{}/{}/sens_spec.png".format(minutes, step_size,
+                                                                                                     datetime.now().strftime(
+                                                                                                         '%Y-%m-%d-%H'),
+                                                                                                     type_of_set)))
 
     plt.show()
 
