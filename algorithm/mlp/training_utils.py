@@ -61,8 +61,8 @@ def define_model(input_shape, output_shape, layer_sizes):
     ip = Input(shape=(input_shape,), name="input")
     x = Dense(units=layer_sizes[0], name="hidden_layer", activation="relu")(ip)
 
-    for layer_size in layer_sizes[1:]:
-        x = Dense(units=layer_size, name="hidden_layer_2", activation="relu")(x)
+    for i, layer_size in enumerate(layer_sizes[1:]):
+        x = Dense(units=layer_size, name="hidden_layer_{}".format(i + 2), activation="relu")(x)
 
     op = Dense(units=output_shape, name="prediction", activation="softmax")(x)
     _model = Model(inputs=ip, outputs=op, name="full_model")
