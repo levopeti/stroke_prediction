@@ -135,11 +135,11 @@ def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_s
 
         if save_path is not None:
             os.makedirs(
-                os.path.join(save_path, "/plots/plots_{}m_{}step_{}/{}/".format(int(length / (60 * 25)), step_size,
+                os.path.join(save_path, "plots/plots_{}m_{}step_{}/{}/".format(int(length / (60 * 25)), step_size,
                                                                                 datetime.now().strftime('%Y-%m-%d-%H'),
                                                                                 type_of_set)), exist_ok=True)
             plt.savefig(os.path.join(save_path,
-                                     "/plots/plots_{}m_{}step_{}/{}/{}.png".format(int(length / (60 * 25)), step_size,
+                                     "plots/plots_{}m_{}step_{}/{}/{}.png".format(int(length / (60 * 25)), step_size,
                                                                                    datetime.now().strftime(
                                                                                        '%Y-%m-%d-%H'),
                                                                                    type_of_set, meas_name)))
@@ -181,11 +181,11 @@ def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_s
         ax.grid(True)
 
         if save_path is not None:
-            os.makedirs(os.path.join(save_path, "/plots/plots_{}m_{}step_{}/{}/".format(minutes, step_size,
+            os.makedirs(os.path.join(save_path, "plots/plots_{}m_{}step_{}/{}/".format(minutes, step_size,
                                                                                         datetime.now().strftime(
                                                                                             '%Y-%m-%d-%H'),
                                                                                         type_of_set)), exist_ok=True)
-            plt.savefig(os.path.join(save_path, "/plots/plots_{}m_{}step_{}/{}/sens_spec.png".format(minutes, step_size,
+            plt.savefig(os.path.join(save_path, "plots/plots_{}m_{}step_{}/{}/sens_spec.png".format(minutes, step_size,
                                                                                                      datetime.now().strftime(
                                                                                                          '%Y-%m-%d-%H'),
                                                                                                      type_of_set)))
