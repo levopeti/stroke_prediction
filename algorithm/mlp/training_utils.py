@@ -55,12 +55,16 @@ def get_data(_mc, _param_dict):
     return X_train, X_test, y_train, y_test
 
 
-def define_model(input_shape):
+def define_model(input_shape, output_shape, layer_sizes):
+    assert len(layer_sizes) > 0, layer_sizes
+
     ip = Input(shape=(input_shape,), name="input")
-    x = Dense(units=512, name="hidden_layer", activation="relu")(ip)
-    x = Dense(units=256, name="hidden_layer_2", activation="relu")(x)
-    x = Dense(units=128, name="hidden_layer_3", activation="relu")(x)
-    op = Dense(units=6, name="prediction", activation="softmax")(x)
+    x = Dense(units=layer_sizes[0], name="hidden_layer", activation="relu")(ip)
+
+    for layer_size in layer_sizes[1:]:
+        x = Dense(units=layer_size, name="hidden_layer_2", activation="relu")(x)
+
+    op = Dense(units=output_shape, name="prediction", activation="softmax")(x)
     _model = Model(inputs=ip, outputs=op, name="full_model")
     _model.summary()
 
@@ -111,7 +115,9 @@ def start_training(_param_dict):
     mc = MeasurementCollector(_base_path, _db_path, _m_path, _ucanaccess_path)
 
     X_train, X_test, y_train, y_test = get_data(mc, _param_dict)
-    model = define_model(input_shape=X_train.shape[1])
+    model = define_model(input_shape=X_train.shape[1],
+                         output_shape=y_train.shape[1],
+                         layer_sizes=_param_dict["layer_sizes"])
     model, history = fit_model(model, X_train, X_test, y_train, y_test, _param_dict["checkpoint_path"])
     get_accuracy_and_cm(model, X_train, X_test, y_train, y_test)
 
@@ -123,6 +129,7 @@ if __name__ == "__main__":
         "minutes": 90,
         "sample_size": 1000000,
         "limb": "all",
+        "layer_sizes": [512, 128],
         "base_path": '/home/levcsi/projects/stroke_prediction/data',
         "db_path": "/home/levcsi/projects/stroke_prediction/data/WUS-v4m.accdb",
         "m_path": "/home/levcsi/projects/stroke_prediction/data/biocal.xlsx",

@@ -18,7 +18,7 @@ TIME_DELTA = 25
 
 
 @cache
-def generate_infer_data(length, step_size, limb, type_of_set, use_cache, key):
+def generate_infer_data(_mc, length, step_size, limb, type_of_set, use_cache, key):
     keys_in_order = (("arm", "acc"),
                      ("leg", "acc"),
                      ("arm", "gyr"),
@@ -27,11 +27,11 @@ def generate_infer_data(length, step_size, limb, type_of_set, use_cache, key):
     cur_meas_name = None
     result_dict = dict()
 
-    for mean_dict, class_value, meas_name in mc.sweep_mean_with_class_generator(mean_type='all',
-                                                                                limb=limb,
-                                                                                length=length,
-                                                                                step_size=step_size,
-                                                                                type_of_set=type_of_set):
+    for mean_dict, class_value, meas_name in _mc.sweep_mean_with_class_generator(mean_type='all',
+                                                                                 limb=limb,
+                                                                                 length=length,
+                                                                                 step_size=step_size,
+                                                                                 type_of_set=type_of_set):
         if cur_meas_name != meas_name:
             print(meas_name)
             result_dict[meas_name] = {
@@ -73,7 +73,7 @@ def make_prediction(_model, _data_dict, use_cache, key):
     return result_dict
 
 
-def make_plot(result_dict, minutes, step_size, length, save=True, type_of_set="train"):
+def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_set="train"):
     plt.ion()
 
     pred_is_healthy_list = list()
@@ -133,13 +133,16 @@ def make_plot(result_dict, minutes, step_size, length, save=True, type_of_set="t
         axs[3].legend(loc='best')
         axs[3].grid()
 
-        if save:
-            os.makedirs("./plots/plots_{}m_{}step_{}/{}/".format(int(length / (60 * 25)), step_size,
-                                                                 datetime.now().strftime('%Y-%m-%d-%H'), type_of_set),
-                        exist_ok=True)
-            plt.savefig("./plots/plots_{}m_{}step_{}/{}/{}.png".format(int(length / (60 * 25)), step_size,
-                                                                       datetime.now().strftime('%Y-%m-%d-%H'),
-                                                                       type_of_set, meas_name))
+        if save_path is not None:
+            os.makedirs(
+                os.path.join(save_path, "/plots/plots_{}m_{}step_{}/{}/".format(int(length / (60 * 25)), step_size,
+                                                                                datetime.now().strftime('%Y-%m-%d-%H'),
+                                                                                type_of_set)), exist_ok=True)
+            plt.savefig(os.path.join(save_path,
+                                     "/plots/plots_{}m_{}step_{}/{}/{}.png".format(int(length / (60 * 25)), step_size,
+                                                                                   datetime.now().strftime(
+                                                                                       '%Y-%m-%d-%H'),
+                                                                                   type_of_set, meas_name)))
 
         plt.show()
 
@@ -176,12 +179,15 @@ def make_plot(result_dict, minutes, step_size, length, save=True, type_of_set="t
     ax.legend(["sensitivity - specificity"], loc='best')
     ax.grid(True)
 
-    if save:
-        os.makedirs("./plots/plots_{}m_{}step_{}/{}/".format(minutes, step_size, datetime.now().strftime('%Y-%m-%d-%H'),
-                                                             type_of_set), exist_ok=True)
-        plt.savefig("./plots/plots_{}m_{}step_{}/{}/sens_spec.png".format(minutes, step_size,
-                                                                          datetime.now().strftime('%Y-%m-%d-%H'),
-                                                                          type_of_set))
+    if save_path is not None:
+        os.makedirs(os.path.join(save_path, "/plots/plots_{}m_{}step_{}/{}/".format(minutes, step_size,
+                                                                                    datetime.now().strftime(
+                                                                                        '%Y-%m-%d-%H'),
+                                                                                    type_of_set)), exist_ok=True)
+        plt.savefig(os.path.join(save_path, "/plots/plots_{}m_{}step_{}/{}/sens_spec.png".format(minutes, step_size,
+                                                                                                 datetime.now().strftime(
+                                                                                                     '%Y-%m-%d-%H'),
+                                                                                                 type_of_set)))
 
     plt.show()
 
@@ -194,36 +200,40 @@ def load_model(_model_path):
 
 
 def start_evaluation(_param_dict):
-    _db_path = "/home/levcsi/projects/stroke_prediction/data/WUS-v4m.accdb"
-    _m_path = "/home/levcsi/projects/stroke_prediction/data/biocal.xlsx"
-    mc = MeasurementCollector('/home/levcsi/projects/stroke_prediction/data', _db_path, _m_path)
+    _db_path = _param_dict["db_path"]
+    _m_path = _param_dict["m_path"]
+    _base_path = _param_dict["base_path"]
+    _ucanaccess_path = _param_dict["ucanaccess_path"]
+    mc = MeasurementCollector(_base_path, _db_path, _m_path, _ucanaccess_path)
 
     minutes = _param_dict["minutes"]
     length = TIME_DELTA * 60 * minutes
     step_size = _param_dict["step_size"]
     limb = _param_dict["limb"]
     type_of_set = _param_dict["type_of_set"]
-    save_plot = _param_dict["save_plot"]
+    save_path = _param_dict["save_path"]
     model_path = _param_dict["model_path"]
 
     _model = load_model(model_path)
 
     key = "{}".format([length, step_size, limb, type_of_set, len(mc.measurement_dict[type_of_set])])
-    train_infer_data = generate_infer_data(length, step_size, limb, type_of_set, use_cache=True, key=key)
+    train_infer_data = generate_infer_data(mc, length, step_size, limb, type_of_set, use_cache=True, key=key)
     train_prediction_dict = make_prediction(_model, train_infer_data, use_cache=True, key=key)
-    make_plot(train_prediction_dict, minutes, step_size, length, save=save_plot, type_of_set=type_of_set)
+    make_plot(train_prediction_dict, minutes, step_size, length, save_path=save_path, type_of_set=type_of_set)
 
 
 if __name__ == "__main__":
     param_dict = {
         "minutes": 90,
-        "sample_size": 1000000,
         "limb": "all",
         "step_size": 500,
         "type_of_set": "train",  # train, test, mixed
-        "save_plot": False,
+        "base_path": '/home/levcsi/projects/stroke_prediction/data',
+        "db_path": "/home/levcsi/projects/stroke_prediction/data/WUS-v4m.accdb",
+        "m_path": "/home/levcsi/projects/stroke_prediction/data/biocal.xlsx",
+        "ucanaccess_path": "/home/levcsi/projects/stroke_prediction/ucanaccess",
+        "save_path": ".",
         "model_path": "",
     }
 
     start_evaluation(param_dict)
-
