@@ -99,6 +99,8 @@ class Measurement(object):
         assert self.measurement_path_dict[tuple(key)] is None, self.measurement_path_dict[tuple(key)]
         self.measurement_path_dict[tuple(key)] = path
 
+    # #### checks for measurement ####
+
     def check_measurement_path_dict(self):
         missing_keys = list()
         for k, v in self.measurement_path_dict.items():
@@ -118,6 +120,10 @@ class Measurement(object):
                 return
 
         self.log_list.append(colored("no limb with class 5".format(self.measurement_name), "red"))
+
+    def check_loading(self):
+        for k in self.measurement_path_dict.keys():
+            self.get_measurement_df(k, only_valid=True)
 
     def add_aux_data(self, aux_data_df):
         self.valid_start_time = aux_data_df["The last sensor is on the patient"].values[0].astype(np.timedelta64)

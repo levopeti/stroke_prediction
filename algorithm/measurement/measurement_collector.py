@@ -32,6 +32,8 @@ class MeasurementCollector(object):
             self.create_mixed_measurement(self.measurement_dict["train"][202112020], self.measurement_dict["train"][202112171])
             self.print_statistics()
         else:
+            self.check_measurements(os.path.join(base_path, "train"), "train")
+            self.check_measurements(os.path.join(base_path, "test"), "test")
             self.check_measurements(os.path.join(base_path, "new"), "new")
             self.check_measurements(os.path.join(base_path, "wrong"), "wrong")
 
@@ -63,12 +65,9 @@ class MeasurementCollector(object):
     def collect_measurements(self, base_path, type_of_set="train"):
         print("\n##### Load measurements for {} #####".format(type_of_set.upper()))
         paths = glob.glob(os.path.join(base_path, "*/*.csv"))
-        print(os.path.join(base_path, "*/*.csv"))
-        print(paths)
         not_found_measurements = list()
 
         for row_id, measurement_name in enumerate(self.dict_of_df["Z_1ÁLTALÁNOS"]["VizsgAz"].values):
-            print([path.split('/')[-1].find(str(measurement_name)) == 0 for path in paths])
             if not any([path.split('/')[-1].find(str(measurement_name)) == 0 for path in paths]):
                 not_found_measurements.append(str(measurement_name))
                 continue
@@ -103,6 +102,36 @@ class MeasurementCollector(object):
 
     def check_measurements(self, base_path, type_of_set="new"):
         print("\n##### Check measurements from {} folder #####".format(type_of_set.upper()))
+        paths = glob.glob(os.path.join(base_path, "*/*.csv"))
+        not_found_in_db = list()
+
+        for path in paths:
+            if not any([path.split('/')[-1].find(str(measurement_name)) == 0 for measurement_name in self.dict_of_df["Z_1ÁLTALÁNOS"]["VizsgAz"].values]):
+                not_found_in_db.append(path)
+                continue
+
+        for row_id, measurement_name in enumerate(self.dict_of_df["Z_1ÁLTALÁNOS"]["VizsgAz"].values):
+            meas = Measurement(measurement_name, row_id, self.dict_of_df["Z_3NEUROLÓGIA"],
+                               synchronizing=self.synchronizing, lightweight=self.lightweight)
+
+            for path in paths:
+                if path.split('/')[-1].find(str(measurement_name)) == 0:
+                    meas.add_measurement_path(path)
+
+            if measurement_name in self.aux_data["Measure ID"].values:
+                meas.add_aux_data(self.aux_data.loc[self.aux_data["Measure ID"] == measurement_name])
+            else:
+                meas.log_list.append(colored("measurement is not found in aux data", "red"))
+
+            meas.check_measurement_path_dict()
+            meas.check_five_class()
+            meas.check_loading()
+
+        if len(not_found_in_db) > 0:
+            print("\n### Measurement csv-s not found in DB: ###")
+
+            for nf_path in not_found_in_db:
+                print(nf_path)
 
     def print_statistics(self):
         for type_of_set, meas_dict in self.measurement_dict.items():
