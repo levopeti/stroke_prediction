@@ -66,7 +66,7 @@ class MeasurementCollector(object):
         not_found_measurements = list()
 
         for row_id, measurement_name in enumerate(self.dict_of_df["Z_1ÁLTALÁNOS"]["VizsgAz"].values):
-
+            print([path.split('/')[-1].find(str(measurement_name)) == 0 for path in paths])
             if not any([path.split('/')[-1].find(str(measurement_name)) == 0 for path in paths]):
                 not_found_measurements.append(str(measurement_name))
                 continue
@@ -94,7 +94,7 @@ class MeasurementCollector(object):
                 self.measurement_dict[type_of_set][measurement_name] = meas
 
         if len(not_found_measurements) > 0:
-            print("\n ### Measurements from DB not found: ###")
+            print("\n### Measurements from DB not found: ###")
 
             for nf_path in not_found_measurements:
                 print(nf_path)
