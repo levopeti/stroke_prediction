@@ -29,13 +29,13 @@ class MeasurementCollector(object):
             }
             self.collect_measurements(os.path.join(base_path, "train"), "train")
             self.collect_measurements(os.path.join(base_path, "test"), "test")
-            self.create_mixed_measurment(self.measurement_dict["train"][202112020], self.measurement_dict["train"][202112171])
+            self.create_mixed_measurement(self.measurement_dict["train"][202112020], self.measurement_dict["train"][202112171])
             self.print_statistics()
         else:
             self.check_measurements(os.path.join(base_path, "new"), "new")
             self.check_measurements(os.path.join(base_path, "wrong"), "wrong")
 
-    def create_mixed_measurment(self, meas_1, meas_2, ratio=0.5):
+    def create_mixed_measurement(self, meas_1, meas_2, ratio=0.5):
         meas_name = "mixed_1"
         all_meas_1 = meas_1.get_all_measurements_df()
         all_meas_2 = meas_2.get_all_measurements_df()
