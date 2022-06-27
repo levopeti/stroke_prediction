@@ -6,7 +6,7 @@ def start_checking(_param_dict):
     _m_path = _param_dict["m_path"]
     _base_path = _param_dict["base_path"]
     _ucanaccess_path = _param_dict["ucanaccess_path"]
-    mc = MeasurementCollector(_base_path, _db_path, _m_path, _ucanaccess_path, check=True)
+    MeasurementCollector(_base_path, _db_path, _m_path, _ucanaccess_path, check=True)
 
 
 if __name__ == "__main__":

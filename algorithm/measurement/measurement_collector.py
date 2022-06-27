@@ -4,6 +4,7 @@ import glob
 import random
 import traceback
 from termcolor import colored
+from tqdm import tqdm
 
 from .accdb_reading import get_measure_df
 from .measurement import Measurement
@@ -111,6 +112,7 @@ class MeasurementCollector(object):
                 continue
 
         for row_id, measurement_name in enumerate(self.dict_of_df["Z_1ÁLTALÁNOS"]["VizsgAz"].values):
+            print(measurement_name)
             meas = Measurement(measurement_name, row_id, self.dict_of_df["Z_3NEUROLÓGIA"],
                                synchronizing=self.synchronizing, lightweight=self.lightweight)
 
@@ -126,6 +128,8 @@ class MeasurementCollector(object):
             meas.check_measurement_path_dict()
             meas.check_five_class()
             meas.check_loading()
+
+            meas.print_log()
 
         if len(not_found_in_db) > 0:
             print("\n### Measurement csv-s not found in DB: ###")
