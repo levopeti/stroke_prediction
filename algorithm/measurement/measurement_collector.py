@@ -63,6 +63,8 @@ class MeasurementCollector(object):
     def collect_measurements(self, base_path, type_of_set="train"):
         print("\n##### Load measurements for {} #####".format(type_of_set.upper()))
         paths = glob.glob(os.path.join(base_path, type_of_set, "*.csv"))
+        print(os.path.join(base_path, type_of_set, "*.csv"))
+        print(paths)
         not_found_measurements = list()
 
         for row_id, measurement_name in enumerate(self.dict_of_df["Z_1ÁLTALÁNOS"]["VizsgAz"].values):
