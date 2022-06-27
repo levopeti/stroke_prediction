@@ -130,7 +130,7 @@ if __name__ == "__main__":
         "sample_size": 1000000,
         "limb": "all",
         "layer_sizes": [512, 128],
-        "base_path": '/home/levcsi/projects/stroke_prediction/data',
+        "base_path": "/home/levcsi/projects/stroke_prediction/data",
         "db_path": "/home/levcsi/projects/stroke_prediction/data/WUS-v4m.accdb",
         "m_path": "/home/levcsi/projects/stroke_prediction/data/biocal.xlsx",
         "ucanaccess_path": "/home/levcsi/projects/stroke_prediction/ucanaccess",

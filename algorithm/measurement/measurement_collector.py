@@ -10,7 +10,7 @@ from .measurement import Measurement
 
 
 class MeasurementCollector(object):
-    def __init__(self, base_path, db_path, m_path, ucanaccess_path, synchronizing=True, lightweight=False):
+    def __init__(self, base_path, db_path, m_path, ucanaccess_path, synchronizing=True, lightweight=False, check=False):
         self.lightweight = lightweight
         self.synchronizing = synchronizing
         self.dict_of_df = get_measure_df(ucanaccess_path, db_path, write=False)
@@ -20,15 +20,20 @@ class MeasurementCollector(object):
         #                                                                     format='%Y-%m-%dT%H:%M:%S.%f')
         # self.aux_data["Take off the first sensor"] = pd.to_datetime(self.aux_data["Take off the first sensor"],
         #                                                             format='%Y-%m-%dT%H:%M:%S.%f')
-        self.measurement_dict = {
-            "train": dict(),
-            "test": dict(),
-            "mixed": dict()
-        }
-        self.collect_measurment(os.path.join(base_path, "train"), "train")
-        self.collect_measurment(os.path.join(base_path, "test"), "test")
-        self.create_mixed_measurment(self.measurement_dict["train"][202112020], self.measurement_dict["train"][202112171])
-        self.print_statistics()
+
+        if not check:
+            self.measurement_dict = {
+                "train": dict(),
+                "test": dict(),
+                "mixed": dict()
+            }
+            self.collect_measurements(os.path.join(base_path, "train"), "train")
+            self.collect_measurements(os.path.join(base_path, "test"), "test")
+            self.create_mixed_measurment(self.measurement_dict["train"][202112020], self.measurement_dict["train"][202112171])
+            self.print_statistics()
+        else:
+            self.check_measurements(os.path.join(base_path, "new"), "new")
+            self.check_measurements(os.path.join(base_path, "wrong"), "wrong")
 
     def create_mixed_measurment(self, meas_1, meas_2, ratio=0.5):
         meas_name = "mixed_1"
@@ -55,13 +60,21 @@ class MeasurementCollector(object):
 
         self.measurement_dict["mixed"][meas_name] = mixed_meas
 
-    def collect_measurment(self, base_path, type_of_set="train"):
+    def collect_measurements(self, base_path, type_of_set="train"):
         print("\n##### Load measurements for {} #####".format(type_of_set.upper()))
+        paths = glob.glob(os.path.join(base_path, type_of_set, "*.csv"))
+        not_found_measurements = list()
+
         for row_id, measurement_name in enumerate(self.dict_of_df["Z_1ÁLTALÁNOS"]["VizsgAz"].values):
+
+            if not any([path.split('/')[-1].find(str(measurement_name)) == 0 for path in paths]):
+                not_found_measurements.append(str(measurement_name))
+                continue
+
             meas = Measurement(measurement_name, row_id, self.dict_of_df["Z_3NEUROLÓGIA"],
                                synchronizing=self.synchronizing, lightweight=self.lightweight)
 
-            for path in glob.glob(base_path + "/*/*.csv"):
+            for path in paths:
                 if path.split('/')[-1].find(str(measurement_name)) == 0:
                     meas.add_measurement_path(path)
 
@@ -79,6 +92,15 @@ class MeasurementCollector(object):
             else:
                 print(colored("measurement_path_dict is OK", "green"))
                 self.measurement_dict[type_of_set][measurement_name] = meas
+
+        if len(not_found_measurements) > 0:
+            print("\n ### Measurements from DB not found: ###")
+
+            for nf_path in not_found_measurements:
+                print(nf_path)
+
+    def check_measurements(self, base_path, type_of_set="new"):
+        print("\n##### Check measurements from {} folder #####".format(type_of_set.upper()))
 
     def print_statistics(self):
         for type_of_set, meas_dict in self.measurement_dict.items():

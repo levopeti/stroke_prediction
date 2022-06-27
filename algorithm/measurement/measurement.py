@@ -96,6 +96,7 @@ class Measurement(object):
             raise ValueError("Bad measurement path: {}".format(path))
 
         assert tuple(key) in self.measurement_path_dict
+        assert self.measurement_path_dict[tuple(key)] is None, self.measurement_path_dict[tuple(key)]
         self.measurement_path_dict[tuple(key)] = path
 
     def check_measurement_path_dict(self):
