@@ -62,8 +62,8 @@ class MeasurementCollector(object):
 
     def collect_measurements(self, base_path, type_of_set="train"):
         print("\n##### Load measurements for {} #####".format(type_of_set.upper()))
-        paths = glob.glob(os.path.join(base_path, type_of_set, "*.csv"))
-        print(os.path.join(base_path, type_of_set, "*.csv"))
+        paths = glob.glob(os.path.join(base_path, "*/*.csv"))
+        print(os.path.join(base_path, "*/*.csv"))
         print(paths)
         not_found_measurements = list()
 
