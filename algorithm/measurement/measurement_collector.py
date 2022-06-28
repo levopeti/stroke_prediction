@@ -4,7 +4,6 @@ import glob
 import random
 import traceback
 from termcolor import colored
-from tqdm import tqdm
 
 from .accdb_reading import get_measure_df
 from .measurement import Measurement
@@ -130,7 +129,10 @@ class MeasurementCollector(object):
             meas.check_measurement_path_dict()
             meas.check_five_class()
             meas.check_loading()
-            meas.check_frequency(0, 0)
+
+            frequency = 25  # Hz, 40 ms
+            expected_delta = (1 / frequency) * 1000  # ms
+            meas.check_frequency(expected_delta, 1)
 
             meas.print_log()
 

@@ -135,14 +135,19 @@ class Measurement(object):
                 try:
                     self.get_measurement_df(k, only_valid=True)
                 except ValueError as e:
-                    self.log_list.append(colored("{}, {}, {}".format(self.measurement_name, self.measurement_path_dict[k], e), "red"))
+                    self.log_list.append(colored("{}, {}, {}".format(self.measurement_name,
+                                                                     self.measurement_path_dict[k], e), "red"))
 
     def check_frequency(self, expected_delta, eps):
         for df in self.measurement_dict.values():
             if df is not None:
                 time_stamps = df["epoch"].values
-                print(time_stamps)
-                exit()
+                deltas = np.diff(time_stamps)
+                if np.any(deltas < expected_delta - eps) or np.any(deltas > expected_delta + eps):
+                    self.log_list.append(colored("frequency is not correct,"
+                                                 " min: {}, max: {}, avg: {}".format(np.min(deltas),
+                                                                                     np.max(deltas),
+                                                                                     np.avg(deltas),), "red"))
 
     def add_aux_data(self, aux_data_df):
         self.valid_start_time = aux_data_df["The last sensor is on the patient"].values[0].astype(np.timedelta64)
