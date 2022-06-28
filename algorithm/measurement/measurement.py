@@ -132,6 +132,7 @@ class Measurement(object):
     def check_loading(self):
         for k in self.measurement_path_dict.keys():
             if k is not None:
+                self.get_measurement_df(k, only_valid=True)
                 try:
                     self.get_measurement_df(k, only_valid=True)
                 except ValueError as e:
