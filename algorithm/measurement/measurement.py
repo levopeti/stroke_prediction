@@ -132,7 +132,6 @@ class Measurement(object):
     def check_loading(self):
         for k in self.measurement_path_dict.keys():
             if k is not None:
-                self.get_measurement_df(k, only_valid=True)
                 try:
                     self.get_measurement_df(k, only_valid=True)
                 except ValueError as e:
@@ -183,7 +182,11 @@ class Measurement(object):
             return _meas_df
 
         def read_csv(_key):
-            _meas_df = pd.read_csv(self.measurement_path_dict[_key], usecols=columns_key_dict[_key[2]])
+            try:
+                _meas_df = pd.read_csv(self.measurement_path_dict[_key], usecols=columns_key_dict[_key[2]])
+            except ValueError:
+                _meas_df = pd.read_csv(self.measurement_path_dict[_key])
+                raise ValueError("{} could not be loaded because of columns: {}".format(self.measurement_name, _meas_df.columns))
             for c_name in _meas_df.columns:
                 _meas_df.rename(columns={c_name: c_name.split(' ')[0]}, inplace=True)
             _meas_df = cut_valid_part(_meas_df)
