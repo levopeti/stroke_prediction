@@ -123,10 +123,11 @@ class Measurement(object):
 
     def check_loading(self):
         for k in self.measurement_path_dict.keys():
-            try:
-                self.get_measurement_df(k, only_valid=True)
-            except ValueError as e:
-                self.log_list.append(colored("{}, {}, {}".format(self.measurement_name, self.measurement_path_dict[k], e), "red"))
+            if k is not None:
+                try:
+                    self.get_measurement_df(k, only_valid=True)
+                except ValueError as e:
+                    self.log_list.append(colored("{}, {}, {}".format(self.measurement_name, self.measurement_path_dict[k], e), "red"))
 
     def add_aux_data(self, aux_data_df):
         self.valid_start_time = aux_data_df["The last sensor is on the patient"].values[0].astype(np.timedelta64)
