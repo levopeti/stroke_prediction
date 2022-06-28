@@ -140,7 +140,7 @@ class Measurement(object):
     def check_frequency(self, expected_delta, eps):
         for df in self.measurement_dict.values():
             if df is not None:
-                time_stamps = df["epoch"].values()
+                time_stamps = df["epoch"].values
                 print(time_stamps)
                 exit()
 
