@@ -33,8 +33,8 @@ class MeasurementCollector(object):
             self.print_statistics()
         else:
             self.check_measurements(os.path.join(base_path, "train"), "train")
-            # self.check_measurements(os.path.join(base_path, "test"), "test")
-            # self.check_measurements(os.path.join(base_path, "new"), "new")
+            self.check_measurements(os.path.join(base_path, "test"), "test")
+            self.check_measurements(os.path.join(base_path, "new"), "new")
             self.check_measurements(os.path.join(base_path, "wrong"), "wrong")
 
     def create_mixed_measurement(self, meas_1, meas_2, ratio=0.5):
@@ -132,7 +132,8 @@ class MeasurementCollector(object):
 
             frequency = 25  # Hz, 40 ms
             expected_delta = (1 / frequency) * 1000  # ms
-            meas.check_frequency(expected_delta, 1)
+            eps = 3
+            meas.check_frequency(expected_delta, eps=eps)
 
             meas.print_log()
 
