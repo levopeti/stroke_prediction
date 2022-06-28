@@ -137,6 +137,13 @@ class Measurement(object):
                 except ValueError as e:
                     self.log_list.append(colored("{}, {}, {}".format(self.measurement_name, self.measurement_path_dict[k], e), "red"))
 
+    def check_frequency(self, expected_delta, eps):
+        for df in self.measurement_dict.values():
+            if df is not None:
+                time_stamps = df["epoch"].values()
+                print(time_stamps)
+                exit()
+
     def add_aux_data(self, aux_data_df):
         self.valid_start_time = aux_data_df["The last sensor is on the patient"].values[0].astype(np.timedelta64)
         self.valid_end_time = aux_data_df["Take off the first sensor"].values[0].astype(np.timedelta64)
@@ -186,7 +193,7 @@ class Measurement(object):
                 _meas_df = pd.read_csv(self.measurement_path_dict[_key], usecols=columns_key_dict[_key[2]])
             except ValueError:
                 _meas_df = pd.read_csv(self.measurement_path_dict[_key])
-                raise ValueError("{} could not be loaded because of columns: {}".format(self.measurement_name, _meas_df.columns))
+                raise ValueError("{} could not be loaded because of columns:\n{}\nexpected: {}".format(self.measurement_name, _meas_df.columns, columns_key_dict[_key[2]]))
             for c_name in _meas_df.columns:
                 _meas_df.rename(columns={c_name: c_name.split(' ')[0]}, inplace=True)
             _meas_df = cut_valid_part(_meas_df)
