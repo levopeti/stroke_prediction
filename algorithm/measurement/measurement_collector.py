@@ -130,6 +130,7 @@ class MeasurementCollector(object):
             meas.check_measurement_path_dict()
             meas.check_five_class()
             meas.check_loading()
+            meas.check_frequency(0, 0)
 
             meas.print_log()
 
