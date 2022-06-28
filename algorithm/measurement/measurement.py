@@ -104,6 +104,7 @@ class Measurement(object):
         for v in self.measurement_path_dict.values():
             if v is None:
                 result += 1
+
         return result
 
     # #### checks for measurement ####
