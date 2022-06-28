@@ -99,6 +99,13 @@ class Measurement(object):
         assert self.measurement_path_dict[tuple(key)] is None, self.measurement_path_dict[tuple(key)]
         self.measurement_path_dict[tuple(key)] = path
 
+    def num_of_missing_paths(self):
+        result = 0
+        for v in self.measurement_path_dict.values():
+            if v is None:
+                result += 1
+        return result
+
     # #### checks for measurement ####
 
     def check_measurement_path_dict(self):

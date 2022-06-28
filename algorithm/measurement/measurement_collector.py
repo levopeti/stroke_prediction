@@ -119,6 +119,9 @@ class MeasurementCollector(object):
                 if path.split('/')[-1].find(str(measurement_name)) == 0:
                     meas.add_measurement_path(path)
 
+            if meas.num_of_missing_paths() == 8:
+                continue
+
             if measurement_name in self.aux_data["Measure ID"].values:
                 meas.add_aux_data(self.aux_data.loc[self.aux_data["Measure ID"] == measurement_name])
             else:
