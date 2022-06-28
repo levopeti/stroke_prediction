@@ -147,7 +147,7 @@ class Measurement(object):
                     self.log_list.append(colored("frequency is not correct,"
                                                  " min: {}, max: {}, avg: {}".format(np.min(deltas),
                                                                                      np.max(deltas),
-                                                                                     np.avg(deltas),), "red"))
+                                                                                     np.mean(deltas)), "red"))
 
     def add_aux_data(self, aux_data_df):
         self.valid_start_time = aux_data_df["The last sensor is on the patient"].values[0].astype(np.timedelta64)
