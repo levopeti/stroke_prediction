@@ -197,6 +197,8 @@ def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_s
 def write_prediction_to_csv(_prediction_dict, save_path):
     dict_to_df = dict()
     max_length = 0
+    import pprint
+    pprint.pprint(_prediction_dict)
 
     for k, v in _prediction_dict.items():
         probs = np.array([x for x in v["y_pred_list"] if x is not None])
