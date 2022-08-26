@@ -210,7 +210,9 @@ def write_prediction_to_csv(_prediction_dict, length, step_size, save_path):
 
     result_df = pd.DataFrame.from_dict(dict_to_df)
 
-    result_df.to_csv(os.path.join(save_path, "result_class_{}_{}.csv".format(length, step_size)), index=False)
+    path_to_save = os.path.join(save_path, "result_class_{}_{}.csv".format(length, step_size))
+    result_df.to_csv(path_to_save, index=False)
+    print("prediction saved into csv ({})".format(path_to_save))
 
 
 def load_model(_model_path):
