@@ -1,6 +1,7 @@
 from tensorflow import keras
 import numpy as np
 import os
+import pandas as pd
 from datetime import datetime
 from sklearn.metrics import confusion_matrix
 
@@ -193,6 +194,27 @@ def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_s
     plt.show()
 
 
+def write_prediction_to_csv(_prediction_dict, save_path):
+    dict_to_df = dict()
+    max_length = 0
+
+    for k, v in _prediction_dict.items():
+        probs = np.array([x for x in v["y_pred_list"] if x is not None])
+        predicted_classes = probs.argmax(axis=1)
+
+        dict_to_df[str(k) + "(" + str(v["class_value"]) + ")"] = predicted_classes.tolist()
+        max_length = max(max_length, len(predicted_classes))
+
+    for l in dict_to_df.values():
+        l += (max_length - len(l)) * [None]
+
+    result_df = pd.DataFrame.from_dict(dict_to_df)
+
+    length = 25 * 60 * 30
+    step_size = 500
+    result_df.to_csv(os.path.join(save_path, "result_class_{}_{}.csv".format(length, step_size)), index=False)
+
+
 def load_model(_model_path):
     _model = keras.models.load_model(_model_path)
     _model.summary()
@@ -221,6 +243,7 @@ def start_evaluation(_param_dict):
     infer_data = generate_infer_data(mc, length, step_size, limb, type_of_set, use_cache=True, key=key)
     prediction_dict = make_prediction(_model, infer_data, use_cache=False, key=key)
     make_plot(prediction_dict, minutes, step_size, length, save_path=save_path, type_of_set=type_of_set)
+    write_prediction_to_csv(prediction_dict, save_path)
 
 
 if __name__ == "__main__":

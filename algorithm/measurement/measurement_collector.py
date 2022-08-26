@@ -29,7 +29,7 @@ class MeasurementCollector(object):
             }
             self.collect_measurements(os.path.join(base_path, "train"), "train")
             self.collect_measurements(os.path.join(base_path, "test"), "test")
-            self.create_mixed_measurement(self.measurement_dict["train"][202112020], self.measurement_dict["train"][202112171])
+            #self.create_mixed_measurement(self.measurement_dict["train"][202112020], self.measurement_dict["train"][202112171])
             self.print_statistics()
         else:
             self.check_measurements(os.path.join(base_path, "train"), "train")
@@ -242,11 +242,11 @@ class MeasurementCollector(object):
     # deprecated #
     ##############
 
-    def get_measurement_df(self, measurement_name, key=None, only_valid=True):
+    def get_measurement_df(self, measurement_name, measurement_type="train", key=None, only_valid=True):
         if key is None:
-            return self.measurement_dict[measurement_name].get_all_measurements_df(only_valid=only_valid)
+            return self.measurement_dict[measurement_type][measurement_name].get_all_measurements_df(only_valid=only_valid)
         else:
-            return self.measurement_dict[measurement_name].get_measurement_df(key, only_valid=only_valid)
+            return self.measurement_dict[measurement_type][measurement_name].get_measurement_df(key, only_valid=only_valid)
 
     def get_all_valid_measurement_df(self):
         result_dict = dict()
