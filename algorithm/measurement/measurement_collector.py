@@ -81,7 +81,6 @@ class MeasurementCollector(object):
 
             if measurement_name in self.aux_data["Measure ID"].values:
                 try:
-                    print(666)
                     meas.add_aux_data(self.aux_data.loc[self.aux_data["Measure ID"] == measurement_name])
                 except Exception as e:
                     meas.log_list.append(colored("aux data cannot be added because: {}".format(e), "red"))
