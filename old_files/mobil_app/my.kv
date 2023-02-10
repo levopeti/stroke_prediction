@@ -1,0 +1,145 @@
+#:import utils kivy.utils
+
+WindowManager:
+    MainWindow:
+    NewWindow:
+    ConnectionWindow:
+
+<MainWindow>:
+    name: "main"
+
+    GridLayout:
+        cols:1
+
+        Button:
+            text: "New"
+            on_release:
+                app.root.current = "new"
+                root.manager.transition.direction = "left"
+
+        Button:
+            text: "Connection"
+            on_release:
+                app.root.current = "connection"
+                root.manager.transition.direction = "left"
+
+        Button:
+            id: btnExit
+            text: "Exit"
+            on_press:
+                root.disconnect()
+                app.stop()
+
+
+<NewWindow>:
+    name: "new"
+    main_grid: main_grid
+
+    GridLayout:
+        cols: 1
+
+        Label:
+            size_hint: (0.2, 0.2)
+            text: root.measurement
+            font_size: 30
+            halign: "center"
+            valign: "middle"
+
+        MainGrid:
+            id: main_grid
+
+        GridLayout:
+            cols: 3
+            size_hint: 1, 0.15
+
+            Button:
+                text: "Start"
+
+                on_release:
+                    root.start_measure()
+                    main_grid.start_plot()
+
+            Button:
+                text: "Stop"
+
+                on_release:
+                    root.stop_measure()
+
+            Button:
+                text: "Back"
+
+                on_release:
+                    main_grid.stop_plot()
+                    app.root.current = "main"
+                    root.manager.transition.direction = "right"
+
+
+<ConnectionWindow>:
+    name: "connection"
+    id: connection
+    container: container
+
+    GridLayout:
+        cols:1
+
+        Label:
+            size_hint: (0.2, 0.2)
+            text: root.log
+            font_size: 30
+            halign: "center"
+            valign: "middle"
+
+        Button:
+            text: "Bluetooth"
+            on_release:
+                root.connect_to_device()
+
+        BoxLayout:
+            id: container
+            orientation: 'vertical'
+
+        Button:
+            text: "Back"
+            on_release:
+                app.root.current = "main"
+                root.manager.transition.direction = "right"
+
+<MainGrid>:
+    name: "main_grid"
+    id: main_grid
+
+    canvas.before:
+        Color:
+            rgb: utils.get_color_from_hex('#212946')
+        Rectangle:
+            pos: self.pos
+            size: self.size
+
+    BoxLayout:
+        size_hint: 1, 1
+        orientation: 'vertical'
+        padding: 10, 10, 0, 10
+
+        ScrollView:
+            id: view
+            do_scroll_x: True
+            do_scroll_y: False
+            orientation: 'vertical'
+            size_hint: 1, 0.9
+            valign: 'middle'
+            bar_width: 4
+            bar_color: 1, 1, 1, 1
+            bar_inactive_color: 1, 1, 1, 0.5
+            scroll_type: ['content']
+
+            BoxLayout:
+                orientation: 'vertical'
+                size_hint: None, 1
+                width: view.width*root.zoom
+                BoxLayout:
+                    id: modulation
+                    size_hint_x: 1
+                    size_hint_y: 1
+
+
+
