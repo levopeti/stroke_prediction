@@ -13,51 +13,51 @@ from api_utils import get_configuration, get_data_for_prediction, get_prediction
 from general_utils import to_int_timestamp, to_str_timestamp
 
 """
-ssh romangyula@109.61.102.122
+ssh motionscan@109.61.102.122
 """
 
 
-def df_from_query(_data_list):
-    """
-    - limb
-    - side
-    - timestamp
-    - type
-    - "x"
-    - "y"
-    - "z"
-    """
-
-    df_dict = {"timestamp": list(),
-               "v1": list(),
-               "v2": list(),
-               "v3": list()}
-
-    cast_dict = {"timestamp": lambda x: to_int_timestamp(x),
-                 "v1": lambda x: float(x),
-                 "v2": lambda x: float(x),
-                 "v3": lambda x: float(x)}
-
-    data_dict = dict()
-    for data in _data_list:
-        _measurement_id = data["measurementId"]
-        key = (data["side"], data["limb"], data["type"])
-        key = key_map[key]
-
-        if _measurement_id not in data_dict:
-            data_dict[_measurement_id] = {keys: df_dict.copy() for keys in key_list}
-
-        data_dict[_measurement_id][key]["timestamp"].append(cast_dict["timestamp"](data["timestamp"]))
-        data_dict[_measurement_id][key]["v1"].append(cast_dict["v1"](data["x"]))
-        data_dict[_measurement_id][key]["v2"].append(cast_dict["v2"](data["y"]))
-        data_dict[_measurement_id][key]["v3"].append(cast_dict["v3"](data["z"]))
-
-    for meas_dict in data_dict.values():
-        for key, inner_data_dict in meas_dict.items():
-            meas_dict[key] = pd.DataFrame.from_dict(inner_data_dict)
-
-    print(data_dict.keys())
-    return data_dict
+# def df_from_query(_data_list):
+#     """
+#     - limb
+#     - side
+#     - timestamp
+#     - type
+#     - "x"
+#     - "y"
+#     - "z"
+#     """
+#
+#     df_dict = {"timestamp": list(),
+#                "v1": list(),
+#                "v2": list(),
+#                "v3": list()}
+#
+#     cast_dict = {"timestamp": lambda x: to_int_timestamp(x),
+#                  "v1": lambda x: float(x),
+#                  "v2": lambda x: float(x),
+#                  "v3": lambda x: float(x)}
+#
+#     data_dict = dict()
+#     for data in _data_list:
+#         _measurement_id = data["measurementId"]
+#         key = (data["side"], data["limb"], data["type"])
+#         key = key_map[key]
+#
+#         if _measurement_id not in data_dict:
+#             data_dict[_measurement_id] = {keys: df_dict.copy() for keys in key_list}
+#
+#         data_dict[_measurement_id][key]["timestamp"].append(cast_dict["timestamp"](data["timestamp"]))
+#         data_dict[_measurement_id][key]["v1"].append(cast_dict["v1"](data["x"]))
+#         data_dict[_measurement_id][key]["v2"].append(cast_dict["v2"](data["y"]))
+#         data_dict[_measurement_id][key]["v3"].append(cast_dict["v3"](data["z"]))
+#
+#     for meas_dict in data_dict.values():
+#         for key, inner_data_dict in meas_dict.items():
+#             meas_dict[key] = pd.DataFrame.from_dict(inner_data_dict)
+#
+#     print(data_dict.keys())
+#     return data_dict
 
 
 def get_measurements(data_list: list) -> List[Measurement]:
