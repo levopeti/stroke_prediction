@@ -11,6 +11,7 @@ from pprint import pprint
 from measurement import Measurement, NotEnoughData, TimeStampTooHigh, SynchronizationError, key_list, key_map
 from api_utils import get_configuration, get_data_for_prediction, get_predictions_from_time_point, save_predictions
 from general_utils import to_int_timestamp, to_str_timestamp
+from utils.arg_parser_and_config import get_config_dict
 
 """
 ssh motionscan@109.61.102.122
@@ -76,18 +77,16 @@ def get_measurements(data_list: list) -> List[Measurement]:
     return measurement_list
 
 
-def get_instances(measurement, meas_length_min, inference_delta_sec, first_timestamp_ms: int = None):
-    frequency = 25  # Hz, T = 40 ms
-    expected_delta = (1 / frequency) * 1000  # ms
+def get_instances(measurement: Measurement, config_dict: dict):
+    expected_delta = (1 / config_dict["frequency"]) * 1000  # ms
     eps = 3
     measurement.check_frequency(expected_delta, eps=eps)
     measurement.synchronize_measurement_dict()
 
-    if first_timestamp_ms is None:
-        first_timestamp_ms = measurement.get_first_timestamp_ms()
+    first_timestamp_ms = measurement.get_first_timestamp_ms()
 
-    length = frequency * 60 * meas_length_min
-    inference_delta_ms = inference_delta_sec * 1e3
+    length = config_dict["frequency"] * 60 * config_dict["meas_length_min"]
+    inference_delta_ms = config_dict["inference_delta_sec"] * 1e3
     keys_in_order = (("arm", "acc"),
                      ("leg", "acc"),
                      ("arm", "gyr"),
@@ -136,13 +135,10 @@ def get_instances(measurement, meas_length_min, inference_delta_sec, first_times
 
 def get_instances_and_make_predictions(model: keras.Model,
                                        measurement_list: List[Measurement],
-                                       meas_length_min: int,
-                                       inference_delta_sec: int,
-                                       first_timestamp_ms: int = None):
+                                       config_dict: dict):
     prediction_for_measurement_dict = dict()
     for measurement in measurement_list:
-        instances, inference_ts_list = get_instances(measurement, meas_length_min, inference_delta_sec,
-                                                     first_timestamp_ms)
+        instances, inference_ts_list = get_instances(measurement, config_dict)
         if len(instances) == 0:
             # TODO: log
             continue
@@ -172,37 +168,29 @@ def upload_predictions(prediction_for_measurement_dict):
         print("uploaded {} predictions with measurement id {}".format(len(predictions), measurement_id))
 
 
-def main_loop(model, configuration):
+def main_loop(model, configuration, config_dict):
     while True:
         timestamp_now = datetime.now()
-        last_x_hours = (timestamp_now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+        last_x_hours = (timestamp_now - timedelta(hours=config_dict["timedelta_h"])).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
-        # "2023-01-30T13:14:32.475Z"
-        # interval_ms = 2 * 60 * 60 * 1000
-        interval_ms = 300000
-        data_list = get_data_for_prediction(configuration, _from=last_x_hours, _interval=interval_ms)
+        data_list = get_data_for_prediction(configuration, last_x_hours, config_dict)
         print("get data for prediction ({})".format(len(data_list)))
+
         if len(data_list) == 0:
             continue
-        measurement_list = get_measurements(data_list)
 
-        meas_length_min = 20
-        inference_delta_sec = 30  # sec
-        prediction_for_measurement_dict = get_instances_and_make_predictions(model, measurement_list, meas_length_min,
-                                                                             inference_delta_sec)
+        measurement_list = get_measurements(data_list)
+        prediction_for_measurement_dict = get_instances_and_make_predictions(model, measurement_list, config_dict)
         upload_predictions(prediction_for_measurement_dict)
 
 
 if __name__ == "__main__":
-    _host_url = "https://api.test.ms.salusmo.euronetrt.hu"
-    _token = "nRYUakaQTdDQyy-PmYlVTIcZRwYvNmZsmGrD6YApvsxTniTghB8RsQZet3fIs95LUP1YSeCM-LQRsdhlrxRNx9ixk60mp" \
-             "cH5CLp9wqUHiDPu2wxKDOZVCJqsach8B9H5"
-    _configuration = get_configuration(_host_url, _token)
+    _config_dict = get_config_dict()
+    _configuration = get_configuration(_config_dict)
 
-    model_path = "./models/model_90_1000000_all"
-    _model = MLP(model_path)
+    _model = MLP(_config_dict)
 
-    main_loop(_model, _configuration)
+    main_loop(_model, _configuration, _config_dict)
 
     # timestamp_now = datetime.now()
     # last_3_hours = timestamp_now - timedelta(hours=9)

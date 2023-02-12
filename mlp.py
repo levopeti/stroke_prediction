@@ -3,8 +3,8 @@ from tensorflow import keras
 
 
 class MLP(object):
-    def __init__(self, model_path):
-        self.model = keras.models.load_model(model_path)
+    def __init__(self, config_dict):
+        self.model = keras.models.load_model(config_dict["model_path"])
         self.model.summary()
 
     @staticmethod

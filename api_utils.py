@@ -4,21 +4,21 @@ from openapi_client import Configuration, ApiClient, ApiException
 from openapi_client.apis.tags.motion_scan_restapi_end_points_api import MotionScanRESTAPIEndPointsApi
 
 
-def get_configuration(host_url, token):
-    configuration = Configuration(host=host_url)
-    configuration.api_key["bearer"] = token
+def get_configuration(config_dict):
+    configuration = Configuration(host=config_dict["host_url"])
+    configuration.api_key["bearer"] = config_dict["token"]
     configuration.api_key_prefix["bearer"] = "Bearer"
     return configuration
 
 
-def get_data_for_prediction(configuration, _from=None, _interval=15000):
+def get_data_for_prediction(configuration, _from, config_dict):
     with ApiClient(configuration) as api_client:
         # Create an instance of the API class
         api_instance = MotionScanRESTAPIEndPointsApi(api_client)
 
         # example passing only optional values
         query_params = {
-            'interval': _interval,
+            'interval': config_dict["interval_ms"],
         }
 
         if _from is not None:
