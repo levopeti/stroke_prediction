@@ -197,7 +197,7 @@ if __name__ == "__main__":
              "cH5CLp9wqUHiDPu2wxKDOZVCJqsach8B9H5"
     _configuration = get_configuration(_host_url, _token)
 
-    model_path = "./model_90_1000000_all"
+    model_path = "./models/model_90_1000000_all"
     _model = MLP(model_path)
 
     main_loop(_model, _configuration)
