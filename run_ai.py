@@ -175,13 +175,15 @@ def upload_predictions(prediction_for_measurement_dict):
 def main_loop(model, configuration):
     while True:
         timestamp_now = datetime.now()
-        last_x_hours = (timestamp_now - timedelta(hours=0.5)).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+        last_x_hours = (timestamp_now - timedelta(hours=1)).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
         # "2023-01-30T13:14:32.475Z"
         # interval_ms = 2 * 60 * 60 * 1000
         interval_ms = 300000
         data_list = get_data_for_prediction(configuration, _from=last_x_hours, _interval=interval_ms)
         print("get data for prediction ({})".format(len(data_list)))
+        if len(data_list) == 0:
+            continue
         measurement_list = get_measurements(data_list)
 
         meas_length_min = 20
