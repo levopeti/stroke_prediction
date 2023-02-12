@@ -140,6 +140,7 @@ def get_instances_and_make_predictions(model: keras.Model,
     for measurement in measurement_list:
         instances, inference_ts_list = get_instances(measurement, config_dict)
         if len(instances) == 0:
+            print("no prediction (len of instances = 0)")
             # TODO: log
             continue
         prediction_dict = model.compute_prediction(instances, inference_ts_list)
