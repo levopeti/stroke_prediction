@@ -9,30 +9,19 @@ from mlp import MLP
 from datetime import datetime, timedelta
 from typing import List
 
-from pprint import pprint
 from measurement import Measurement, NotEnoughData, TimeStampTooHigh, SynchronizationError, key_list, key_map
 from api_utils import get_configuration, get_data_for_prediction, get_predictions_from_time_point, save_predictions
-from general_utils import to_int_timestamp, to_str_timestamp
+from general_utils import to_int_timestamp, to_str_timestamp, get_data_info
 from utils.arg_parser_and_config import get_config_dict
-
-"""
-ssh motionscan@109.61.102.122
-"""
+from all_measurements_df import AllMeasurementsDF
 
 
-def get_measurements(data_list: list) -> List[Measurement]:
-    """ limb, side, timestamp, type, x, y, z"""
-
-    data_df = pd.DataFrame(data_list)
-    data_df["timestamp_ms"] = data_df.apply(lambda row: to_int_timestamp(row.timestamp), axis=1)
-    data_df["keys_tuple"] = data_df.apply(lambda row: key_map[(row.side, row.limb, row.type)], axis=1)
-
+def get_measurements(am_df: AllMeasurementsDF) -> List[Measurement]:
     measurement_list = list()
-    for measurement_id in data_df.measurementId.unique():
+    for measurement_id in am_df.all_data_df.measurementId.unique():
         meas = Measurement(measurement_id)
-        meas.fill_from_df(data_df[data_df.measurementId == measurement_id])
+        meas.fill_from_df(am_df.all_data_df[am_df.all_data_df.measurementId == measurement_id])
         measurement_list.append(meas)
-
     return measurement_list
 
 
@@ -116,28 +105,27 @@ def upload_predictions(prediction_for_measurement_dict):
 
 
 def main_loop(model, configuration, config_dict):
+    am_df = AllMeasurementsDF()
+
     while True:
         timestamp_now = datetime.now()
         last_x_hours = (timestamp_now - timedelta(hours=config_dict["timedelta_h"])).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
         data_list = get_data_for_prediction(configuration, last_x_hours, config_dict)
-        print("get data for prediction ({})".format(len(data_list)))
+        print("\nget data for prediction ({}), timedelta_h: {..2f}".format(len(data_list), config_dict["timedelta_h"]))
 
-        if len(data_list) == 0:
-            #time.sleep(10)
-            config_dict["timedelta_h"] += 1
-            print("timedelta_h: {}".format(config_dict["timedelta_h"]))
-            continue
+        if len(data_list) > 0:
+            am_df.add_data(data_list)
+            measurement_list = get_measurements(am_df)
+            prediction_for_measurement_dict = get_instances_and_make_predictions(model, measurement_list, config_dict)
+            upload_predictions(prediction_for_measurement_dict)
 
-        measurement_list = get_measurements(data_list)
-        prediction_for_measurement_dict = get_instances_and_make_predictions(model, measurement_list, config_dict)
-        upload_predictions(prediction_for_measurement_dict)
+        config_dict["timedelta_h"] += config_dict["interval_ms"] / (1000 * 60 * 60)  # hours
 
 
 if __name__ == "__main__":
     _config_dict = get_config_dict()
     _configuration = get_configuration(_config_dict)
-
     _model = MLP(_config_dict)
 
     main_loop(_model, _configuration, _config_dict)

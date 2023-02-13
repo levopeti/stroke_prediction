@@ -4,14 +4,14 @@ from openapi_client import Configuration, ApiClient, ApiException
 from openapi_client.apis.tags.motion_scan_restapi_end_points_api import MotionScanRESTAPIEndPointsApi
 
 
-def get_configuration(config_dict):
+def get_configuration(config_dict: dict) -> Configuration:
     configuration = Configuration(host=config_dict["host_url"])
     configuration.api_key["bearer"] = config_dict["token"]
     configuration.api_key_prefix["bearer"] = "Bearer"
     return configuration
 
 
-def get_data_for_prediction(configuration, _from, config_dict):
+def get_data_for_prediction(configuration: Configuration, _from: str, config_dict: dict) -> list:
     with ApiClient(configuration) as api_client:
         # Create an instance of the API class
         api_instance = MotionScanRESTAPIEndPointsApi(api_client)
@@ -41,7 +41,7 @@ def get_data_for_prediction(configuration, _from, config_dict):
         return json.loads(api_response.response.data)
 
 
-def get_predictions_from_time_point(configuration, _from, _interval=15000):
+def get_predictions_from_time_point(configuration: Configuration, _from: str, _interval: int = 15000) -> list:
     with ApiClient(configuration) as api_client:
         # Create an instance of the API class
         api_instance = MotionScanRESTAPIEndPointsApi(api_client)
@@ -68,7 +68,7 @@ def get_predictions_from_time_point(configuration, _from, _interval=15000):
         return json.loads(api_response.response.data)
 
 
-def save_predictions(configuration, body):
+def save_predictions(configuration: Configuration, body: dict):
     with ApiClient(configuration) as api_client:
         # Create an instance of the API class
         api_instance = MotionScanRESTAPIEndPointsApi(api_client)
