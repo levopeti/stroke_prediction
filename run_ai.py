@@ -1,8 +1,10 @@
 import os
-
 import keras
+import time
 import numpy as np
 import pandas as pd
+
+
 from mlp import MLP
 from datetime import datetime, timedelta
 from typing import List
@@ -140,7 +142,7 @@ def get_instances_and_make_predictions(model: keras.Model,
     for measurement in measurement_list:
         instances, inference_ts_list = get_instances(measurement, config_dict)
         if len(instances) == 0:
-            print("no prediction (len of instances = 0)")
+            print("no prediction (len of instances = 0) for measurement: {}".format(measurement.measurement_id))
             # TODO: log
             continue
         prediction_dict = model.compute_prediction(instances, inference_ts_list)
@@ -178,6 +180,7 @@ def main_loop(model, configuration, config_dict):
         print("get data for prediction ({})".format(len(data_list)))
 
         if len(data_list) == 0:
+            time.sleep(10)
             continue
 
         measurement_list = get_measurements(data_list)
