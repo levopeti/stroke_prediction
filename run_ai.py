@@ -112,7 +112,7 @@ def main_loop(model, configuration, config_dict):
         last_x_hours = (timestamp_now - timedelta(hours=config_dict["timedelta_h"])).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
         data_list = get_data_for_prediction(configuration, last_x_hours, config_dict)
-        print("\nget data for prediction ({}), timedelta_h: {..2f}".format(len(data_list), config_dict["timedelta_h"]))
+        print("\nget data for prediction ({}), timedelta_h: {:.2f}".format(len(data_list), config_dict["timedelta_h"]))
 
         if len(data_list) > 0:
             am_df.add_data(data_list)
