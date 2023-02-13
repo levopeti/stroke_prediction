@@ -1,6 +1,9 @@
 import pandas as pd
 import numpy as np
+
 from termcolor import colored
+
+from general_utils import to_str_timestamp
 
 
 class NotEnoughData(Exception):
@@ -24,17 +27,16 @@ key_list = [("left", "arm", "acc"),
             ("right", "leg", "acc"),
             ("right", "leg", "gyr")]
 
-
 key_map = {
-        ("l", "a", "a"): ("left", "arm", "acc"),
-        ("l", "a", "g"): ("left", "arm", "gyr"),
-        ("l", "l", "a"): ("left", "leg", "acc"),
-        ("l", "l", "g"): ("left", "leg", "gyr"),
-        ("r", "a", "a"): ("right", "arm", "acc"),
-        ("r", "a", "g"): ("right", "arm", "gyr"),
-        ("r", "l", "a"): ("right", "leg", "acc"),
-        ("r", "l", "g"): ("right", "leg", "gyr"),
-    }
+    ("l", "a", "a"): ("left", "arm", "acc"),
+    ("l", "a", "g"): ("left", "arm", "gyr"),
+    ("l", "l", "a"): ("left", "leg", "acc"),
+    ("l", "l", "g"): ("left", "leg", "gyr"),
+    ("r", "a", "a"): ("right", "arm", "acc"),
+    ("r", "a", "g"): ("right", "arm", "gyr"),
+    ("r", "l", "a"): ("right", "leg", "acc"),
+    ("r", "l", "g"): ("right", "leg", "gyr"),
+}
 
 
 class Measurement(object):
@@ -205,8 +207,9 @@ class Measurement(object):
     def get_diff(self, key, length=None, end_ts=None, use_abs=True, mask=None):
         result, timestamps = self.calculate_diff(key, use_abs)
         if end_ts > timestamps.max():
-            raise TimeStampTooHigh("End timestamp is higher than the maximum")
-
+            raise TimeStampTooHigh("End timestamp ({})"
+                                   " is higher than the maximum ({})".format(to_str_timestamp(end_ts),
+                                                                             to_str_timestamp(timestamps.max())))
         result = result[timestamps < end_ts]
 
         if mask is not None:
@@ -214,7 +217,8 @@ class Measurement(object):
 
         if length is not None:
             if length > len(result):
-                raise NotEnoughData("After filtering we have less data than expected (length)")
+                raise NotEnoughData("After filtering we have less data ({}) than expected ({})".format(len(result),
+                                                                                                       length))
 
             result = result[-length:]
 

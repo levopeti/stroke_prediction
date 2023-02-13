@@ -5,6 +5,7 @@ from datetime import datetime
 
 
 def to_int_timestamp(timestamp_str):
+    """ timestamp in microseconds"""
     return int(datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M:%S.%fZ').timestamp() * 1000)
 
 
@@ -29,8 +30,8 @@ def get_data_info(data_df: pd.DataFrame, prefix: str = ""):
 
             timestamp_ms_min = key_df.timestamp_ms.min()
             timestamp_ms_max = key_df.timestamp_ms.max()
-            first_timestamp = datetime.fromtimestamp(timestamp_ms_min / 1000)
-            last_timestamp = datetime.fromtimestamp(timestamp_ms_max / 1000)
+            first_timestamp = datetime.fromtimestamp(timestamp_ms_min / 1000)  # from micro sec to milli sec
+            last_timestamp = datetime.fromtimestamp(timestamp_ms_max / 1000)  # from micro sec to milli sec
             delta = last_timestamp - first_timestamp
             print("{}: from {} ({}) to {} ({}), delta (min): {:.2f}".format(keys_tuple, key_df.timestamp.min(),
                                                                             timestamp_ms_min,

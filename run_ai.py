@@ -4,10 +4,9 @@ import time
 import numpy as np
 import pandas as pd
 
-
 from mlp import MLP
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Tuple
 
 from measurement import Measurement, NotEnoughData, TimeStampTooHigh, SynchronizationError, key_list, key_map
 from api_utils import get_configuration, get_data_for_prediction, get_predictions_from_time_point, save_predictions
@@ -25,7 +24,7 @@ def get_measurements(am_df: AllMeasurementsDF) -> List[Measurement]:
     return measurement_list
 
 
-def get_instances(measurement: Measurement, config_dict: dict):
+def get_instances(measurement: Measurement, config_dict: dict) -> Tuple[list, list]:
     expected_delta = (1 / config_dict["frequency"]) * 1000  # ms
     eps = 3
     measurement.check_frequency(expected_delta, eps=eps)
@@ -53,10 +52,12 @@ def get_instances(measurement: Measurement, config_dict: dict):
                     diff_mean = measurement.get_limb_diff_mean(key[0], key[1], length, end_ts=end_ts)
                     ratio_mean_first = measurement.get_limb_ratio_mean(key[0], key[1], length, end_ts=end_ts,
                                                                        mean_first=True)
-                    ratio_mean = measurement.get_limb_ratio_mean(key[0], key[1], length, end_ts=end_ts, mean_first=False)
-                except NotEnoughData:
+                    ratio_mean = measurement.get_limb_ratio_mean(key[0], key[1], length, end_ts=end_ts,
+                                                                 mean_first=False)
+                except NotEnoughData as e:
+                    print(e)
                     break
-                except TimeStampTooHigh:
+                except TimeStampTooHigh as e:
                     return _instance_list, _inference_ts_list
 
                 _instance.append([diff_mean, ratio_mean_first, ratio_mean])
@@ -106,13 +107,20 @@ def upload_predictions(prediction_for_measurement_dict):
 
 def main_loop(model, configuration, config_dict):
     am_df = AllMeasurementsDF()
+    ts_now = datetime.now()
 
     while True:
-        timestamp_now = datetime.now()
-        last_x_hours = (timestamp_now - timedelta(hours=config_dict["timedelta_h"])).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+        from_ts = ts_now - timedelta(hours=config_dict["timedelta_from_now_h"])
+        to_ts = from_ts + timedelta(milliseconds=config_dict["interval_milliseconds"])
 
-        data_list = get_data_for_prediction(configuration, last_x_hours, config_dict)
-        print("\nget data for prediction ({}), timedelta_h: {:.2f}".format(len(data_list), config_dict["timedelta_h"]))
+        data_list = get_data_for_prediction(configuration,
+                                            from_ts.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
+                                            config_dict)
+        print("\nget data for prediction ({}),"
+              " timedelta_from_now_h: {:.2f}, from {} to {}".format(len(data_list),
+                                                                    config_dict["timedelta_from_now_h"],
+                                                                    from_ts,
+                                                                    to_ts))
 
         if len(data_list) > 0:
             am_df.add_data(data_list)
@@ -120,10 +128,11 @@ def main_loop(model, configuration, config_dict):
             prediction_for_measurement_dict = get_instances_and_make_predictions(model, measurement_list, config_dict)
             upload_predictions(prediction_for_measurement_dict)
 
-        config_dict["timedelta_h"] += config_dict["interval_ms"] / (1000 * 60 * 60)  # hours
+        config_dict["timedelta_from_now_h"] += config_dict["interval_milliseconds"] / (1000 * 60 * 60)  # hours
 
 
 if __name__ == "__main__":
+    # TODO: time measurement
     _config_dict = get_config_dict()
     _configuration = get_configuration(_config_dict)
     _model = MLP(_config_dict)

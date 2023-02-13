@@ -18,7 +18,7 @@ def get_data_for_prediction(configuration: Configuration, _from: str, config_dic
 
         # example passing only optional values
         query_params = {
-            'interval': config_dict["interval_ms"],
+            'interval': config_dict["interval_milliseconds"],
         }
 
         if _from is not None:

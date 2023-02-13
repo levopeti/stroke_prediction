@@ -10,7 +10,9 @@ from api_utils import get_configuration
 _host_url = "https://api.test.ms.salusmo.euronetrt.hu"
 _token = "nRYUakaQTdDQyy-PmYlVTIcZRwYvNmZsmGrD6YApvsxTniTghB8RsQZet3fIs95LUP1YSeCM-LQRsdhlrxRNx9ixk60mp" \
          "cH5CLp9wqUHiDPu2wxKDOZVCJqsach8B9H5"
-_configuration = get_configuration(_host_url, _token)
+_config_dict = {"host_url": _host_url,
+                "token": _token}
+_configuration = get_configuration(_config_dict)
 
 key_list = [("l", "a", "a"),
             ("l", "a", "g"),
@@ -21,20 +23,20 @@ key_list = [("l", "a", "a"),
             ("r", "l", "a"),
             ("r", "l", "g")]
 
-data_points = 25 * 60 * 60 * 3
-print(data_points)
+# data_points = 25 * 60 * 60 * 3
+# print(data_points)
 
 timestamp_data = datetime.now()
 print(timestamp_data.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z")
 time_stamp_dict = {m_id: timestamp_data for m_id in [5, 6, 7]}
-time_delta_ms = 40
+time_delta_millis = 40
 
 uploaded_data = 0
 while True:
     for measurement_id in [5, 6, 7]:
         measure = list()
         for i in range(100):
-            time_stamp_dict[measurement_id] += timedelta(milliseconds=time_delta_ms)
+            time_stamp_dict[measurement_id] += timedelta(milliseconds=time_delta_millis)
             timestamp_data_string = time_stamp_dict[measurement_id].strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
             for key in key_list:
@@ -73,4 +75,6 @@ while True:
                 print("Exception when calling MotionScanRESTAPIEndPointsApi->save_measurements: %s\n" % e)
         uploaded_data += 100
     print(uploaded_data / (25 * 60 * 60))
+    print(time_stamp_dict[6].strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z")
+    print()
 
