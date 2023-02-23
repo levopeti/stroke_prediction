@@ -1,16 +1,10 @@
-import os
-import keras
-import time
-import numpy as np
-import pandas as pd
-
 from mlp import MLP
 from datetime import datetime, timedelta
-from typing import List, Tuple
+from typing import List, Tuple, Union
 
-from measurement import Measurement, NotEnoughData, TimeStampTooHigh, SynchronizationError, key_list, key_map
-from api_utils import get_configuration, get_data_for_prediction, get_predictions_from_time_point, save_predictions
-from general_utils import to_int_timestamp, to_str_timestamp, get_data_info
+from measurement import Measurement, NotEnoughData, TimeStampTooHigh, SynchronizationError
+from api_utils import get_configuration, get_data_for_prediction, save_predictions
+from general_utils import to_str_timestamp
 from utils.arg_parser_and_config import get_config_dict
 from all_measurements_df import AllMeasurementsDF
 
@@ -24,13 +18,19 @@ def get_measurements(am_df: AllMeasurementsDF) -> List[Measurement]:
     return measurement_list
 
 
-def get_instances(measurement: Measurement, config_dict: dict) -> Tuple[list, list]:
+def get_instances(measurement: Measurement,
+                  first_timestamp_ms: int,
+                  config_dict: dict) -> Tuple[list, Union[list, None]]:
     expected_delta = (1 / config_dict["frequency"]) * 1000  # ms
     eps = 3
+
+    missing_keys = measurement.get_missing_keys()
+
+    if len(missing_keys) != 0:
+        return missing_keys, None
+
     measurement.check_frequency(expected_delta, eps=eps)
     measurement.synchronize_measurement_dict()
-
-    first_timestamp_ms = measurement.get_first_timestamp_ms()
 
     length = config_dict["frequency"] * 60 * config_dict["meas_length_min"]
     inference_delta_ms = config_dict["inference_delta_sec"] * 1e3
@@ -39,7 +39,7 @@ def get_instances(measurement: Measurement, config_dict: dict) -> Tuple[list, li
                      ("arm", "gyr"),
                      ("leg", "gyr"))
 
-    def collect_instances():
+    def collect_instances() -> Tuple[list, list]:
         _instance_list = list()
         _inference_ts_list = list()
         i = 0
@@ -69,15 +69,40 @@ def get_instances(measurement: Measurement, config_dict: dict) -> Tuple[list, li
     return collect_instances()
 
 
-def get_instances_and_make_predictions(model: keras.Model,
+def get_instances_and_make_predictions(model: MLP,
                                        measurement_list: List[Measurement],
                                        config_dict: dict):
     prediction_for_measurement_dict = dict()
     for measurement in measurement_list:
-        instances, inference_ts_list = get_instances(measurement, config_dict)
+        first_timestamp_ms = measurement.get_first_timestamp_ms()
+        try:
+            instances, inference_ts_list = get_instances(measurement, first_timestamp_ms, config_dict)
+        except SynchronizationError:
+            # synchronization error
+            error_message = "problem during synchronizing the measurements"
+            prediction_for_measurement_dict[measurement.measurement_id] = {"probabilities": [1],
+                                                                           "labels": [None],
+                                                                           "is_stroke": [error_message],
+                                                                           "timestamps": [first_timestamp_ms]}
+            continue
+
+        if inference_ts_list is None:
+            # missing key error
+            error_message = "keys are missing: {}".format(instances)
+            prediction_for_measurement_dict[measurement.measurement_id] = {"probabilities": [1],
+                                                                           "labels": [None],
+                                                                           "is_stroke": [error_message],
+                                                                           "timestamps": [first_timestamp_ms]}
+            continue
+
         if len(instances) == 0:
+            # not enough data error
             print("no prediction (len of instances = 0) for measurement: {}".format(measurement.measurement_id))
-            # TODO: log
+            error_message = "not enough data (yet)"
+            prediction_for_measurement_dict[measurement.measurement_id] = {"probabilities": [1],
+                                                                           "labels": [None],
+                                                                           "is_stroke": [error_message],
+                                                                           "timestamps": [first_timestamp_ms]}
             continue
         prediction_dict = model.compute_prediction(instances, inference_ts_list)
         prediction_for_measurement_dict[measurement.measurement_id] = prediction_dict

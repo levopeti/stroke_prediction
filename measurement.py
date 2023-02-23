@@ -4,6 +4,7 @@ import numpy as np
 from termcolor import colored
 
 from general_utils import to_str_timestamp
+from typing import Union
 
 
 class NotEnoughData(Exception):
@@ -90,6 +91,13 @@ class Measurement(object):
                                                                                      np.max(deltas),
                                                                                      np.mean(deltas)), "red"))
 
+    def get_missing_keys(self) -> list:
+        missing_keys = list()
+        for key, meas in self.measurement_dict.items():
+            if meas is None:
+                missing_keys.append(key)
+        return missing_keys
+
     def print_log(self):
         for log in self.log_list:
             print(log)
@@ -129,6 +137,7 @@ class Measurement(object):
                     base_df = _df.sort_values('timestamp_ms')
                 else:
                     _df = _df.sort_values('timestamp_ms')
+                    # TODO: tolerance parameter
                     merged_df = pd.merge_asof(base_df, _df, on="timestamp_ms", tolerance=40, direction='nearest')
                     if merged_df.isna().sum().sum() != 0:
                         raise SynchronizationError("merged df has nans during synchronization")
@@ -153,8 +162,10 @@ class Measurement(object):
 
         self.measurement_dict = synchronize(self.measurement_dict)
 
-    def get_first_timestamp_ms(self):
-        return self.measurement_dict[("left", "arm", "acc")]["timestamp_ms"].min()
+    def get_first_timestamp_ms(self) -> Union[None, int]:
+        for keys in self.measurement_dict.keys():
+            if self.measurement_dict[keys] is not None:
+                return self.measurement_dict[keys]["timestamp_ms"].min()
 
     # def get_all_measurements_df(self, only_valid=True):
     #     result_dict = dict()
