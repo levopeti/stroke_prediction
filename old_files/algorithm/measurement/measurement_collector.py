@@ -251,10 +251,10 @@ class MeasurementCollector(object):
         else:
             return self.measurement_dict[measurement_type][measurement_name].get_measurement_df(key, only_valid=only_valid)
 
-    def get_all_valid_measurement_df(self):
+    def get_all_valid_measurement_df(self, type_of_set="train"):
         result_dict = dict()
 
-        for m_name, meas in self.measurement_dict.items():
+        for m_name, meas in self.measurement_dict[type_of_set].items():
             if meas.valid:
                 result_dict[m_name] = meas.get_all_measurements_df()
 
@@ -263,10 +263,10 @@ class MeasurementCollector(object):
     def get_diff(self, measurement_name, key):
         return self.measurement_dict[measurement_name].get_diff(key)
 
-    def get_all_diff_df(self):
+    def get_all_diff_df(self, type_of_set="train"):
         result_dict = dict()
 
-        for m_name, meas in self.measurement_dict.items():
+        for m_name, meas in self.measurement_dict[type_of_set].items():
             if meas.valid:
                 result_dict[m_name] = meas.get_all_diff()
 
