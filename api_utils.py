@@ -11,12 +11,27 @@ def get_configuration(config_dict: dict) -> Configuration:
     return configuration
 
 
-def get_data_for_prediction(configuration: Configuration, _from: str, config_dict: dict) -> list:
+def get_measurement_ids(configuration: Configuration, _from: str, config_dict: dict) -> list:
     with ApiClient(configuration) as api_client:
-        # Create an instance of the API class
         api_instance = MotionScanRESTAPIEndPointsApi(api_client)
+        query_params = {
+            'from': _from,
+            'interval': config_dict["interval_milliseconds"],
+        }
+        header_params = {
+            'x-motionscan-name': 'motionscandemo',
+        }
 
-        # example passing only optional values
+        api_response = api_instance.get_measurementids(
+            query_params=query_params,
+            header_params=header_params,
+        )
+        return json.loads(api_response.response.data)["measurementids"]
+
+
+def get_data_for_prediction(configuration: Configuration, _from: str, _meas_id: str, config_dict: dict) -> list:
+    with ApiClient(configuration) as api_client:
+        api_instance = MotionScanRESTAPIEndPointsApi(api_client)
         query_params = {
             'interval': config_dict["interval_milliseconds"],
         }
@@ -24,16 +39,13 @@ def get_data_for_prediction(configuration: Configuration, _from: str, config_dic
         if _from is not None:
             query_params["from"] = _from
 
+        if _meas_id is not None:
+            query_params["measurement-id"] = [_meas_id]
+
         header_params = {
             'x-motionscan-name': 'motionscandemo',
         }
-        # try:
-        #     api_response = api_instance.get_data_for_prediction(
-        #         query_params=query_params,
-        #         header_params=header_params,
-        #     )
-        # except ApiException as e:
-        #     print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
+
         api_response = api_instance.get_data_for_prediction(
             query_params=query_params,
             header_params=header_params,

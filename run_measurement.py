@@ -26,14 +26,16 @@ key_list = [("l", "a", "a"),
 # data_points = 25 * 60 * 60 * 3
 # print(data_points)
 
+id_list = [5, 6, 7]  # [8, 9, 10]
+
 timestamp_data = datetime.now()
 print(timestamp_data.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z")
-time_stamp_dict = {m_id: timestamp_data for m_id in [5, 6, 7]}
+time_stamp_dict = {m_id: timestamp_data for m_id in id_list}
 time_delta_millis = 40
 
 uploaded_data = 0
 while True:
-    for measurement_id in [5, 6, 7]:
+    for measurement_id in id_list:
         measure = list()
         for i in range(100):
             time_stamp_dict[measurement_id] += timedelta(milliseconds=time_delta_millis)
@@ -75,6 +77,6 @@ while True:
                 print("Exception when calling MotionScanRESTAPIEndPointsApi->save_measurements: %s\n" % e)
         uploaded_data += 100
     print(uploaded_data / (25 * 60 * 60))
-    print(time_stamp_dict[6].strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z")
+    print(time_stamp_dict[id_list[0]].strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z")
     print()
 

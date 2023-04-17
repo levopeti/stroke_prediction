@@ -44,17 +44,18 @@ class ModelFromSchema(
 
     def __new__(
         cls,
-        *args: typing.Union[dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, ],
+        *_args: typing.Union[dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, ],
         _configuration: typing.Optional[schemas.Configuration] = None,
         **kwargs: typing.Union[schemas.AnyTypeSchema, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, None, list, tuple, bytes],
     ) -> 'ModelFromSchema':
         return super().__new__(
             cls,
-            *args,
+            *_args,
             _configuration=_configuration,
             **kwargs,
         )
 IntervalSchema = schemas.AnyTypeSchema
+MeasurementIdSchema = schemas.AnyTypeSchema
 RequestRequiredQueryParams = typing_extensions.TypedDict(
     'RequestRequiredQueryParams',
     {
@@ -65,6 +66,7 @@ RequestOptionalQueryParams = typing_extensions.TypedDict(
     {
         'from': typing.Union[ModelFromSchema, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, ],
         'interval': typing.Union[IntervalSchema, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, ],
+        'measurement-id': typing.Union[MeasurementIdSchema, dict, frozendict.frozendict, str, date, datetime, uuid.UUID, int, float, decimal.Decimal, bool, None, list, tuple, bytes, io.FileIO, io.BufferedReader, ],
     },
     total=False
 )
@@ -84,6 +86,12 @@ request_query_interval = api_client.QueryParameter(
     name="interval",
     style=api_client.ParameterStyle.FORM,
     schema=IntervalSchema,
+    explode=True,
+)
+request_query_measurement_id = api_client.QueryParameter(
+    name="measurement-id",
+    style=api_client.ParameterStyle.FORM,
+    schema=MeasurementIdSchema,
     explode=True,
 )
 # Header params
@@ -288,6 +296,7 @@ class BaseApi(api_client.Api):
         for parameter in (
             request_query__from,
             request_query_interval,
+            request_query_measurement_id,
         ):
             parameter_data = query_params.get(parameter.name, schemas.unset)
             if parameter_data is schemas.unset:
@@ -331,7 +340,11 @@ class BaseApi(api_client.Api):
                 api_response = api_client.ApiResponseWithoutDeserialization(response=response)
 
         if not 200 <= response.status <= 299:
-            raise exceptions.ApiException(api_response=api_response)
+            raise exceptions.ApiException(
+                status=response.status,
+                reason=response.reason,
+                api_response=api_response
+            )
 
         return api_response
 

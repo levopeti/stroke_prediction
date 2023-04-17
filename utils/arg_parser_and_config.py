@@ -40,10 +40,13 @@ def get_args() -> argparse.Namespace:
         show_versions()
 
     parser = argparse.ArgumentParser(description='Run AI to predict strokes.')
-    parser.add_argument('--timedelta_from_now_h', default=1, type=float, help='Hours from now in the past to get the from timestamp.')
+    parser.add_argument('--timedelta_from_now_h', default=0, type=float,
+                        help='Hours from now in the past to get the from timestamp.')
     parser.add_argument('--interval_milliseconds', default=300000, type=int, help='Time interval in milliseconds.')
     parser.add_argument('--meas_length_min', default=90, type=int, help='Considered time for prediction in minutes.')
-    parser.add_argument('--inference_delta_sec', default=30, type=int, help='Time delay between two measurements in seconds.')
+    parser.add_argument('--inference_delta_sec', default=30, type=int,
+                        help='Time delay between two measurements in seconds.')
+    parser.add_argument('--test_mode', default=False, action='store_true',  help='Run in test mode.')
 
     args = parser.parse_args()
     return args

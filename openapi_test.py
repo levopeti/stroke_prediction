@@ -40,6 +40,36 @@ timestamp_data_string = timestamp_data.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "
 print(timestamp_data_string)
 
 start = time()
+# get-measurementids ###
+
+with openapi_client.ApiClient(configuration) as api_client:
+    api_instance = motion_scan_restapi_end_points_api.MotionScanRESTAPIEndPointsApi(api_client)
+
+    # example passing only required values which don't have defaults set
+    timestamp_data = datetime.now()  # - timedelta(minutes=5)
+    timestamp_data_string = timestamp_data.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+    print(timestamp_data_string)
+    query_params = {
+        'from': timestamp_data_string,
+        'interval': 15000,
+    }
+    header_params = {
+        'x-motionscan-name': 'motionscandemo',
+    }
+    try:
+        api_response = api_instance.get_measurementids(
+            query_params=query_params,
+            header_params=header_params,
+        )
+        pprint(api_response)
+        pprint(api_response.response.reason)
+    except openapi_client.ApiException as e:
+        print("Exception when calling MotionScanRESTAPIEndPointsApi->get_predictions_from_timepoint: %s\n" % e)
+
+end = time()
+print(f'{end - start} sec!\n')
+
+start = time()
 
 measure = list()
 timestamp_data = datetime.now()
@@ -136,47 +166,47 @@ start = time()
 
 # get_predictions_from_timepoint ###
 
-with openapi_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = motion_scan_restapi_end_points_api.MotionScanRESTAPIEndPointsApi(api_client)
+# with openapi_client.ApiClient(configuration) as api_client:
+#     # Create an instance of the API class
+#     api_instance = motion_scan_restapi_end_points_api.MotionScanRESTAPIEndPointsApi(api_client)
+#
+#     # # example passing only required values which don't have defaults set
+#     # query_params = {
+#     # }
+#     # header_params = {
+#     #     'x-motionscan-name': 'motionscandemo',
+#     # }
+#     # try:
+#     #     api_response = api_instance.get_predictions_from_timepoint(
+#     #         query_params=query_params,
+#     #         header_params=header_params,
+#     #     )
+#     #     pprint(api_response)
+#     #     print("\n")
+#     #     pprint(api_response.response.reason)
+#     #     print("\n")
+#     # except openapi_client.ApiException as e:
+#     #     print("Exception when calling MotionScanRESTAPIEndPointsApi->get_predictions_from_timepoint: %s\n" % e)
+#
+#     # example passing only optional values
+#     query_params = {
+#         'from': timestamp_data_string,  # "2022-12-05T23:49:09.117Z",
+#         'interval': 15000,
+#     }
+#     header_params = {
+#         'x-motionscan-name': 'motionscandemo',
+#     }
+#     try:
+#         api_response = api_instance.get_predictions_from_timepoint(
+#             query_params=query_params,
+#             header_params=header_params,
+#         )
+#         pprint(api_response)
+#     except openapi_client.ApiException as e:
+#         print("Exception when calling MotionScanRESTAPIEndPointsApi->get_predictions_from_timepoint: %s\n" % e)
 
-    # example passing only required values which don't have defaults set
-    query_params = {
-    }
-    header_params = {
-        'x-motionscan-name': 'motionscandemo',
-    }
-    try:
-        api_response = api_instance.get_predictions_from_timepoint(
-            query_params=query_params,
-            header_params=header_params,
-        )
-        pprint(api_response)
-        print("\n")
-        pprint(api_response.response.reason)
-        print("\n")
-    except openapi_client.ApiException as e:
-        print("Exception when calling MotionScanRESTAPIEndPointsApi->get_predictions_from_timepoint: %s\n" % e)
-
-    # example passing only optional values
-    query_params = {
-        'from': "2022-12-05T23:49:09.117Z",
-        'interval': 15000,
-    }
-    header_params = {
-        'x-motionscan-name': 'motionscandemo',
-    }
-    try:
-        api_response = api_instance.get_predictions_from_timepoint(
-            query_params=query_params,
-            header_params=header_params,
-        )
-        pprint(api_response)
-    except openapi_client.ApiException as e:
-        print("Exception when calling MotionScanRESTAPIEndPointsApi->get_predictions_from_timepoint: %s\n" % e)
-
-end = time()
-print(f'{data_points} db prediction request: {end - start} sec!\n')
+# end = time()
+# print(f'{data_points} db prediction request: {end - start} sec!\n')
 
 start = time()
 
@@ -186,30 +216,32 @@ with openapi_client.ApiClient(configuration) as api_client:
     # Create an instance of the API class
     api_instance = motion_scan_restapi_end_points_api.MotionScanRESTAPIEndPointsApi(api_client)
 
-    # example passing only required values which don't have defaults set
-    query_params = {
-    }
-    header_params = {
-        'x-motionscan-name': 'motionscandemo',
-    }
-    try:
-        api_response = api_instance.get_data_for_prediction(
-            query_params=query_params,
-            header_params=header_params,
-        )
-        pprint(api_response)
-    except openapi_client.ApiException as e:
-        print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
+    # # example passing only required values which don't have defaults set
+    # query_params = {
+    # }
+    # header_params = {
+    #     'x-motionscan-name': 'motionscandemo',
+    # }
+    # try:
+    #     api_response = api_instance.get_data_for_prediction(
+    #         query_params=query_params,
+    #         header_params=header_params,
+    #     )
+    #     pprint(api_response)
+    # except openapi_client.ApiException as e:
+    #     print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
 
     # example passing only optional values
     query_params = {
         # 'from': "2022-12-06T07:48:42.382Z",
-        'from': "2023-01-28T23:14:01.327Z",
+        'from': timestamp_data_string,  # "2022-12-05T23:49:09.117Z",
         'interval': 15000,
+        'measurement-id': ["000006"],
     }
     header_params = {
         'x-motionscan-name': 'motionscandemo',
     }
+
     try:
         api_response = api_instance.get_data_for_prediction(
             query_params=query_params,

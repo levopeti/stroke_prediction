@@ -7,7 +7,12 @@ import enum
 
 class PathValues(str, enum.Enum):
     SAVEMEASUREMENTS = "/save-measurements"
+    GETMEASUREMENTS = "/get-measurements"
+    GETMEASUREMENTIDS = "/get-measurementids"
     GETPREDICTIONSFROMTIMEPOINT = "/get-predictions-from-timepoint"
     GETDATAFORPREDICTION = "/get-data-for-prediction"
     SAVEPREDICTIONS = "/save-predictions"
+    GETPREDICTIONS = "/get-predictions"
+    GETCLEANEDMEASUREMENTS = "/get-cleanedmeasurements"
+    SAVECLEANEDMEASUREMENTS = "/save-cleanedmeasurements"
     PING = "/ping"

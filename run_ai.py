@@ -3,7 +3,7 @@ from datetime import datetime, timedelta
 from typing import List, Tuple, Union
 
 from measurement import Measurement, NotEnoughData, TimeStampTooHigh, SynchronizationError
-from api_utils import get_configuration, get_data_for_prediction, save_predictions
+from api_utils import get_measurement_ids, get_configuration, get_data_for_prediction, save_predictions
 from general_utils import to_str_timestamp
 from utils.arg_parser_and_config import get_config_dict
 from all_measurements_df import AllMeasurementsDF
@@ -138,20 +138,27 @@ def main_loop(model, configuration, config_dict):
         from_ts = ts_now - timedelta(hours=config_dict["timedelta_from_now_h"])
         to_ts = from_ts + timedelta(milliseconds=config_dict["interval_milliseconds"])
 
-        data_list = get_data_for_prediction(configuration,
-                                            from_ts.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
-                                            config_dict)
-        print("\nget data for prediction ({}),"
-              " timedelta_from_now_h: {:.2f}, from {} to {}".format(len(data_list),
-                                                                    config_dict["timedelta_from_now_h"],
-                                                                    from_ts,
-                                                                    to_ts))
+        measurement_ids = get_measurement_ids(configuration,
+                                              from_ts.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
+                                              config_dict)
 
-        if len(data_list) > 0:
-            am_df.add_data(data_list)
-            measurement_list = get_measurements(am_df)
-            prediction_for_measurement_dict = get_instances_and_make_predictions(model, measurement_list, config_dict)
-            upload_predictions(prediction_for_measurement_dict)
+        for measurement_id in measurement_ids:
+            data_list = get_data_for_prediction(configuration,
+                                                from_ts.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
+                                                measurement_id,
+                                                config_dict)
+            print("\nget data for prediction ({}),"
+                  " timedelta_from_now_h: {:.2f}, from {} to {}".format(len(data_list),
+                                                                        config_dict["timedelta_from_now_h"],
+                                                                        from_ts,
+                                                                        to_ts))
+
+            if len(data_list) > 0:
+                am_df.add_data(data_list)
+                measurement_list = get_measurements(am_df)
+                prediction_for_measurement_dict = get_instances_and_make_predictions(model, measurement_list,
+                                                                                     config_dict)
+                upload_predictions(prediction_for_measurement_dict)
 
         config_dict["timedelta_from_now_h"] += config_dict["interval_milliseconds"] / (1000 * 60 * 60)  # hours
 
