@@ -4,6 +4,7 @@ import glob
 import random
 import traceback
 from termcolor import colored
+from tqdm import tqdm
 
 from .accdb_reading import get_measure_df
 from .measurement import Measurement
@@ -251,22 +252,24 @@ class MeasurementCollector(object):
         else:
             return self.measurement_dict[measurement_type][measurement_name].get_measurement_df(key, only_valid=only_valid)
 
-    def get_all_valid_measurement_df(self):
+    def get_all_valid_measurement_df(self, type_of_set="train", max_num_of_meas=None):
         result_dict = dict()
 
-        for m_name, meas in self.measurement_dict.items():
+        for m_name, meas in tqdm(self.measurement_dict[type_of_set].items(), "get all valid measurements"):
             if meas.valid:
                 result_dict[m_name] = meas.get_all_measurements_df()
+            if max_num_of_meas is not None and max_num_of_meas == len(result_dict):
+                break
 
         return result_dict
 
     def get_diff(self, measurement_name, key):
         return self.measurement_dict[measurement_name].get_diff(key)
 
-    def get_all_diff_df(self):
+    def get_all_diff_df(self, type_of_set="train"):
         result_dict = dict()
 
-        for m_name, meas in self.measurement_dict.items():
+        for m_name, meas in tqdm(self.measurement_dict[type_of_set].items(), "get all diff"):
             if meas.valid:
                 result_dict[m_name] = meas.get_all_diff()
 
