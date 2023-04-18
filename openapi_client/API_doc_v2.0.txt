@@ -1,0 +1,883 @@
+openapi: 3.1.0
+info:
+  title: MotionScan REST API
+  description: " ### MotionScan REST API description ### "
+  license:
+    name: © 2022 MotionScan Kft.
+    url: https://salusmo.com
+  version: 1.1.0
+
+security:
+  - bearer: []
+
+paths:
+  /save-measurements:
+    put:
+      security:
+        - bearer:
+            - write:measurements
+      tags:
+        - MotionScan REST API EndPoints
+      description: Saves measurement data on backend.
+      operationId: save-measurements
+      parameters:
+        - name: x-motionscan-name
+          in: header
+          required: true
+          schema:
+            type: string
+          example: motionscandemo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MotionscanEndpointMeasurementsContent"
+        required: true
+      responses:
+        "403":
+          description: Access denied!
+        "404":
+          description: No endpoint found!
+        "405":
+          description: The HTTP method specified in the request is not usable here!
+        "415":
+          description: Data is required for this endpoint call!
+        "500":
+          description: Server error!
+        "520":
+          description: General error!
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAPIEndpointErrorResponse"
+        "200":
+          description: Request succeeded!
+
+  /get-measurements:
+    get:
+      security:
+        - bearer:
+            - read:measurements
+      tags:
+        - MotionScan REST API EndPoints
+      description: Returns measurement data
+      operationId: get-measurements
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/DateTime"
+          example: "2022-01-02T04:05:06Z"
+        - name: interval
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 1500
+        - name: x-motionscan-name
+          in: header
+          required: true
+          schema:
+            type: string
+          example: motionscandemo
+        - name: measurement-id
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "403":
+          description: Access denied!
+        "404":
+          description: No endpoint found!
+        "405":
+          description: The HTTP method specified in the request is not usable here!
+        "415":
+          description: Data is required for this endpoint call!
+        "500":
+          description: Server error!
+        "520":
+          description: General error!
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAPIEndpointErrorResponse"
+        "200":
+          description: Request succeeded!
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetMeasurementsResult"
+
+  /get-measurementids:
+    get:
+      security:
+        - bearer:
+            - read:measurementids
+      tags:
+        - MotionScan REST API EndPoints
+      description: Returns a list of measurement id from a given timepoint.
+      operationId: get-measurementids
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/DateTime"
+          example: "2022-01-02T04:05:06Z"
+        - name: interval
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 1500
+        - name: x-motionscan-name
+          in: header
+          required: true
+          schema:
+            type: string
+          example: motionscandemo
+      responses:
+        "403":
+          description: Access denied!
+        "404":
+          description: No endpoint found!
+        "405":
+          description: The HTTP method specified in the request is not usable here!
+        "415":
+          description: Data is required for this endpoint call!
+        "500":
+          description: Server error!
+        "520":
+          description: General error!
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAPIEndpointErrorResponse"
+        "200":
+          description: Request succeeded!
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  measurementids:
+                    $ref: "#/components/schemas/MotionscanEndpointMeasurementidsResult"
+
+  /get-predictions-from-timepoint:
+    get:
+      security:
+        - bearer:
+            - read:predictions
+      tags:
+        - MotionScan REST API EndPoints
+      description: Returns a list of predictions from a given timepoint. Deprecated, use /get-predictions
+      operationId: get-predictions-from-timepoint
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/DateTime"
+          example: "2022-01-02T04:05:06Z"
+        - name: interval
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 1500
+        - name: x-motionscan-name
+          in: header
+          required: true
+          schema:
+            type: string
+          example: motionscandemo
+        - name: measurement-id
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "403":
+          description: Access denied!
+        "404":
+          description: No endpoint found!
+        "405":
+          description: The HTTP method specified in the request is not usable here!
+        "415":
+          description: Data is required for this endpoint call!
+        "500":
+          description: Server error!
+        "520":
+          description: General error!
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAPIEndpointErrorResponse"
+        "200":
+          description: Request succeeded!
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MotionscanEndpointPredictionsResult"
+
+  /get-data-for-prediction:
+    get:
+      security:
+        - bearer:
+            - read:measurements
+      tags:
+        - MotionScan REST API EndPoints
+      description: Returns measurement data for prediction. Deprecated, use /get-measurements
+      operationId: get-data-for-prediction
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/DateTime"
+          example: "2022-01-02T04:05:06Z"
+        - name: interval
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 1500
+        - name: x-motionscan-name
+          in: header
+          required: true
+          schema:
+            type: string
+          example: motionscandemo
+        - name: measurement-id
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "403":
+          description: Access denied!
+        "404":
+          description: No endpoint found!
+        "405":
+          description: The HTTP method specified in the request is not usable here!
+        "415":
+          description: Data is required for this endpoint call!
+        "500":
+          description: Server error!
+        "520":
+          description: General error!
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAPIEndpointErrorResponse"
+        "200":
+          description: Request succeeded!
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MotionscanEndpointGetDataForPredictionResult"
+
+  /save-predictions:
+    put:
+      security:
+        - bearer:
+            - write:predictions
+      tags:
+        - MotionScan REST API EndPoints
+      description: Saves predictions.
+      operationId: save-predictions
+      parameters:
+        - name: x-motionscan-name
+          in: header
+          required: true
+          schema:
+            type: string
+          example: motionscandemo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MotionscanEndpointSavePredictionsContent"
+        required: true
+      responses:
+        "403":
+          description: Access denied!
+        "404":
+          description: No endpoint found!
+        "405":
+          description: The HTTP method specified in the request is not usable here!
+        "415":
+          description: Data is required for this endpoint call!
+        "500":
+          description: Server error!
+        "520":
+          description: General error!
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAPIEndpointErrorResponse"
+        "200":
+          description: Request succeeded!
+
+  /get-predictions:
+    get:
+      security:
+        - bearer:
+            - read:predictions
+      tags:
+        - MotionScan REST API EndPoints
+      description: Returns a list of predictions
+      operationId: get-predictions
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/DateTime"
+          example: "2022-01-02T04:05:06Z"
+        - name: interval
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 1500
+        - name: x-motionscan-name
+          in: header
+          required: true
+          schema:
+            type: string
+          example: motionscandemo
+        - name: measurement-id
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "403":
+          description: Access denied!
+        "404":
+          description: No endpoint found!
+        "405":
+          description: The HTTP method specified in the request is not usable here!
+        "415":
+          description: Data is required for this endpoint call!
+        "500":
+          description: Server error!
+        "520":
+          description: General error!
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAPIEndpointErrorResponse"
+        "200":
+          description: Request succeeded!
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/GetPredictionsResult"
+
+  /get-cleanedmeasurements:
+    get:
+      security:
+        - bearer:
+            - read:cleanedmeasurements
+      tags:
+        - MotionScan REST API EndPoints
+      description: Returns cleaned measurement data for prediction.
+      operationId: get-cleanedmeasurements
+      parameters:
+        - name: from
+          in: query
+          required: false
+          schema:
+            $ref: "#/components/schemas/DateTime"
+          example: "2022-01-02T04:05:06Z"
+        - name: interval
+          in: query
+          required: false
+          schema:
+            type: integer
+          example: 1500
+        - name: x-motionscan-name
+          in: header
+          required: true
+          schema:
+            type: string
+          example: motionscandemo
+        - name: measurement-id
+          in: query
+          required: false
+          schema:
+            type: array
+            items:
+              type: string
+      responses:
+        "403":
+          description: Access denied!
+        "404":
+          description: No endpoint found!
+        "405":
+          description: The HTTP method specified in the request is not usable here!
+        "415":
+          description: Data is required for this endpoint call!
+        "500":
+          description: Server error!
+        "520":
+          description: General error!
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAPIEndpointErrorResponse"
+        "200":
+          description: Request succeeded!
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/MotionscanEndpointGetCleanedMeasurementsContent"
+
+  /save-cleanedmeasurements:
+    put:
+      security:
+        - bearer:
+            - write:cleanedmeasurements
+      tags:
+        - MotionScan REST API EndPoints
+      description: Saves cleaned measurements.
+      operationId: save-cleanedmeasurements
+      parameters:
+        - name: x-motionscan-name
+          in: header
+          required: true
+          schema:
+            type: string
+          example: motionscandemo
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/MotionscanEndpointSaveCleanedMeasurementsContent"
+        required: true
+      responses:
+        "403":
+          description: Access denied!
+        "404":
+          description: No endpoint found!
+        "405":
+          description: The HTTP method specified in the request is not usable here!
+        "415":
+          description: Data is required for this endpoint call!
+        "500":
+          description: Server error!
+        "520":
+          description: General error!
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAPIEndpointErrorResponse"
+        "200":
+          description: Request succeeded!
+
+  /ping:
+    post:
+      security:
+        - bearer: []
+      tags:
+        - REST API - Tools
+      description: Endpoint for testing the connection.
+      operationId: ping
+      parameters:
+        - name: x-motionscan-name
+          in: header
+          required: true
+          schema:
+            type: string
+          example: MotionScanTest
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PingEndpointContent"
+        required: true
+      responses:
+        "403":
+          description: Access denied!
+        "404":
+          description: No endpoint found!
+        "405":
+          description: The HTTP method specified in the request is not usable here!
+        "415":
+          description: Data is required for this endpoint call!
+        "500":
+          description: Server error!
+        "520":
+          description: General error!
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/OpenAPIEndpointErrorResponse"
+        "200":
+          description: PING response
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PingEndpointResult"
+
+components:
+  schemas:
+    DateTime:
+      type: string
+      format: date-time
+
+    Metadata:
+      type: object
+      properties:
+        measurementId:
+          type: string
+        softwareVersion:
+          type: string
+        APIVersion:
+          type: string
+
+      required:
+        - measurementId
+
+    OpenAPIEndpointErrorResponse:
+      type: object
+      properties:
+        error:
+          type: string
+        code:
+          type: string
+
+      required:
+        - error
+        - code
+
+    DataItem:
+      type: object
+      properties:
+        limb:
+          type: string
+          enum:
+            - "a"
+            - "l"
+        side:
+          type: string
+          enum:
+            - "l"
+            - "r"
+        timestamp:
+          $ref: "#/components/schemas/DateTime"
+        type:
+          type: string
+          enum:
+            - "a"
+            - "g"
+        "x":
+          type: number
+          format: double
+        "y":
+          type: number
+          format: double
+        "z":
+          type: number
+          format: double
+        patientId:
+          type: integer
+          format: int32
+        serial_number:
+          type: integer
+          format: int32
+
+      required:
+        - limb
+        - side
+        - timestamp
+        - type
+        - "x"
+        - "y"
+        - "z"
+
+    MotionscanEndpointMeasurementsContent:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Metadata"
+        - type: object
+          properties:
+            measure:
+              type: array
+              items:
+                $ref: "#/components/schemas/DataItem"
+
+          required:
+            - measure
+
+    GetMeasurementsResult:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Metadata"
+        - $ref: "#/components/schemas/DataItem"
+
+    MotionscanEndpointGetDataForPredictionResult:
+      $ref: "#/components/schemas/GetMeasurementsResult"
+
+    PredictionItem:
+      type: object
+      properties:
+        prediction:
+          type: string
+        probability:
+          type: number
+          format: double
+        timestamp:
+          $ref: "#/components/schemas/DateTime"
+        patientId:
+          type: integer
+          format: int32
+        serial_number:
+          type: integer
+          format: int32
+
+      required:
+        - prediction
+        - probability
+        - timestamp
+
+    MotionscanEndpointSavePredictionsContent:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Metadata"
+        - type: object
+          properties:
+            predictions:
+              type: array
+              items:
+                $ref: "#/components/schemas/PredictionItem"
+
+          required:
+            - predictions
+
+    GetPredictionsResult:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Metadata"
+        - $ref: "#/components/schemas/PredictionItem"
+
+    MotionscanEndpointPredictionsResult:
+      $ref: "#/components/schemas/GetPredictionsResult"
+
+    MotionscanEndpointMeasurementidsResult:
+      type: array
+      items:
+        type: string
+
+    CleanedDataItem:
+      type: object
+      properties:
+        timestamp:
+          $ref: "#/components/schemas/DateTime"
+        patientId:
+          type: integer
+          format: int32
+        serial_number:
+          type: integer
+          format: int32
+        ltLegAccX:
+          type: number
+          format: double
+        ltLegAccY:
+          type: number
+          format: double
+        ltLegAccZ:
+          type: number
+          format: double
+        ltLegGyroX:
+          type: number
+          format: double
+        ltLegGyroY:
+          type: number
+          format: double
+        ltLegGyroZ:
+          type: number
+          format: double
+        ltArmAccX:
+          type: number
+          format: double
+        ltArmAccY:
+          type: number
+          format: double
+        ltArmAccZ:
+          type: number
+          format: double
+        ltArmGyroX:
+          type: number
+          format: double
+        ltArmGyroY:
+          type: number
+          format: double
+        ltArmGyroZ:
+          type: number
+          format: double
+        rtLegAccX:
+          type: number
+          format: double
+        rtLegAccY:
+          type: number
+          format: double
+        rtLegAccZ:
+          type: number
+          format: double
+        rtLegGyroX:
+          type: number
+          format: double
+        rtLegGyroY:
+          type: number
+          format: double
+        rtLegGyroZ:
+          type: number
+          format: double
+        rtArmAccX:
+          type: number
+          format: double
+        rtArmAccY:
+          type: number
+          format: double
+        rtArmAccZ:
+          type: number
+          format: double
+        rtArmGyroX:
+          type: number
+          format: double
+        rtArmGyroY:
+          type: number
+          format: double
+        rtArmGyroZ:
+          type: number
+          format: double
+
+      required:
+        - timestamp
+        - ltLegAccX
+        - ltLegAccY
+        - ltLegAccZ
+        - ltLegGyroX
+        - ltLegGyroY
+        - ltLegGyroZ
+        - ltArmAccX
+        - ltArmAccY
+        - ltArmAccZ
+        - ltArmGyroX
+        - ltArmGyroY
+        - ltArmGyroZ
+        - rtLegAccX
+        - rtLegAccY
+        - rtLegAccZ
+        - rtLegGyroX
+        - rtLegGyroY
+        - rtLegGyroZ
+        - rtArmAccX
+        - rtArmAccY
+        - rtArmAccZ
+        - rtArmGyroX
+        - rtArmGyroY
+        - rtArmGyroZ
+
+    MotionscanEndpointGetCleanedMeasurementsContent:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Metadata"
+        - $ref: "#/components/schemas/CleanedDataItem"
+
+    MotionscanEndpointSaveCleanedMeasurementsContent:
+      type: object
+      allOf:
+        - $ref: "#/components/schemas/Metadata"
+        - type: object
+          properties:
+            measure:
+              type: array
+              items:
+                $ref: "#/components/schemas/CleanedDataItem"
+
+          required:
+            - measure
+
+    PingEndpointListItem:
+      type: object
+      properties:
+        message:
+          type: string
+          example: Példa szöveg
+        date:
+          type: string
+          format: date
+          example: "2020-01-01"
+        dateTime:
+          type: string
+          format: date-time
+          example: "2020-12-31T23:59:59+01:00"
+
+    PingEndpointResult:
+      type: object
+      properties:
+        message:
+          type: string
+        date:
+          type: string
+          format: date
+          example: "2020-01-01"
+        dateTime:
+          type: string
+          format: date-time
+          example: "2020-12-31T23:59:59+01:00"
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/PingEndpointListItem"
+
+    PingEndpointContent:
+      required:
+        - message
+      type: object
+      properties:
+        message:
+          type: string
+          example: árvíztűrőtükörfúrógépÁRVÍZTŰRŐTÜKÖRFÚRÓGÉP
+        date:
+          type: string
+          format: date
+          example: "2020-01-01"
+        dateTime:
+          type: string
+          format: date-time
+          example: "2020-12-31T23:59:59+01:00"
+        list:
+          type: array
+          items:
+            $ref: "#/components/schemas/PingEndpointListItem"
+
+  securitySchemes:
+    bearer:
+      type: apiKey
+      in: header
+      name: Authorization
