@@ -1,5 +1,8 @@
 import json
 
+from time import time
+from typing import Tuple
+
 from openapi_client import Configuration, ApiClient, ApiException
 from openapi_client.apis.tags.motion_scan_restapi_end_points_api import MotionScanRESTAPIEndPointsApi
 
@@ -11,12 +14,13 @@ def get_configuration(config_dict: dict) -> Configuration:
     return configuration
 
 
-def get_measurement_ids(configuration: Configuration, _from: str, config_dict: dict) -> list:
+def get_measurement_ids(configuration: Configuration, _from: str, _interval: int) -> list:
     with ApiClient(configuration) as api_client:
         api_instance = MotionScanRESTAPIEndPointsApi(api_client)
         query_params = {
             'from': _from,
-            'interval': config_dict["interval_milliseconds"],
+            'interval': _interval,
+            # 'interval': config_dict["interval_milliseconds"],
         }
         header_params = {
             'x-motionscan-name': 'motionscandemo',
@@ -29,11 +33,15 @@ def get_measurement_ids(configuration: Configuration, _from: str, config_dict: d
         return json.loads(api_response.response.data)["measurementids"]
 
 
-def get_data_for_prediction(configuration: Configuration, _from: str, _meas_id: str, config_dict: dict) -> list:
+def get_data_for_prediction(configuration: Configuration,
+                            _from: str,
+                            _meas_id: str,
+                            _interval: int) -> Tuple[list, float]:
+    start = time()
     with ApiClient(configuration) as api_client:
         api_instance = MotionScanRESTAPIEndPointsApi(api_client)
         query_params = {
-            'interval': config_dict["interval_milliseconds"],
+            'interval': _interval,
         }
 
         if _from is not None:
@@ -50,7 +58,7 @@ def get_data_for_prediction(configuration: Configuration, _from: str, _meas_id: 
             query_params=query_params,
             header_params=header_params,
         )
-        return json.loads(api_response.response.data)
+        return json.loads(api_response.response.data), time() - start
 
 
 def get_predictions_from_time_point(configuration: Configuration, _from: str, _interval: int = 15000) -> list:

@@ -78,5 +78,6 @@ while True:
         uploaded_data += 100
     print(uploaded_data / (25 * 60 * 60))
     print(time_stamp_dict[id_list[0]].strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z")
+    print(id_list)
     print()
 

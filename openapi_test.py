@@ -4,6 +4,7 @@
 # ```python
 
 import random
+import json
 from pprint import pprint
 from datetime import datetime
 from datetime import timedelta
@@ -51,7 +52,7 @@ with openapi_client.ApiClient(configuration) as api_client:
     print(timestamp_data_string)
     query_params = {
         'from': timestamp_data_string,
-        'interval': 15000,
+        'interval': 2 * 60 * 60 * 1000,  # 15000,
     }
     header_params = {
         'x-motionscan-name': 'motionscandemo',
@@ -68,101 +69,102 @@ with openapi_client.ApiClient(configuration) as api_client:
 
 end = time()
 print(f'{end - start} sec!\n')
-
-start = time()
-
-measure = list()
-timestamp_data = datetime.now()
-time_delta_ms = 40
-for i in range(data_points):
-    timestamp_data += timedelta(milliseconds=time_delta_ms)
-    timestamp_data_string = timestamp_data.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-    measure.append({
-        "limb": random.choice("al"),
-        "side": random.choice("lr"),
-        "timestamp": timestamp_data_string,
-        "type": random.choice("ag"),
-        "x": random.random(),
-        "y": random.random(),
-        "z": random.random()
-    })
-
-test_body = {
-    "measure": measure,
-    "measurementId": "000001",
-    "softwareVersion": "Data Collector 1.0",
-    "APIVersion": "MotionScan API 1.0"
-}
-
-# save_measurements ###
-
-with openapi_client.ApiClient(configuration) as api_client:
-    # Create an instance of the API class
-    api_instance = motion_scan_restapi_end_points_api.MotionScanRESTAPIEndPointsApi(api_client)
-
-    # example passing only required values which don't have defaults set
-    header_params = {
-        'x-motionscan-name': 'motionscandemo',
-    }
-    body = test_body
-    try:
-        api_response = api_instance.save_measurements(
-            header_params=header_params,
-            body=body,
-        )
-        pprint(api_response)
-        print("\n")
-        pprint(api_response.response.reason)
-        print("\n")
-    except openapi_client.ApiException as e:
-        print("Exception when calling MotionScanRESTAPIEndPointsApi->save_measurements: %s\n" % e)
-
-end = time()
-print(f'{data_points} db measure upload: {end - start} sec!\n')
-
-start = time()
-
-predictions = list()
-for i in range(data_points):
-    timestamp_data = datetime.now() + timedelta(milliseconds=i)
-    timestamp_data_string = timestamp_data.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
-    predictions.append({
-        "prediction": random.choice(["ok", "stroke"]),
-        "probability": random.random(),
-        "timestamp": timestamp_data_string,
-    })
-
-# print(predictions)
-
-test_body = {
-    "predictions": predictions,
-    "measurementId": "000001",
-    "softwareVersion": "Predictor 1.0",
-    "APIVersion": "MotionScan API 1.0"
-}
-
-# save_predictions ###
-
-with openapi_client.ApiClient(configuration) as api_client:
-    # Create an instance of the AP
-    # example passing only required values which don't have defaults set
-    header_params = {
-        'x-motionscan-name': 'motionscandemo',
-    }
-    body = test_body
-    try:
-        api_response = api_instance.save_predictions(
-            header_params=header_params,
-            body=body,
-        )
-        pprint(api_response)
-    except openapi_client.ApiException as e:
-        print("Exception when calling MotionScanRESTAPIEndPointsApi->save_predictions: %s\n" % e)
-
-end = time()
-print(f'{data_points} db prediction: {end - start} sec!\n')
-
-start = time()
+exit()
+#
+# start = time()
+#
+# measure = list()
+# timestamp_data = datetime.now()
+# time_delta_ms = 40
+# for i in range(data_points):
+#     timestamp_data += timedelta(milliseconds=time_delta_ms)
+#     timestamp_data_string = timestamp_data.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+#     measure.append({
+#         "limb": random.choice("al"),
+#         "side": random.choice("lr"),
+#         "timestamp": timestamp_data_string,
+#         "type": random.choice("ag"),
+#         "x": random.random(),
+#         "y": random.random(),
+#         "z": random.random()
+#     })
+#
+# test_body = {
+#     "measure": measure,
+#     "measurementId": "000001",
+#     "softwareVersion": "Data Collector 1.0",
+#     "APIVersion": "MotionScan API 1.0"
+# }
+#
+# # save_measurements ###
+#
+# with openapi_client.ApiClient(configuration) as api_client:
+#     # Create an instance of the API class
+#     api_instance = motion_scan_restapi_end_points_api.MotionScanRESTAPIEndPointsApi(api_client)
+#
+#     # example passing only required values which don't have defaults set
+#     header_params = {
+#         'x-motionscan-name': 'motionscandemo',
+#     }
+#     body = test_body
+#     try:
+#         api_response = api_instance.save_measurements(
+#             header_params=header_params,
+#             body=body,
+#         )
+#         pprint(api_response)
+#         print("\n")
+#         pprint(api_response.response.reason)
+#         print("\n")
+#     except openapi_client.ApiException as e:
+#         print("Exception when calling MotionScanRESTAPIEndPointsApi->save_measurements: %s\n" % e)
+#
+# end = time()
+# print(f'{data_points} db measure upload: {end - start} sec!\n')
+#
+# start = time()
+#
+# predictions = list()
+# for i in range(data_points):
+#     timestamp_data = datetime.now() + timedelta(milliseconds=i)
+#     timestamp_data_string = timestamp_data.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+#     predictions.append({
+#         "prediction": random.choice(["ok", "stroke"]),
+#         "probability": random.random(),
+#         "timestamp": timestamp_data_string,
+#     })
+#
+# # print(predictions)
+#
+# test_body = {
+#     "predictions": predictions,
+#     "measurementId": "000001",
+#     "softwareVersion": "Predictor 1.0",
+#     "APIVersion": "MotionScan API 1.0"
+# }
+#
+# # save_predictions ###
+#
+# with openapi_client.ApiClient(configuration) as api_client:
+#     # Create an instance of the AP
+#     # example passing only required values which don't have defaults set
+#     header_params = {
+#         'x-motionscan-name': 'motionscandemo',
+#     }
+#     body = test_body
+#     try:
+#         api_response = api_instance.save_predictions(
+#             header_params=header_params,
+#             body=body,
+#         )
+#         pprint(api_response)
+#     except openapi_client.ApiException as e:
+#         print("Exception when calling MotionScanRESTAPIEndPointsApi->save_predictions: %s\n" % e)
+#
+# end = time()
+# print(f'{data_points} db prediction: {end - start} sec!\n')
+#
+# start = time()
 
 # get_predictions_from_timepoint ###
 
@@ -235,7 +237,7 @@ with openapi_client.ApiClient(configuration) as api_client:
     query_params = {
         # 'from': "2022-12-06T07:48:42.382Z",
         'from': timestamp_data_string,  # "2022-12-05T23:49:09.117Z",
-        'interval': 15000,
+        'interval': 1000 * 60 * 60 * 1,  # 15000,
         'measurement-id': ["000006"],
     }
     header_params = {
@@ -247,7 +249,7 @@ with openapi_client.ApiClient(configuration) as api_client:
             query_params=query_params,
             header_params=header_params,
         )
-        pprint(api_response)
+        # pprint(api_response)
         print("\n")
         pprint(api_response.response.reason)
         print("\n")
@@ -255,4 +257,4 @@ with openapi_client.ApiClient(configuration) as api_client:
         print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
 
 end = time()
-print(f'{data_points} db data request for prediction: {end - start} sec!\n')
+print(f'{len(json.loads(api_response.response.data))} items: {end - start} sec!\n')

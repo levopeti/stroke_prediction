@@ -1,29 +1,41 @@
-import pandas as pd
+import numpy as np
+
 from termcolor import colored
-
 from datetime import datetime
+from typing import Union
 
 
-def to_int_timestamp(timestamp_str):
+def to_int_timestamp(timestamp_str: str) -> int:
     """ timestamp in microseconds"""
     return int(datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M:%S.%fZ').timestamp() * 1000)
 
 
-def to_str_timestamp(timestamp_int):
-    dt_object = datetime.fromtimestamp(timestamp_int / 1000)
+def to_str_timestamp(timestamp: Union[int, datetime]):
+    if isinstance(timestamp, (int, np.int64)):
+        dt_object = datetime.fromtimestamp(timestamp / 1000)
+    else:
+        dt_object = timestamp
     return dt_object.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 
-def get_data_info(data_df: pd.DataFrame, prefix: str = ""):
+def hour_to_millisec(hour: Union[int, float]) -> int:
+    return int(hour * 60 * 60 * 1000)
+
+
+def min_to_millisec(minute: Union[int, float]) -> int:
+    return int(minute * 60 * 1000)
+
+
+def get_data_info(data_dict: dict, prefix: str = ""):
     """ columns: limb, side, timestamp, type, x, y, z, timestamp_ms, keys_tuple"""
-    measurement_ids = data_df.measurementId.unique()
+    measurement_ids = sorted(data_dict.keys())
     print(colored("\n{} measurement ids: {}".format(prefix, measurement_ids), color="blue"))
 
     for measurement_id in measurement_ids:
         print("\nmeasurement {}".format(measurement_id))
-        meas_df = data_df[data_df.measurementId == measurement_id]
+        meas_df = data_dict[measurement_id]
 
-        keys_tuples = data_df.keys_tuple.unique()
+        keys_tuples = meas_df.keys_tuple.unique()
         print("keys_tuples:")
         for keys_tuple in keys_tuples:
             key_df = meas_df[meas_df.keys_tuple == keys_tuple]

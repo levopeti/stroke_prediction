@@ -41,7 +41,7 @@ key_map = {
 
 
 class Measurement(object):
-    def __init__(self, measurement_id, synchronizing=True):
+    def __init__(self, measurement_id: str, synchronizing: int = True):
         self.measurement_id = measurement_id
         self.synchronizing = synchronizing
 
