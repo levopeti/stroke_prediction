@@ -357,6 +357,7 @@ class Measurement(object):
             start_idx = start_idx if start_idx is not None else randint(0, len(result) - (length + 1))
             if start_idx > len(result) - (length + 1):
                 raise ValueError("start_idx is too large")
+
             result = result[start_idx:start_idx + length]
 
         assert len(result) > 0

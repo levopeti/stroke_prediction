@@ -19,7 +19,7 @@ TIME_DELTA_SEC = 0.04
 
 def get_data(_mc, _param_dict):
     minutes = _param_dict["minutes"]
-    length = TIME_DELTA_SEC * 60 * minutes
+    length = int(TIME_DELTA_SEC * 60 * minutes)
     sample_size = _param_dict["sample_size"]
     limb = _param_dict["limb"]
 
@@ -130,9 +130,9 @@ if __name__ == "__main__":
         "sample_size": 1000000,
         "limb": "all",
         "layer_sizes": [512, 128],
-        "base_path": "/home/levcsi/projects/stroke_prediction/data",
-        "db_path": "/home/levcsi/projects/stroke_prediction/data/WUS-v4m.accdb",
-        "m_path": "/home/levcsi/projects/stroke_prediction/data/biocal.xlsx",
+        "base_path": '/home/levcsi/projects/stroke_prediction/old_files/data',
+        "db_path": "/home/levcsi/projects/stroke_prediction/old_files/data/WUS-v4m.accdb",
+        "m_path": "/home/levcsi/projects/stroke_prediction/old_files/data/biocal.xlsx",
         "ucanaccess_path": "/home/levcsi/projects/stroke_prediction/ucanaccess",
         "checkpoint_path": "/tmp/chpts",
     }
