@@ -1,6 +1,8 @@
 import jaydebeapi
 import pandas as pd
 import os
+import warnings
+warnings.simplefilter(action='ignore', category=Warning)
 
 pd.set_option('display.max_columns', None)
 pd.set_option('display.max_rows', None)

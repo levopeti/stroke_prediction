@@ -75,6 +75,7 @@ def make_prediction(_model, _data_dict, use_cache, key):
 
 
 def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_set="train"):
+    print("make plot")
     plt.ion()
 
     pred_is_healthy_list = list()
@@ -82,14 +83,16 @@ def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_s
     for meas_name, pred_dict in result_dict.items():
         print(meas_name)
         print("class value: {}".format(set(pred_dict["class_values"])))
+        print("len of y pred list: {}".format(len(pred_dict["y_pred_list"])))
 
         pred_array = np.array(pred_dict["y_pred_list"]).argmax(axis=1)
         percentage_list = [len(pred_array[pred_array == value]) / len(pred_array) * 100 for value in range(6)]
         fig, axs = plt.subplots(4, 1, facecolor="w")
 
-        color_list = ['blue', 'blue', 'blue', 'blue', 'blue', 'blue']
+        color_list = ['blue'] * 6
         for i in set(pred_dict["class_values"]):
             color_list[i] = "red"
+
         graph = axs[0].bar(list(range(6)),
                            percentage_list,
                            color=color_list)
@@ -115,15 +118,15 @@ def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_s
                    shadow=True, startangle=90)
         axs[1].legend(["Prediction in terms of is it healty or not"], loc='best')
 
-        xformatter = md.DateFormatter('%H:%M')
-        xlocator = md.MinuteLocator(interval=2)
-
         axs[2].plot(np.array(pred_dict["y_pred_list"]).argmax(axis=1), label=meas_name)
         axs[2].plot(pred_dict["class_values"], label="class_values ({})".format(set(pred_dict["class_values"])))
         axs[2].axis([None, None, -0.5, 5.5])
         axs[2].legend(loc='best')
         axs[2].grid()
 
+        xformatter = md.DateFormatter('%H:%M')
+        # xlocator = md.MinuteLocator(interval=8)
+        xlocator = md.HourLocator(interval=80)
         axs[2].xaxis.set_major_formatter(xformatter)
         axs[2].xaxis.set_major_locator(xlocator)
 
@@ -173,7 +176,6 @@ def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_s
 
         for p in graph:
             height = p.get_height()
-            print(type(height))
             ax.text(x=p.get_x() + p.get_width() / 2, y=height + 1,
                     s="{:.2f} %".format(height),
                     ha='center')
@@ -252,12 +254,12 @@ if __name__ == "__main__":
         "limb": "all",
         "step_size": 500,
         "type_of_set": "train",  # train, test, mixed
-        "base_path": '/home/levcsi/projects/stroke_prediction/data',
-        "db_path": "/home/levcsi/projects/stroke_prediction/data/WUS-v4m.accdb",
-        "m_path": "/home/levcsi/projects/stroke_prediction/data/biocal.xlsx",
+        "base_path": '/home/levcsi/projects/stroke_prediction/old_files/data',
+        "db_path": "/home/levcsi/projects/stroke_prediction/old_files/data/WUS-v4m.accdb",
+        "m_path": "/home/levcsi/projects/stroke_prediction/old_files/data/biocal.xlsx",
         "ucanaccess_path": "/home/levcsi/projects/stroke_prediction/ucanaccess",
         "save_path": ".",
-        "model_path": "",
+        "model_path": "/home/levcsi/projects/stroke_prediction/models/model_90_1000000_all",
     }
 
     start_evaluation(param_dict)

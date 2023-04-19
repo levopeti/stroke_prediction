@@ -18,6 +18,10 @@ def to_str_timestamp(timestamp: Union[int, datetime]):
     return dt_object.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 
 
+def from_int_to_datetime(timestamp: int) -> datetime:
+    return datetime.fromtimestamp(timestamp / 1000)
+
+
 def hour_to_millisec(hour: Union[int, float]) -> int:
     return int(hour * 60 * 60 * 1000)
 

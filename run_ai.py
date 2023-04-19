@@ -5,7 +5,7 @@ from time import time, sleep
 
 from measurement import Measurement, NotEnoughData, TimeStampTooHigh, SynchronizationError
 from api_utils import get_measurement_ids, get_configuration, get_data_for_prediction, save_predictions
-from general_utils import to_str_timestamp, hour_to_millisec, min_to_millisec
+from general_utils import to_str_timestamp, from_int_to_datetime, min_to_millisec
 from utils.arg_parser_and_config import get_config_dict
 from measurement_manager import MeasurementManager
 from openapi_client import Configuration
@@ -242,7 +242,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
             print("process measurement {}".format(measurement_id))
             start = time()
             mm.drop_old_data(measurement_id)
-            from_ts = mm.get_last_timestamp(measurement_id)
+            from_ts = from_int_to_datetime(mm.get_last_timestamp(measurement_id))
 
             if from_ts is None:
                 # measurement id is new
@@ -270,7 +270,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
             measurement = get_measurement(mm, measurement_id)
             prediction_dict = get_instances_and_make_predictions(model, measurement, config_dict)
             upload_prediction(prediction_dict, measurement_id)
-            print("process measurement {} is done ({:.0}s)".format(measurement_id, time() - start))
+            print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
 
 
 if __name__ == "__main__":
