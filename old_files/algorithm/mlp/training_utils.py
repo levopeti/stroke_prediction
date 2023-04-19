@@ -13,13 +13,13 @@ from ..measurement.measurement_collector import MeasurementCollector
 from ..utils.confusion_matrix_keras import plot_cm_keras
 from ..utils.cache_utils import cache
 
-# milliseconds between two measurements
-TIME_DELTA = 25
+# seconds between two measurements
+TIME_DELTA_SEC = 0.04
 
 
 def get_data(_mc, _param_dict):
     minutes = _param_dict["minutes"]
-    length = TIME_DELTA * 60 * minutes
+    length = TIME_DELTA_SEC * 60 * minutes
     sample_size = _param_dict["sample_size"]
     limb = _param_dict["limb"]
 

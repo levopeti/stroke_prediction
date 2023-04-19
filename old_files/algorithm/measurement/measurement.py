@@ -1,5 +1,7 @@
 import pandas as pd
 import numpy as np
+
+from datetime import datetime
 from termcolor import colored
 from random import randint
 
@@ -150,8 +152,23 @@ class Measurement(object):
                                                                                      np.mean(deltas)), "red"))
 
     def add_aux_data(self, aux_data_df):
-        self.valid_start_time = aux_data_df["The last sensor is on the patient"].values[0].astype(np.timedelta64)
-        self.valid_end_time = aux_data_df["Take off the first sensor"].values[0].astype(np.timedelta64)
+        self.valid_start_time = aux_data_df["The last sensor is on the patient"].values[0]
+
+        if isinstance(self.valid_start_time, datetime):
+            self.valid_start_time = int(self.valid_start_time.timestamp() * 1e3)
+        elif isinstance(self.valid_start_time, np.datetime64):
+            self.valid_start_time = int(self.valid_start_time.astype(datetime) / 1e6)
+        else:
+            raise TypeError("valid start time not datetime nether np.datetime64")
+
+        self.valid_end_time = aux_data_df["Take off the first sensor"].values[0]
+
+        if isinstance(self.valid_end_time, datetime):
+            self.valid_end_time = int(self.valid_end_time.timestamp() * 1e3)
+        elif isinstance(self.valid_end_time, np.datetime64):
+            self.valid_end_time = int(self.valid_end_time.astype(datetime) / 1e6)
+        else:
+            raise TypeError("valid start time neither datetime nor np.datetime64")
 
     def print_log(self):
         print(colored("### {} ({}, {}) ###".format(self.measurement_name, *[self.get_limb_class_value("arm"),
@@ -189,8 +206,8 @@ class Measurement(object):
             if only_valid and self.valid_start_time is not None and self.valid_end_time is not None:
                 # _meas_df = _meas_df[_meas_df["epoch"] > self.valid_start_time.timestamp() * 1000]
                 # _meas_df = _meas_df[_meas_df["epoch"] < self.valid_end_time.timestamp() * 1000]
-                _meas_df = _meas_df[_meas_df["epoch"] > int(self.valid_start_time / np.timedelta64(1, 'ms'))]
-                _meas_df = _meas_df[_meas_df["epoch"] < int(self.valid_end_time / np.timedelta64(1, 'ms'))]
+                _meas_df = _meas_df[_meas_df["epoch"] > self.valid_start_time]
+                _meas_df = _meas_df[_meas_df["epoch"] < self.valid_end_time]
             return _meas_df
 
         def read_csv(_key):

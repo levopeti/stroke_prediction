@@ -1,7 +1,9 @@
-from tensorflow import keras
-import numpy as np
 import os
+import numpy as np
 import pandas as pd
+import seaborn as sns
+
+from tensorflow import keras
 from datetime import datetime
 from sklearn.metrics import confusion_matrix
 
@@ -14,8 +16,8 @@ import matplotlib
 
 matplotlib.rcParams['figure.figsize'] = [15, 15]
 
-# milliseconds between two measurements
-TIME_DELTA = 25
+# seconds between two measurements
+TIME_DELTA_SEC = 0.04
 
 
 @cache
@@ -74,7 +76,7 @@ def make_prediction(_model, _data_dict, use_cache, key):
     return result_dict
 
 
-def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_set="train"):
+def make_plot(result_dict, minutes, step_size, save_path=None, type_of_set="train", plot=False):
     print("make plot")
     plt.ion()
 
@@ -126,7 +128,7 @@ def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_s
 
         xformatter = md.DateFormatter('%H:%M')
         # xlocator = md.MinuteLocator(interval=8)
-        xlocator = md.HourLocator(interval=80)
+        xlocator = md.HourLocator(interval=100)
         axs[2].xaxis.set_major_formatter(xformatter)
         axs[2].xaxis.set_major_locator(xlocator)
 
@@ -139,16 +141,17 @@ def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_s
 
         if save_path is not None:
             os.makedirs(
-                os.path.join(save_path, "plots/plots_{}m_{}step_{}/{}/".format(int(length / (60 * 25)), step_size,
+                os.path.join(save_path, "plots/plots_{}m_{}step_{}/{}/".format(minutes, step_size,
                                                                                 datetime.now().strftime('%Y-%m-%d-%H'),
                                                                                 type_of_set)), exist_ok=True)
             plt.savefig(os.path.join(save_path,
-                                     "plots/plots_{}m_{}step_{}/{}/{}.png".format(int(length / (60 * 25)), step_size,
+                                     "plots/plots_{}m_{}step_{}/{}/{}.png".format(minutes, step_size,
                                                                                    datetime.now().strftime(
                                                                                        '%Y-%m-%d-%H'),
                                                                                    type_of_set, meas_name)))
 
-        plt.show()
+        if plot:
+            plt.show()
 
     cm = confusion_matrix(~np.concatenate(is_healty_list), ~np.concatenate(pred_is_healthy_list))
 
@@ -192,8 +195,59 @@ def make_plot(result_dict, minutes, step_size, length, save_path=None, type_of_s
                                                                                                      datetime.now().strftime(
                                                                                                          '%Y-%m-%d-%H'),
                                                                                                      type_of_set)))
+    if plot:
+        plt.show()
 
-    plt.show()
+
+def sens_spec(result_dict: dict, step_size: int, save_path: str, minutes: int, type_of_set: str):
+    new_time_delta_sec = step_size * TIME_DELTA_SEC
+    sens_spec_dict = {"threshold": list(),
+                      "window (s)": list(),
+                      "sensitivity": list(),
+                      "specificity": list()
+                      }
+
+    for avg_prob_threshold in [0.7, 0.8, 0.85, 0.9, 0.95]:
+        for window_length_sec in [20, 60, 120, 300, 600]:
+            window_length = int(window_length_sec / new_time_delta_sec)
+
+            pred_is_stroke_list = list()
+            is_stroke_list = list()
+            for meas_name, pred_dict in result_dict.items():
+                pred_is_stroke = np.array(pred_dict["y_pred_list"]).argmax(axis=1) < 4.5
+                is_stroke = np.array(pred_dict["class_values"]) < 4.5
+
+                avg_pred = np.lib.stride_tricks.sliding_window_view(pred_is_stroke, window_length).mean(axis=1)
+                avg_pred_is_stroke = avg_pred > avg_prob_threshold
+
+                pred_is_stroke_list.append(avg_pred_is_stroke)
+                is_stroke_list.append(is_stroke[-len(avg_pred_is_stroke):])
+
+            cm = confusion_matrix(np.concatenate(is_stroke_list), np.concatenate(pred_is_stroke_list))
+            sensitivity = round(cm[0, 0] / (cm[0, 0] + cm[0, 1]), 2)
+            specificity = round(cm[1, 1] / (cm[1, 0] + cm[1, 1]), 2)
+
+            sens_spec_dict["threshold"].append(avg_prob_threshold)
+            sens_spec_dict["window (s)"].append(window_length_sec)
+            sens_spec_dict["sensitivity"].append(sensitivity)
+            sens_spec_dict["specificity"].append(specificity)
+
+    sens_spec_df = pd.DataFrame.from_dict(sens_spec_dict)
+    sens_df = pd.pivot_table(sens_spec_df, values="sensitivity", index=["threshold"], columns=["window (s)"])
+    spec_df = pd.pivot_table(sens_spec_df, values="specificity", index=["threshold"], columns=["window (s)"])
+
+    fig, axs = plt.subplots(2, 1, facecolor="w")
+
+    sns.heatmap(sens_df, cmap="coolwarm", linewidths=0.30, annot=True, ax=axs[0])
+    axs[0].title.set_text("Sensitivity")
+
+    sns.heatmap(spec_df, cmap="coolwarm", linewidths=0.30, annot=True, ax=axs[1])
+    axs[1].title.set_text("Specificity")
+    if save_path is not None:
+        plt.savefig(os.path.join(save_path, "plots/plots_{}m_{}step_{}/{}/sens_spec_hm.png".format(minutes, step_size,
+                                                                                                datetime.now().strftime(
+                                                                                                    '%Y-%m-%d-%H'),
+                                                                                                type_of_set)))
 
 
 def write_prediction_to_csv(_prediction_dict, length, step_size, save_path):
@@ -231,8 +285,7 @@ def start_evaluation(_param_dict):
     _ucanaccess_path = _param_dict["ucanaccess_path"]
     mc = MeasurementCollector(_base_path, _db_path, _m_path, _ucanaccess_path)
 
-    minutes = _param_dict["minutes"]
-    length = TIME_DELTA * 60 * minutes
+    length = int(TIME_DELTA_SEC * 60 * _param_dict["minutes"])
     step_size = _param_dict["step_size"]
     limb = _param_dict["limb"]
     type_of_set = _param_dict["type_of_set"]
@@ -244,7 +297,8 @@ def start_evaluation(_param_dict):
     key = "{}".format([length, step_size, limb, type_of_set, len(mc.measurement_dict[type_of_set])])
     infer_data = generate_infer_data(mc, length, step_size, limb, type_of_set, use_cache=True, key=key)
     prediction_dict = make_prediction(_model, infer_data, use_cache=False, key=key)
-    make_plot(prediction_dict, minutes, step_size, length, save_path=save_path, type_of_set=type_of_set)
+    make_plot(prediction_dict, _param_dict["minutes"], step_size, save_path=save_path, type_of_set=type_of_set)
+    sens_spec(prediction_dict, step_size, save_path, _param_dict["minutes"], type_of_set)
     write_prediction_to_csv(prediction_dict, length, step_size, save_path)
 
 
@@ -252,7 +306,7 @@ if __name__ == "__main__":
     param_dict = {
         "minutes": 90,
         "limb": "all",
-        "step_size": 500,
+        "step_size": 500,  # x * TIME_DELTA_SEC in sec
         "type_of_set": "train",  # train, test, mixed
         "base_path": '/home/levcsi/projects/stroke_prediction/old_files/data',
         "db_path": "/home/levcsi/projects/stroke_prediction/old_files/data/WUS-v4m.accdb",
