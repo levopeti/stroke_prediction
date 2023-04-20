@@ -224,7 +224,7 @@ def sens_spec(result_dict: dict, step_size: int, save_path: str, minutes: int, t
                 is_stroke_list.append(is_stroke[-len(avg_pred_is_stroke):])
 
             cm = confusion_matrix(np.concatenate(is_stroke_list), np.concatenate(pred_is_stroke_list))
-            if cm.shape == (1, 1):
+            if cm.shape == (2, 2):
                 sensitivity = round(cm[0, 0] / (cm[0, 0] + cm[0, 1]), 2)
                 specificity = round(cm[1, 1] / (cm[1, 0] + cm[1, 1]), 2)
             else:
