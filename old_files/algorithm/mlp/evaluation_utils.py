@@ -229,6 +229,7 @@ def sens_spec(result_dict: dict, step_size: int, save_path: str, minutes: int, t
                 specificity = round(cm[1, 1] / (cm[1, 0] + cm[1, 1]), 2)
             except IndexError:
                 print(cm)
+                print(np.concatenate(is_stroke_list).sum(), np.concatenate(pred_is_stroke_list).sum())
                 continue
             sens_spec_dict["threshold"].append(avg_prob_threshold)
             sens_spec_dict["window (s)"].append(window_length_sec)
