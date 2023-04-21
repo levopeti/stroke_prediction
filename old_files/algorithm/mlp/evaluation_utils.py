@@ -153,20 +153,16 @@ def make_plot(result_dict, minutes, step_size, save_path=None, type_of_set="trai
         if plot:
             plt.show()
 
-    cm = confusion_matrix(~np.concatenate(is_healty_list), ~np.concatenate(pred_is_healthy_list))
+    tn_fp_fn_tp = confusion_matrix(~np.concatenate(is_healty_list), ~np.concatenate(pred_is_healthy_list)).ravel()
 
-    if len(cm) == 2:
-        # if ratio == 1 and is_healty:
-        #    cm = np.array([[0, 0],
-        #                   [0, 1]])
-        # elif ratio == 1 and not is_healty:
-        #    cm = np.array([[1, 0],
-        #                   [0, 0]])
-
-        print(cm)
-        sensitivity = cm[0, 0] / (cm[0, 0] + cm[0, 1])
+    if len(tn_fp_fn_tp) == 4:
+        print("tn_fp_fn_tp ", tn_fp_fn_tp)
+        tn, fp, fn, tp = tn_fp_fn_tp
+        # Sensitivity = TP / (TP + FN)
+        sensitivity = tp / (tp + fn)
         print(sensitivity)
-        specificity = cm[1, 1] / (cm[1, 0] + cm[1, 1])
+        # Specificity = TN / (TN + FP)
+        specificity = tn / (tn + fp)
         print(specificity)
 
         color_list = ['blue', 'red']
@@ -223,13 +219,16 @@ def sens_spec(result_dict: dict, step_size: int, save_path: str, minutes: int, t
                 pred_is_stroke_list.append(avg_pred_is_stroke)
                 is_stroke_list.append(is_stroke[-len(avg_pred_is_stroke):])
 
-            cm = confusion_matrix(np.concatenate(is_stroke_list), np.concatenate(pred_is_stroke_list))
-            if cm.shape == (2, 2):
-                sensitivity = round(cm[0, 0] / (cm[0, 0] + cm[0, 1]), 2)
-                specificity = round(cm[1, 1] / (cm[1, 0] + cm[1, 1]), 2)
+            tn_fp_fn_tp = confusion_matrix(np.concatenate(is_stroke_list), np.concatenate(pred_is_stroke_list)).ravel()
+            if len(tn_fp_fn_tp) == 4:
+                tn, fp, fn, tp = tn_fp_fn_tp
+                # Sensitivity = TP / (TP + FN)
+                sensitivity = tp / (tp + fn)
+                # Specificity = TN / (TN + FP)
+                specificity = tn / (tn + fp)
             else:
-                sensitivity = 1
-                specificity = np.nan
+                sensitivity = np.nan
+                specificity = 1
 
             sens_spec_dict["threshold"].append(avg_prob_threshold)
             sens_spec_dict["window (s)"].append(window_length_sec)
