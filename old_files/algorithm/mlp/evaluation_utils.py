@@ -243,11 +243,14 @@ def sens_spec(result_dict: dict, step_size: int, save_path: str, minutes: int, t
 
     fig, axs = plt.subplots(2, 1, facecolor="w")
 
-    sns.heatmap(sens_df, vmax=1, cmap="coolwarm", linewidths=0.30, annot=True, ax=axs[0])
-    axs[0].title.set_text("Sensitivity")
+    if len(sens_df) > 0:
+        sns.heatmap(sens_df, vmax=1, cmap="coolwarm", linewidths=0.30, annot=True, ax=axs[0])
+        axs[0].title.set_text("Sensitivity")
 
-    sns.heatmap(spec_df, vmax=1, cmap="coolwarm", linewidths=0.30, annot=True, ax=axs[1])
-    axs[1].title.set_text("Specificity")
+    if len(spec_df) > 0:
+        sns.heatmap(spec_df, vmax=1, cmap="coolwarm", linewidths=0.30, annot=True, ax=axs[1])
+        axs[1].title.set_text("Specificity")
+
     if save_path is not None:
         plt.savefig(os.path.join(save_path, "plots/plots_{}m_{}step_{}/{}/sens_spec_hm.png".format(minutes, step_size,
                                                                                                 datetime.now().strftime(
