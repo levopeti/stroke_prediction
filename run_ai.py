@@ -229,11 +229,11 @@ def main_loop_old(model, configuration, config_dict):
 
 
 def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
-    time_zone = pytz.timezone("Europe/Budapest")
-    mm = MeasurementManager(config_dict, time_zone)
+    timezone = pytz.timezone("Europe/Budapest")
+    mm = MeasurementManager(config_dict, timezone)
 
     while True:
-        now_ts = datetime.now(time_zone)
+        now_ts = datetime.now(timezone)
         measurement_ids = get_measurement_ids(configuration,
                                               _from=to_str_timestamp(now_ts),
                                               _interval=min_to_millisec(config_dict["meas_length_to_keep_min"]))
@@ -254,7 +254,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
 
             if from_ts is None:
                 # measurement id is new
-                now_ts = datetime.now(time_zone)
+                now_ts = datetime.now(timezone)
                 from_ts = now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])
 
             while True:
