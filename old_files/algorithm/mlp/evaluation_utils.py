@@ -298,7 +298,8 @@ def start_evaluation(_param_dict):
 
     _model = load_model(model_path)
 
-    key = "{}".format([length, step_size, limb, type_of_set, len(mc.measurement_dict[type_of_set])])
+    key = "{}".format([length, step_size, limb, type_of_set, len(mc.measurement_dict[type_of_set]),
+                       _class_values_to_use])
     infer_data = generate_infer_data(mc, length, step_size, limb, type_of_set, use_cache=True, key=key)
     prediction_dict = make_prediction(_model, infer_data, use_cache=False, key=key)
     make_plot(prediction_dict, _param_dict["minutes"], step_size, save_path=save_path, type_of_set=type_of_set)
