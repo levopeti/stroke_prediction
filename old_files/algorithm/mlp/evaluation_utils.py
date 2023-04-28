@@ -241,15 +241,21 @@ def sens_spec(result_dict: dict, step_size: int, save_path: str, minutes: int, t
     print(sens_df)
     print(spec_df)
 
-    fig, axs = plt.subplots(2, 1, facecolor="w")
+    if len(sens_df) > 0 and len(spec_df) > 0:
+        fig, axs = plt.subplots(2, 1, facecolor="w")
+    else:
+        fig, axs = plt.subplots(1, 1, facecolor="w")
+
+    axs_id = 0
 
     if len(sens_df) > 0:
-        sns.heatmap(sens_df, vmax=1, cmap="coolwarm", linewidths=0.30, annot=True, ax=axs[0])
-        axs[0].title.set_text("Sensitivity")
+        sns.heatmap(sens_df, vmax=1, cmap="coolwarm", linewidths=0.30, annot=True, ax=axs[axs_id])
+        axs[axs_id].title.set_text("Sensitivity")
+        axs_id += 1
 
     if len(spec_df) > 0:
-        sns.heatmap(spec_df, vmax=1, cmap="coolwarm", linewidths=0.30, annot=True, ax=axs[1])
-        axs[1].title.set_text("Specificity")
+        sns.heatmap(spec_df, vmax=1, cmap="coolwarm", linewidths=0.30, annot=True, ax=axs[axs_id])
+        axs[axs_id].title.set_text("Specificity")
 
     if save_path is not None:
         plt.savefig(os.path.join(save_path, "plots/plots_{}m_{}step_{}/{}/sens_spec_hm.png".format(minutes, step_size,
