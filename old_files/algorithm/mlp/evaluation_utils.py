@@ -286,7 +286,8 @@ def start_evaluation(_param_dict):
     _m_path = _param_dict["m_path"]
     _base_path = _param_dict["base_path"]
     _ucanaccess_path = _param_dict["ucanaccess_path"]
-    mc = MeasurementCollector(_base_path, _db_path, _m_path, _ucanaccess_path)
+    _class_values_to_use = _param_dict["class_values_to_use"]
+    mc = MeasurementCollector(_base_path, _db_path, _m_path, _ucanaccess_path, class_values_to_use=_class_values_to_use)
 
     length = int(TIME_DELTA_SEC * 60 * _param_dict["minutes"])
     step_size = _param_dict["step_size"]
@@ -309,6 +310,7 @@ if __name__ == "__main__":
     param_dict = {
         "minutes": 90,
         "limb": "all",
+        "class_values_to_use": None,  # [0, 1, 2]
         "step_size": 500,  # x * TIME_DELTA_SEC in sec
         "type_of_set": "train",  # train, test, mixed
         "base_path": '/home/levcsi/projects/stroke_prediction/old_files/data',

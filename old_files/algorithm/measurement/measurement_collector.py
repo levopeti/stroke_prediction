@@ -11,12 +11,14 @@ from .measurement import Measurement
 
 
 class MeasurementCollector(object):
-    def __init__(self, base_path, db_path, m_path, ucanaccess_path, synchronizing=True, lightweight=False, check=False):
+    def __init__(self, base_path, db_path, m_path, ucanaccess_path, synchronizing=True, lightweight=False, check=False,
+                 class_values_to_use=None):
         self.lightweight = lightweight
         self.synchronizing = synchronizing
         self.dict_of_df = get_measure_df(ucanaccess_path, db_path, write=False)
         self.aux_data = pd.read_excel(m_path)
         self.aux_data["Measure ID"] = pd.to_numeric(self.aux_data["Measure ID"], downcast='integer')
+        self.class_values_to_use = class_values_to_use
         # self.aux_data["The last sensor is on the patient"] = pd.to_datetime(self.aux_data["The last sensor is on the patient"],
         #                                                                     format='%Y-%m-%dT%H:%M:%S.%f')
         # self.aux_data["Take off the first sensor"] = pd.to_datetime(self.aux_data["Take off the first sensor"],
@@ -75,6 +77,9 @@ class MeasurementCollector(object):
 
             meas = Measurement(measurement_name, row_id, self.dict_of_df["Z_3NEUROLÓGIA"],
                                synchronizing=self.synchronizing, lightweight=self.lightweight)
+
+            if self.class_values_to_use is not None and meas.get_absolute_class_value() not in self.class_values_to_use:
+                continue
 
             for path in paths:
                 if path.split('/')[-1].find(str(measurement_name)) == 0:
