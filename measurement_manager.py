@@ -45,6 +45,8 @@ class MeasurementManager(object):
         get_data_info(self.all_measurement_dict, "all")
 
     def get_df(self, measurement_id: str) -> pd.DataFrame:
-        assert measurement_id in self.all_measurement_dict, "{} is not found in" \
-                                                            " measurement manager".format(measurement_id)
-        return self.all_measurement_dict[measurement_id]
+        if measurement_id in self.all_measurement_dict:
+            return self.all_measurement_dict[measurement_id]
+        else:
+            print("{} is not found in measurement manager ({})".format(measurement_id,
+                                                                       self.all_measurement_dict.keys()))

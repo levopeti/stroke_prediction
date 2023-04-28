@@ -20,10 +20,15 @@ from openapi_client import Configuration
 #     return measurement_list
 
 
-def get_measurement(mm: MeasurementManager, measurement_id: str) -> Measurement:
+def get_measurement(mm: MeasurementManager, measurement_id: str) -> Union[Measurement, None]:
     meas = Measurement(measurement_id)
-    meas.fill_from_df(mm.get_df(measurement_id))
-    return meas
+    meas_df = mm.get_df(measurement_id)
+
+    if meas_df is None:
+        return None
+    else:
+        meas.fill_from_df(meas_df)
+        return meas
 
 
 def get_instances(measurement: Measurement,
@@ -268,6 +273,11 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
                     break
 
             measurement = get_measurement(mm, measurement_id)
+
+            if measurement is None:
+                print("no prediction for measurement {}".format(measurement_id))
+                continue
+
             prediction_dict = get_instances_and_make_predictions(model, measurement, config_dict)
             upload_prediction(prediction_dict, measurement_id)
             print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
