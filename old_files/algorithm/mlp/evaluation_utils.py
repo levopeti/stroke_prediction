@@ -245,6 +245,7 @@ def sens_spec(result_dict: dict, step_size: int, save_path: str, minutes: int, t
         fig, axs = plt.subplots(2, 1, facecolor="w")
     else:
         fig, axs = plt.subplots(1, 1, facecolor="w")
+        axs = [axs]
 
     axs_id = 0
 
