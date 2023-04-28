@@ -238,6 +238,8 @@ def sens_spec(result_dict: dict, step_size: int, save_path: str, minutes: int, t
     sens_spec_df = pd.DataFrame.from_dict(sens_spec_dict)
     sens_df = pd.pivot_table(sens_spec_df, values="sensitivity", index=["threshold"], columns=["window (s)"])
     spec_df = pd.pivot_table(sens_spec_df, values="specificity", index=["threshold"], columns=["window (s)"])
+    print(sens_df)
+    print(spec_df)
 
     fig, axs = plt.subplots(2, 1, facecolor="w")
 
