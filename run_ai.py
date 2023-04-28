@@ -1,3 +1,5 @@
+import pytz
+
 from mlp import MLP
 from datetime import datetime, timedelta
 from typing import List, Tuple, Union
@@ -227,10 +229,11 @@ def main_loop_old(model, configuration, config_dict):
 
 
 def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
-    mm = MeasurementManager(config_dict)
+    time_zone = pytz.timezone("Europe/Budapest")
+    mm = MeasurementManager(config_dict, time_zone)
 
     while True:
-        now_ts = datetime.now()
+        now_ts = datetime.now(time_zone)
         measurement_ids = get_measurement_ids(configuration,
                                               _from=to_str_timestamp(now_ts),
                                               _interval=min_to_millisec(config_dict["meas_length_to_keep_min"]))
@@ -251,7 +254,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
 
             if from_ts is None:
                 # measurement id is new
-                now_ts = datetime.now()
+                now_ts = datetime.now(time_zone)
                 from_ts = now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])
 
             while True:

@@ -1,4 +1,5 @@
 import pandas as pd
+import pytz
 
 from typing import Union
 from datetime import datetime, timedelta
@@ -8,9 +9,10 @@ from measurement import key_map
 
 
 class MeasurementManager(object):
-    def __init__(self, config_dict: dict):
+    def __init__(self, config_dict: dict, time_zone: pytz.timezone):
         self.config_dict = config_dict
         self.all_measurement_dict = dict()
+        self.time_zone = time_zone
 
     def get_last_timestamp(self, measurement_id: str) -> Union[int, None]:
         if measurement_id in self.all_measurement_dict:
@@ -20,7 +22,7 @@ class MeasurementManager(object):
 
     def drop_old_data(self, measurement_id: str):
         if measurement_id in self.all_measurement_dict:
-            ts_now = datetime.now()
+            ts_now = datetime.now(self.time_zone)
             until_ok_ts = ts_now - timedelta(minutes=self.config_dict["meas_length_to_keep_min"])
             df = self.all_measurement_dict[measurement_id]
             self.all_measurement_dict[measurement_id] = df[df["timestamp_ms"] >= until_ok_ts.timestamp() * 1000]
