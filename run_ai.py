@@ -267,11 +267,11 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
                                                                                        elapsed_time))
 
                 if len(data_list) > 0:
-                    mm.add_data(measurement_id, data_list)
+                    mm.add_data(measurement_id, data_list, datetime.now(timezone))
 
                 from_ts += timedelta(minutes=config_dict["interval_min"])
 
-                if from_ts > now_ts:
+                if from_ts.replace(tzinfo=timezone) > now_ts:
                     # from_ts is in the future
                     break
 
