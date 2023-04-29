@@ -238,6 +238,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
                                               _from=to_str_timestamp(now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])),
                                               _interval=min_to_millisec(config_dict["meas_length_to_keep_min"]))
 
+        full_start = time()
         if measurement_ids is None:
             print("No measurements in the last {} minutes ({})".format(config_dict["meas_length_to_keep_min"],
                                                                        to_str_timestamp(now_ts)))
@@ -284,6 +285,9 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
             prediction_dict = get_instances_and_make_predictions(model, measurement, config_dict)
             upload_prediction(prediction_dict, measurement_id)
             print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
+
+        if time() - full_start < 60:
+            sleep(2 * 60)
 
 
 if __name__ == "__main__":
