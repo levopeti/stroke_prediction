@@ -235,7 +235,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
     while True:
         now_ts = datetime.now(timezone)
         measurement_ids = get_measurement_ids(configuration,
-                                              _from=to_str_timestamp(now_ts),
+                                              _from=to_str_timestamp(now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])),
                                               _interval=min_to_millisec(config_dict["meas_length_to_keep_min"]))
 
         if measurement_ids is None:
@@ -244,7 +244,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
             sleep(5 * 60)
             continue
 
-        print("Measurement ids to process: {}".format(measurement_ids))
+        print("Measurement ids to process: {} ({})".format(measurement_ids, to_str_timestamp(now_ts)))
 
         for measurement_id in measurement_ids:
             print("process measurement {}".format(measurement_id))

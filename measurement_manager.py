@@ -7,6 +7,8 @@ from datetime import datetime, timedelta
 from general_utils import to_int_timestamp, to_str_timestamp, get_data_info
 from measurement import key_map
 
+pd.set_option('display.max_rows', 500)
+
 
 class MeasurementManager(object):
     def __init__(self, config_dict: dict, timezone: pytz.timezone):
@@ -43,7 +45,7 @@ class MeasurementManager(object):
         self.all_measurement_dict[measurement_id] = pd.concat([self.all_measurement_dict[measurement_id], data_df],
                                                               ignore_index=True)
         assert self.all_measurement_dict[measurement_id].duplicated(keep=False).sum() == 0,\
-            self.all_measurement_dict[measurement_id].duplicated(keep=False).sum()
+            self.all_measurement_dict[measurement_id].head(124)
         get_data_info(self.all_measurement_dict, "all")
 
     def get_df(self, measurement_id: str) -> pd.DataFrame:
