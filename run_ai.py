@@ -231,73 +231,66 @@ def main_loop_old(model, configuration, config_dict):
 
 
 def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
-    discord = DiscordBot()
+    timezone = pytz.timezone("Europe/Budapest")
+    mm = MeasurementManager(config_dict, timezone)
 
-    try:
-        timezone = pytz.timezone("Europe/Budapest")
-        mm = MeasurementManager(config_dict, timezone)
+    while True:
+        now_ts = datetime.now(timezone)
+        measurement_ids = get_measurement_ids(configuration,
+                                              _from=to_str_timestamp(
+                                                  now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])),
+                                              _interval=min_to_millisec(config_dict["meas_length_to_keep_min"]))
 
-        while True:
-            now_ts = datetime.now(timezone)
-            measurement_ids = get_measurement_ids(configuration,
-                                                  _from=to_str_timestamp(
-                                                      now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])),
-                                                  _interval=min_to_millisec(config_dict["meas_length_to_keep_min"]))
+        full_start = time()
+        if measurement_ids is None:
+            print("No measurements in the last {} minutes ({})".format(config_dict["meas_length_to_keep_min"],
+                                                                       to_str_timestamp(now_ts)))
+            sleep(5 * 60)
+            continue
 
-            full_start = time()
-            if measurement_ids is None:
-                print("No measurements in the last {} minutes ({})".format(config_dict["meas_length_to_keep_min"],
-                                                                           to_str_timestamp(now_ts)))
-                sleep(5 * 60)
+        print("Measurement ids to process: {} ({})".format(measurement_ids, to_str_timestamp(now_ts)))
+
+        for measurement_id in measurement_ids:
+            print("process measurement {}".format(measurement_id))
+            start = time()
+            mm.drop_old_data(measurement_id)
+            from_ts = from_int_to_datetime(mm.get_last_timestamp(measurement_id))
+
+            if from_ts is None:
+                # measurement id is new
+                now_ts = datetime.now(timezone)
+                from_ts = now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])
+
+            while True:
+                to_ts = from_ts + timedelta(minutes=config_dict["interval_min"])
+                data_list, elapsed_time = get_data_for_prediction(configuration,
+                                                                  to_str_timestamp(from_ts),
+                                                                  measurement_id,
+                                                                  min_to_millisec(config_dict["interval_min"]))
+                print("\nget data for prediction ({}), from {} to {} ({:.2f}s)".format(len(data_list), from_ts, to_ts,
+                                                                                       elapsed_time))
+
+                if len(data_list) > 0:
+                    mm.add_data(measurement_id, data_list, datetime.now(timezone))
+
+                from_ts += timedelta(minutes=config_dict["interval_min"])
+
+                if from_ts.replace(tzinfo=timezone) > now_ts:
+                    # from_ts is in the future
+                    break
+
+            measurement = get_measurement(mm, measurement_id)
+
+            if measurement is None:
+                print("no prediction for measurement {}".format(measurement_id))
                 continue
 
-            print("Measurement ids to process: {} ({})".format(measurement_ids, to_str_timestamp(now_ts)))
+            prediction_dict = get_instances_and_make_predictions(model, measurement, config_dict)
+            upload_prediction(prediction_dict, measurement_id)
+            print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
 
-            for measurement_id in measurement_ids:
-                print("process measurement {}".format(measurement_id))
-                start = time()
-                mm.drop_old_data(measurement_id)
-                from_ts = from_int_to_datetime(mm.get_last_timestamp(measurement_id))
-
-                if from_ts is None:
-                    # measurement id is new
-                    now_ts = datetime.now(timezone)
-                    from_ts = now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])
-
-                while True:
-                    to_ts = from_ts + timedelta(minutes=config_dict["interval_min"])
-                    data_list, elapsed_time = get_data_for_prediction(configuration,
-                                                                      to_str_timestamp(from_ts),
-                                                                      measurement_id,
-                                                                      min_to_millisec(config_dict["interval_min"]))
-                    print("\nget data for prediction ({}), from {} to {} ({:.2f}s)".format(len(data_list), from_ts, to_ts,
-                                                                                           elapsed_time))
-
-                    if len(data_list) > 0:
-                        mm.add_data(measurement_id, data_list, datetime.now(timezone))
-
-                    from_ts += timedelta(minutes=config_dict["interval_min"])
-
-                    if from_ts.replace(tzinfo=timezone) > now_ts:
-                        # from_ts is in the future
-                        break
-
-                measurement = get_measurement(mm, measurement_id)
-
-                if measurement is None:
-                    print("no prediction for measurement {}".format(measurement_id))
-                    continue
-
-                prediction_dict = get_instances_and_make_predictions(model, measurement, config_dict)
-                upload_prediction(prediction_dict, measurement_id)
-                print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
-
-            if time() - full_start < 60:
-                sleep(2 * 60)
-    except Exception:
-        discord.send_message(fields=[{"name": "stroke ai has stopped",
-                                      "value": "error: {}".format(traceback.format_exc()),
-                                      "inline": True}])
+        if time() - full_start < 60:
+            sleep(2 * 60)
 
 
 if __name__ == "__main__":
@@ -306,7 +299,23 @@ if __name__ == "__main__":
     _configuration = get_configuration(_config_dict)
     _model = MLP(_config_dict)
 
-    main_loop(_model, _configuration, _config_dict)
+    discord = DiscordBot()
+
+    try:
+        while True:
+            discord.send_message(fields=[{"name": "stroke ai has started",
+                                          "value": "new session has started (in an infinity loop)",
+                                          "inline": True}])
+            main_loop(_model, _configuration, _config_dict)
+            sleep(10)
+    except Exception:
+        discord.send_message(fields=[{"name": "stroke ai has stopped",
+                                      "value": "error: {}".format(traceback.format_exc()),
+                                      "inline": True}])
+    except KeyboardInterrupt:
+        discord.send_message(fields=[{"name": "stroke ai has stopped",
+                                      "value": "stopped by keyboard interrupt (infinity loop ends)",
+                                      "inline": True}])
 
     # timestamp_now = datetime.now()
     # last_3_hours = timestamp_now - timedelta(hours=9)
