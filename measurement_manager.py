@@ -29,7 +29,8 @@ class MeasurementManager(object):
             df = self.all_measurement_dict[measurement_id]
             self.all_measurement_dict[measurement_id] = df[df["timestamp_ms"] >= until_ok_ts.timestamp() * 1000]
 
-            assert self.all_measurement_dict[measurement_id]["timestamp_ms"].min() >= until_ok_ts.timestamp() * 1000
+            if len(self.all_measurement_dict[measurement_id]):
+                assert self.all_measurement_dict[measurement_id]["timestamp_ms"].min() >= until_ok_ts.timestamp() * 1000
 
     def add_data(self, measurement_id: str, data_list: list, time_of_request: datetime):
         """ columns: limb, side, timestamp, type, x, y, z"""

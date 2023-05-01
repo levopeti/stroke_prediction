@@ -3,6 +3,7 @@ astunparse==1.6.3
 cachetools==5.3.0
 certifi==2022.12.7
 charset-normalizer==3.0.1
+discordwebhook==1.0.3
 flatbuffers==23.1.21
 frozendict==2.3.4
 gast==0.4.0
