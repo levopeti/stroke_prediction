@@ -134,7 +134,7 @@ def get_instances_and_make_predictions(model: MLP,
         instances, inference_ts_list = get_instances(measurement, first_timestamp_ms, config_dict)
     except SynchronizationError:
         # synchronization error
-        error_message = "problem during synchronizing the measurements"
+        error_message = "Error 1"
         return {"probabilities": [1],
                 "labels": [None],
                 "is_stroke": [error_message],
@@ -142,7 +142,8 @@ def get_instances_and_make_predictions(model: MLP,
 
     if inference_ts_list is None:
         # missing key error
-        error_message = "keys are missing: {}".format(instances)
+        missing_keys = [[key[0] for key in instance] for instance in instances]
+        error_message = "Error 2 {}".format(missing_keys)
         return {"probabilities": [1],
                 "labels": [None],
                 "is_stroke": [error_message],
@@ -151,7 +152,7 @@ def get_instances_and_make_predictions(model: MLP,
     if len(instances) == 0:
         # not enough data error
         print("no prediction (len of instances = 0) for measurement: {}".format(measurement.measurement_id))
-        error_message = "not enough data (yet)"
+        error_message = "Error 3"
         return {"probabilities": [1],
                 "labels": [None],
                 "is_stroke": [error_message],
@@ -185,8 +186,15 @@ def upload_prediction(prediction_dict: dict, measurement_id: str):
     start = time()
     predictions = list()
     for i in range(len(prediction_dict["is_stroke"])):
+        if isinstance(prediction_dict["is_stroke"][i], str):
+            # error message
+            prediction = prediction_dict["is_stroke"][i]
+        else:
+            assert isinstance(prediction_dict["is_stroke"][i], bool)
+            prediction = "stroke" if prediction_dict["is_stroke"][i] else "ok"
+
         predictions.append({
-            "prediction": "stroke" if prediction_dict["is_stroke"][i] else "ok",
+            "prediction": prediction,
             "probability": float(prediction_dict["probabilities"][i]),
             "timestamp": to_str_timestamp(prediction_dict["timestamps"][i]),
         })
@@ -197,37 +205,9 @@ def upload_prediction(prediction_dict: dict, measurement_id: str):
         "softwareVersion": "Predictor 1.0",
         "APIVersion": "MotionScan API 1.0"
     }
-
     save_predictions(_configuration, _body)
     print("uploaded {} prediction(s) with measurement id {} ({:.0}s)".format(len(predictions), measurement_id,
                                                                              time() - start))
-
-
-def main_loop_old(model, configuration, config_dict):
-    am_df = AllMeasurementsDF()
-    ts_now = datetime.now()
-
-    while True:
-        from_ts = ts_now - timedelta(hours=config_dict["timedelta_from_now_h"])
-        to_ts = from_ts + timedelta(milliseconds=config_dict["interval_milliseconds"])
-
-        data_list = get_data_for_prediction(configuration,
-                                            from_ts.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z",
-                                            config_dict)
-        print("\nget data for prediction ({}),"
-              " timedelta_from_now_h: {:.2f}, from {} to {}".format(len(data_list),
-                                                                    config_dict["timedelta_from_now_h"],
-                                                                    from_ts,
-                                                                    to_ts))
-
-        if len(data_list) > 0:
-            am_df.add_data(data_list)
-            measurement_list = get_measurements(am_df)
-            prediction_for_measurement_dict = get_instances_and_make_predictions(model, measurement_list,
-                                                                                 config_dict)
-            upload_predictions(prediction_for_measurement_dict)
-
-        config_dict["timedelta_from_now_h"] += config_dict["interval_milliseconds"] / (1000 * 60 * 60)  # hours
 
 
 def main_loop(model: MLP, configuration: Configuration, config_dict: dict):

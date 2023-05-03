@@ -90,20 +90,11 @@ def get_predictions_from_time_point(configuration: Configuration, _from: str, _i
 
 def save_predictions(configuration: Configuration, body: dict):
     with ApiClient(configuration) as api_client:
-        # Create an instance of the API class
         api_instance = MotionScanRESTAPIEndPointsApi(api_client)
-        # example passing only required values which don't have defaults set
         header_params = {
             'x-motionscan-name': 'motionscandemo',
         }
 
-        # try:
-        #     api_instance.save_predictions(
-        #         header_params=header_params,
-        #         body=body,
-        #     )
-        # except ApiException as e:
-        #     print("Exception when calling MotionScanRESTAPIEndPointsApi->save_predictions: %s\n" % e)
         api_instance.save_predictions(
             header_params=header_params,
             body=body,
