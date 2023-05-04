@@ -74,17 +74,14 @@ def get_predictions_from_time_point(configuration: Configuration, _from: str, _i
         header_params = {
             'x-motionscan-name': 'motionscandemo',
         }
-        # try:
-        #     api_response = api_instance.get_data_for_prediction(
-        #         query_params=query_params,
-        #         header_params=header_params,
-        #     )
-        # except ApiException as e:
-        #     print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
-        api_response = api_instance.get_predictions_from_timepoint(
-            query_params=query_params,
-            header_params=header_params,
-        )
+        try:
+            api_response = api_instance.get_data_for_prediction(
+                query_params=query_params,
+                header_params=header_params,
+            )
+        except ApiException as e:
+            print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
+
         return json.loads(api_response.response.data)
 
 
@@ -95,8 +92,12 @@ def save_predictions(configuration: Configuration, body: dict):
             'x-motionscan-name': 'motionscandemo',
         }
 
-        api_instance.save_predictions(
-            header_params=header_params,
-            body=body,
-        )
+        try:
+            api_instance.save_predictions(
+                header_params=header_params,
+                body=body,
+            )
+        except ApiException as e:
+            print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
+            raise Exception("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
 
