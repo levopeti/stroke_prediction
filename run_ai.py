@@ -240,7 +240,8 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
                 # measurement id is new
                 now_ts = datetime.now(timezone)
                 from_ts = now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])
-
+            else:
+                from_ts = timezone.localize(from_ts)
             while True:
                 to_ts = from_ts + timedelta(minutes=config_dict["interval_min"])
                 data_list, elapsed_time = get_data_for_prediction(configuration,
@@ -255,7 +256,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
 
                 from_ts += timedelta(minutes=config_dict["interval_min"])
 
-                if from_ts.replace(tzinfo=timezone) > now_ts:
+                if from_ts > datetime.now(timezone):
                     # from_ts is in the future
                     break
 
@@ -279,7 +280,7 @@ if __name__ == "__main__":
     _configuration = get_configuration(_config_dict)
     _model = MLP(_config_dict)
 
-    discord = DiscordBot()
+    discord = DiscordBot(active=False)
 
     try:
         while True:
