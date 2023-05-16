@@ -280,7 +280,7 @@ if __name__ == "__main__":
     _configuration = get_configuration(_config_dict)
     _model = MLP(_config_dict)
 
-    discord = DiscordBot(active=False)
+    discord = DiscordBot(active=True)
 
     try:
         while True:
