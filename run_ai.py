@@ -1,4 +1,6 @@
 import traceback
+from pprint import pprint
+
 import pytz
 
 from discord import DiscordBot
@@ -72,7 +74,7 @@ def get_instances(measurement: Measurement,
                     ratio_mean = measurement.get_limb_ratio_mean(key[0], key[1], length, end_ts=end_ts,
                                                                  mean_first=False)
                 except NotEnoughData as e:
-                    print(e)
+                    # print(e)
                     break
                 except TimeStampTooHigh as e:
                     return _instance_list, _inference_ts_list
@@ -134,6 +136,7 @@ def get_instances_and_make_predictions(model: MLP,
         instances, inference_ts_list = get_instances(measurement, first_timestamp_ms, config_dict)
     except SynchronizationError:
         # synchronization error
+        print("nsynchronization error for measurement: {}".format(measurement.measurement_id))
         error_message = "Error 1"
         return {"probabilities": [1],
                 "labels": [None],
@@ -142,6 +145,7 @@ def get_instances_and_make_predictions(model: MLP,
 
     if inference_ts_list is None:
         # missing key error
+        print("missing key error for measurement: {}".format(measurement.measurement_id))
         missing_keys = [[key[0] for key in instance] for instance in instances]
         error_message = "Error 2 {}".format(missing_keys)
         return {"probabilities": [1],
@@ -280,7 +284,7 @@ if __name__ == "__main__":
     _configuration = get_configuration(_config_dict)
     _model = MLP(_config_dict)
 
-    discord = DiscordBot(active=True)
+    discord = DiscordBot(active=_config_dict["discord"])
 
     try:
         while True:

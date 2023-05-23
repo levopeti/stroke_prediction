@@ -51,6 +51,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument('--inference_delta_sec', default=30, type=int,
                         help='Time delay between two measurements in seconds.')
     parser.add_argument('--test_mode', default=False, action='store_true',  help='Run in test mode.')
+    parser.add_argument('--discord', default=False, action='store_true', help='Run discord webhook.')
 
     args = parser.parse_args()
     return args
