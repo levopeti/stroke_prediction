@@ -235,7 +235,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
         print("Measurement ids to process: {} ({})".format(measurement_ids, to_str_timestamp(now_ts)))
 
         for measurement_id in measurement_ids:
-            print("process measurement {}".format(measurement_id))
+            print("\nprocess measurement {}".format(measurement_id))
             start = time()
             from_ts = from_int_to_datetime(mm.get_last_timestamp(measurement_id))
 
