@@ -167,6 +167,11 @@ class Measurement(object):
             if self.measurement_dict[keys] is not None:
                 return self.measurement_dict[keys]["timestamp_ms"].min()
 
+    def get_last_timestamp_ms(self) -> Union[None, int]:
+        for keys in self.measurement_dict.keys():
+            if self.measurement_dict[keys] is not None:
+                return self.measurement_dict[keys]["timestamp_ms"].max()
+
     # def get_all_measurements_df(self, only_valid=True):
     #     result_dict = dict()
     #

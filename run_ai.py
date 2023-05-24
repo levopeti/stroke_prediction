@@ -131,9 +131,9 @@ def get_instances(measurement: Measurement,
 def get_instances_and_make_predictions(model: MLP,
                                        measurement: Measurement,
                                        config_dict: dict):
-    first_timestamp_ms = measurement.get_first_timestamp_ms()
+    last_timestamp_ms = measurement.get_last_timestamp_ms()
     try:
-        instances, inference_ts_list = get_instances(measurement, first_timestamp_ms, config_dict)
+        instances, inference_ts_list = get_instances(measurement, last_timestamp_ms, config_dict)
     except SynchronizationError:
         # synchronization error
         print("synchronization error for measurement: {}".format(measurement.measurement_id))
@@ -141,7 +141,7 @@ def get_instances_and_make_predictions(model: MLP,
         return {"probabilities": [1],
                 "labels": [None],
                 "is_stroke": [error_message],
-                "timestamps": [first_timestamp_ms]}
+                "timestamps": [last_timestamp_ms]}
 
     if inference_ts_list is None:
         # missing key error
@@ -151,7 +151,7 @@ def get_instances_and_make_predictions(model: MLP,
         return {"probabilities": [1],
                 "labels": [None],
                 "is_stroke": [error_message],
-                "timestamps": [first_timestamp_ms]}
+                "timestamps": [last_timestamp_ms]}
 
     if len(instances) == 0:
         # not enough data error
@@ -160,7 +160,7 @@ def get_instances_and_make_predictions(model: MLP,
         return {"probabilities": [1],
                 "labels": [None],
                 "is_stroke": [error_message],
-                "timestamps": [first_timestamp_ms]}
+                "timestamps": [last_timestamp_ms]}
 
     return model.compute_prediction(instances, inference_ts_list)
 
@@ -227,12 +227,12 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
 
         full_start = time()
         if measurement_ids is None:
-            print("No measurements in the last {} minutes ({})".format(config_dict["meas_length_to_keep_min"],
+            print("\nNo measurements in the last {} minutes ({})".format(config_dict["meas_length_to_keep_min"],
                                                                        to_str_timestamp(now_ts)))
             sleep(5 * 60)
             continue
 
-        print("Measurement ids to process: {} ({})".format(measurement_ids, to_str_timestamp(now_ts)))
+        print("\nMeasurement ids to process: {} ({})".format(measurement_ids, to_str_timestamp(now_ts)))
 
         for measurement_id in measurement_ids:
             print("\nprocess measurement {}".format(measurement_id))

@@ -47,14 +47,22 @@ _config_dict = {"host_url": _host_url,
                 "token": _token}
 configuration = get_configuration(_config_dict)
 
-timestamp_data = datetime.now() - timedelta(minutes=90)
+timestamp_data = datetime.now() - timedelta(minutes=120)
 timestamp_data_string = timestamp_data.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
 print(timestamp_data_string)
-interval = min_to_millisec(90)
+interval = min_to_millisec(120)
 
 while True:
     api_response, elapsed_time = get_prediction(timestamp_data_string, interval)
-    pprint(api_response.response.data)
+    # pprint(json.loads(api_response.response.data))
+
+    meas_ids = set()
+    for pred_dict in json.loads(api_response.response.data):
+        meas_ids.add(pred_dict["measurementId"])
+        if pred_dict["measurementId"] == "1":
+            print(pred_dict)
+
+    print(meas_ids)
     print(f'{len(json.loads(api_response.response.data))} items: {elapsed_time} sec!\n')
     sleep(5)
 
