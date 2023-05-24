@@ -45,7 +45,7 @@ class MeasurementManager(object):
         data_df["timestamp_ms"] = data_df.apply(lambda row: to_int_timestamp(row.timestamp), axis=1)
         data_df["keys_tuple"] = data_df.apply(lambda row: key_map[(row.side, row.limb, row.type)], axis=1)
         data_df["time_of_request"] = time_of_request
-        get_data_info({measurement_id: data_df}, "new")
+        # get_data_info({measurement_id: data_df}, "new")
 
         self.all_measurement_dict[measurement_id] = pd.concat([self.all_measurement_dict[measurement_id], data_df],
                                                               ignore_index=True)
@@ -58,7 +58,7 @@ class MeasurementManager(object):
             self.all_measurement_dict[measurement_id][self.all_measurement_dict[measurement_id][
                 self.all_measurement_dict[measurement_id].columns.difference(["time_of_request"])].duplicated(keep=False)]
 
-        get_data_info(self.all_measurement_dict, "all")
+        # get_data_info(self.all_measurement_dict, "all")
 
     def get_df(self, measurement_id: str) -> pd.DataFrame:
         if measurement_id in self.all_measurement_dict:

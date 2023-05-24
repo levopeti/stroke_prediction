@@ -11,7 +11,7 @@ from time import time, sleep
 
 from measurement import Measurement, NotEnoughData, TimeStampTooHigh, SynchronizationError
 from api_utils import get_measurement_ids, get_configuration, get_data_for_prediction, save_predictions
-from general_utils import to_str_timestamp, from_int_to_datetime, min_to_millisec
+from general_utils import to_str_timestamp, from_int_to_datetime, min_to_millisec, get_data_info
 from utils.arg_parser_and_config import get_config_dict
 from measurement_manager import MeasurementManager
 from openapi_client import Configuration
@@ -274,6 +274,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
             print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
 
         mm.drop_old_data()
+        get_data_info(mm.all_measurement_dict, "all")
         if time() - full_start < 60:
             print("2 minutes sleep")
             sleep(2 * 60)
