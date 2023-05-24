@@ -22,8 +22,8 @@ class MeasurementManager(object):
         else:
             return None
 
-    def drop_old_data(self, measurement_id: str):
-        if measurement_id in self.all_measurement_dict:
+    def drop_old_data(self):
+        for measurement_id in self.all_measurement_dict.keys():
             ts_now = datetime.now(self.timezone)
             until_ok_ts = ts_now - timedelta(minutes=self.config_dict["meas_length_to_keep_min"])
             df = self.all_measurement_dict[measurement_id]

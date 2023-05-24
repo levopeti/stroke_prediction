@@ -136,7 +136,7 @@ def get_instances_and_make_predictions(model: MLP,
         instances, inference_ts_list = get_instances(measurement, first_timestamp_ms, config_dict)
     except SynchronizationError:
         # synchronization error
-        print("nsynchronization error for measurement: {}".format(measurement.measurement_id))
+        print("synchronization error for measurement: {}".format(measurement.measurement_id))
         error_message = "Error 1"
         return {"probabilities": [1],
                 "labels": [None],
@@ -237,7 +237,6 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
         for measurement_id in measurement_ids:
             print("process measurement {}".format(measurement_id))
             start = time()
-            mm.drop_old_data(measurement_id)
             from_ts = from_int_to_datetime(mm.get_last_timestamp(measurement_id))
 
             if from_ts is None:
@@ -274,7 +273,9 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
             upload_prediction(prediction_dict, measurement_id)
             print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
 
+        mm.drop_old_data()
         if time() - full_start < 60:
+            print("2 minutes sleep")
             sleep(2 * 60)
 
 
@@ -294,6 +295,7 @@ if __name__ == "__main__":
             main_loop(_model, _configuration, _config_dict)
             sleep(10)
     except Exception:
+        print(traceback.format_exc())
         discord.send_message(fields=[{"name": "stroke ai has stopped",
                                       "value": "error: {}".format(traceback.format_exc()),
                                       "inline": True}])
