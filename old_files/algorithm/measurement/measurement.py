@@ -201,8 +201,8 @@ class Measurement(object):
         return min(self.class_value_dict[("left", limb)], self.class_value_dict[("right", limb)])
 
     def get_measurement_df(self, key, only_valid=True):
-        columns_key_dict = {"acc": ("epoch (ms)", "x-axis (g)", "y-axis (g)", "z-axis (g)"),
-                            "gyr": ("epoch (ms)", "x-axis (deg/s)", "y-axis (deg/s)", "z-axis (deg/s)")}
+        columns_key_dict = {"acc": ("epoch (ms)", "epoc (ms)", "x-axis (g)", "y-axis (g)", "z-axis (g)"),
+                            "gyr": ("epoch (ms)", "epoc (ms)", "x-axis (deg/s)", "y-axis (deg/s)", "z-axis (deg/s)")}
 
         def cut_valid_part(_meas_df):
             if only_valid and self.valid_start_time is not None and self.valid_end_time is not None:
@@ -220,6 +220,10 @@ class Measurement(object):
                 raise ValueError("{} could not be loaded because of columns:\n{}\nexpected: {}".format(self.measurement_name, _meas_df.columns, columns_key_dict[_key[2]]))
             for c_name in _meas_df.columns:
                 _meas_df.rename(columns={c_name: c_name.split(' ')[0]}, inplace=True)
+                
+                if c_name == "epoc":
+                    _meas_df.rename(columns={"epoc": "epoch"}, inplace=True)
+                    
             _meas_df = cut_valid_part(_meas_df)
             return _meas_df
 
