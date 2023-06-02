@@ -159,7 +159,8 @@ class Measurement(object):
         elif isinstance(self.valid_start_time, np.datetime64):
             self.valid_start_time = int(self.valid_start_time.astype(datetime) / 1e6)
         else:
-            raise TypeError("valid start time not datetime nether np.datetime64")
+            raise TypeError("valid start time neither datetime nor \
+            np.datetime64 ({}, {})".format(type(self.valid_start_time), self.valid_start_time))
 
         self.valid_end_time = aux_data_df["Take off the first sensor"].values[0]
 
@@ -168,7 +169,8 @@ class Measurement(object):
         elif isinstance(self.valid_end_time, np.datetime64):
             self.valid_end_time = int(self.valid_end_time.astype(datetime) / 1e6)
         else:
-            raise TypeError("valid start time neither datetime nor np.datetime64")
+            raise TypeError("valid end time neither datetime nor \
+            np.datetime64 ({}, {})".format(type(self.valid_end_time), self.valid_end_time))
 
     def print_log(self):
         print(colored("### {} ({}, {}) ###".format(self.measurement_name, *[self.get_limb_class_value("arm"),
