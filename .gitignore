@@ -131,3 +131,4 @@ dmypy.json
 # custom
 ssh_pw.txt
 /discord_url.json
+/host_url_and_token.json

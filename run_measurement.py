@@ -7,11 +7,7 @@ from openapi_client.apis.tags.motion_scan_restapi_end_points_api import MotionSc
 from api_utils import get_configuration
 
 
-_host_url = "https://api.test.ms.salusmo.euronetrt.hu"
-_token = "nRYUakaQTdDQyy-PmYlVTIcZRwYvNmZsmGrD6YApvsxTniTghB8RsQZet3fIs95LUP1YSeCM-LQRsdhlrxRNx9ixk60mp" \
-         "cH5CLp9wqUHiDPu2wxKDOZVCJqsach8B9H5"
-_config_dict = {"host_url": _host_url,
-                "token": _token}
+_config_dict = {"host_url_and_token_path": "./host_url_and_token.json"}
 _configuration = get_configuration(_config_dict)
 
 key_list = [("l", "a", "a"),

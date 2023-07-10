@@ -40,11 +40,7 @@ def get_prediction(_timestamp_data_string, _interval):
     return _api_response, end - start
 
 
-_host_url = "https://api.test.ms.salusmo.euronetrt.hu"
-_token = "nRYUakaQTdDQyy-PmYlVTIcZRwYvNmZsmGrD6YApvsxTniTghB8RsQZet3fIs95LUP1YSeCM-LQRsdhlrxRNx9ixk60mp" \
-         "cH5CLp9wqUHiDPu2wxKDOZVCJqsach8B9H5"
-_config_dict = {"host_url": _host_url,
-                "token": _token}
+_config_dict = {"host_url_and_token_path": "./host_url_and_token.json"}
 configuration = get_configuration(_config_dict)
 
 timestamp_data = datetime.now() - timedelta(minutes=120)

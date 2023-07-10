@@ -8,8 +8,11 @@ from openapi_client.apis.tags.motion_scan_restapi_end_points_api import MotionSc
 
 
 def get_configuration(config_dict: dict) -> Configuration:
-    configuration = Configuration(host=config_dict["host_url"])
-    configuration.api_key["bearer"] = config_dict["token"]
+    with open(config_dict["host_url_and_token_path"]) as f:
+        host_url_and_token = json.load(f)["discord_url"]
+
+    configuration = Configuration(host=host_url_and_token["host_url"])
+    configuration.api_key["bearer"] = host_url_and_token["token"]
     configuration.api_key_prefix["bearer"] = "Bearer"
     return configuration
 

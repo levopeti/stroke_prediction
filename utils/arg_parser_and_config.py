@@ -60,10 +60,7 @@ def get_args() -> argparse.Namespace:
 def get_other_config() -> dict:
     other_config_dict = {
         "model_path": "./models/model_90_1000000_all",
-        "host_url": "https://api.test.ms.salusmo.euronetrt.hu",
-        "token": "nRYUakaQTdDQyy-PmYlVTIcZRwYvNmZsmGrD6YApvsxTniTghB8RsQZet3fIs95LUP1YSeCM-LQRsdhlrxRNx9ixk60mpcH5CL"
-                 "p9wqUHiDPu2wxKDOZVCJqsach8B9H5",
-
+        "host_url_and_token_path": "./host_url_and_token.json",
         "frequency": 25,  # Hz, T = 40 ms
         "frequency_check_eps": 3
     }
