@@ -52,6 +52,7 @@ def get_args() -> argparse.Namespace:
                         help='Time delay between two measurements in seconds.')
     parser.add_argument('--test_mode', default=False, action='store_true',  help='Run in test mode.')
     parser.add_argument('--discord', default=False, action='store_true', help='Run discord webhook.')
+    parser.add_argument('--local_mode', default=False, action='store_true', help='Local data flow through zmq.')
 
     args = parser.parse_args()
     return args

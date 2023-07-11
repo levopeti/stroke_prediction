@@ -1,8 +1,8 @@
 import traceback
-from pprint import pprint
-
 import pytz
+import zmq
 
+from pprint import pprint
 from discord import DiscordBot
 from mlp import MLP
 from datetime import datetime, timedelta
@@ -280,6 +280,54 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
             sleep(2 * 60)
 
 
+def main_loop_local_mode(model: MLP, config_dict: dict, *args, **kwargs):
+    timezone = pytz.timezone("Europe/Budapest")
+    mm = MeasurementManager(config_dict, timezone)
+
+    context = zmq.Context()
+    socket = context.socket(zmq.REQ)
+    socket.connect("tcp://localhost:5555")
+
+    # (re)start run_measurement.py
+    socket.send_string("restart")
+    print(socket.recv_string())
+
+    while True:
+        full_start = time()
+
+        # first pull is for getting the used ids
+        socket.send_string("get_measurement_ids")
+        measurement_ids = socket.recv_pyobj()
+        print("\nMeasurement ids to process: {}".format(measurement_ids))
+
+        for measurement_id in measurement_ids:
+            print("\nprocess measurement {}".format(measurement_id))
+            start = time()
+            socket.send_string(str(measurement_id))
+            data_list = socket.recv_pyobj()["measure"]
+
+            print("\nget data for prediction ({})".format(len(data_list)))
+
+            if len(data_list) > 0:
+                mm.add_data(measurement_id, data_list, datetime.now(timezone))
+
+            measurement = get_measurement(mm, measurement_id)
+
+            if measurement is None:
+                print("no prediction for measurement {}".format(measurement_id))
+                continue
+
+            prediction_dict = get_instances_and_make_predictions(model, measurement, config_dict)
+            # upload_prediction(prediction_dict, measurement_id)
+            print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
+
+        mm.drop_old_data()
+        get_data_info(mm.all_measurement_dict, "all")
+        if time() - full_start < 60:
+            print("2 minutes sleep")
+            sleep(10)
+
+
 if __name__ == "__main__":
     # TODO: time measurement
     _config_dict = get_config_dict()
@@ -288,12 +336,17 @@ if __name__ == "__main__":
 
     discord = DiscordBot(active=_config_dict["discord"])
 
+    if _config_dict["local_mode"]:
+        current_main_loop = main_loop_local_mode
+    else:
+        current_main_loop = main_loop
+
     try:
         while True:
             discord.send_message(fields=[{"name": "stroke ai has started",
                                           "value": "new session has started (in an infinity loop)",
                                           "inline": True}])
-            main_loop(_model, _configuration, _config_dict)
+            current_main_loop(_model, configuration=_configuration, config_dict=_config_dict)
             sleep(10)
     except Exception:
         print(traceback.format_exc())
