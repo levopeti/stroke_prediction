@@ -1,8 +1,8 @@
 import pytz
 from datetime import timedelta, datetime
 
-from api_utils import get_measurement_ids, get_configuration
-from general_utils import min_to_millisec, to_str_timestamp
+from utils.api_utils import get_measurement_ids, get_configuration
+from utils.general_utils import min_to_millisec, to_str_timestamp
 
 _config_dict = {"host_url_and_token_path": "./host_url_and_token.json"}
 configuration = get_configuration(_config_dict)

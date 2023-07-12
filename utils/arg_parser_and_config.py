@@ -4,6 +4,7 @@ import sys
 import subprocess
 import yaml
 import os
+import pytz
 
 
 def show_versions():
@@ -48,7 +49,7 @@ def get_args() -> argparse.Namespace:
     #                     help='Hours from now in the past to get the from timestamp.')
     # parser.add_argument('--interval_milliseconds', default=300000, type=int, help='Time interval in milliseconds.')
     parser.add_argument('--meas_length_min', default=90, type=int, help='Considered time for prediction in minutes.')
-    parser.add_argument('--inference_delta_sec', default=30, type=int,
+    parser.add_argument('--inference_step_size_sec', default=30, type=int,
                         help='Time delay between two measurements in seconds.')
     parser.add_argument('--test_mode', default=False, action='store_true',  help='Run in test mode.')
     parser.add_argument('--discord', default=False, action='store_true', help='Run discord webhook.')
@@ -63,7 +64,8 @@ def get_other_config() -> dict:
         "model_path": "./models/model_90_1000000_all",
         "host_url_and_token_path": "./host_url_and_token.json",
         "frequency": 25,  # Hz, T = 40 ms
-        "frequency_check_eps": 3
+        "frequency_check_eps": 3,  # ms
+        "timezone": pytz.timezone("Europe/Budapest")
     }
     return other_config_dict
 

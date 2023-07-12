@@ -5,6 +5,7 @@ from typing import Tuple
 
 from openapi_client import Configuration, ApiClient, ApiException
 from openapi_client.apis.tags.motion_scan_restapi_end_points_api import MotionScanRESTAPIEndPointsApi
+from utils.general_utils import to_str_timestamp
 
 
 def get_configuration(config_dict: dict) -> Configuration:
@@ -105,3 +106,30 @@ def save_predictions(configuration: Configuration, body: dict):
             print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
             raise Exception("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
 
+
+def upload_prediction(configuration: Configuration, prediction_dict: dict, measurement_id: str):
+    start = time()
+    predictions = list()
+    for i in range(len(prediction_dict["is_stroke"])):
+        if isinstance(prediction_dict["is_stroke"][i], str):
+            # error message
+            prediction = prediction_dict["is_stroke"][i]
+        else:
+            assert isinstance(prediction_dict["is_stroke"][i], bool)
+            prediction = "stroke" if prediction_dict["is_stroke"][i] else "ok"
+
+        predictions.append({
+            "prediction": prediction,
+            "probability": float(prediction_dict["probabilities"][i]),
+            "timestamp": to_str_timestamp(prediction_dict["timestamps"][i]),
+        })
+
+    _body = {
+        "predictions": predictions,
+        "measurementId": measurement_id,
+        "softwareVersion": "Predictor 1.0",
+        "APIVersion": "MotionScan API 1.0"
+    }
+    save_predictions(configuration, _body)
+    print("uploaded {} prediction(s) with measurement id {} ({:.0}s)".format(len(predictions), measurement_id,
+                                                                             time() - start))

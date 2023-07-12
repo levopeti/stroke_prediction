@@ -3,7 +3,7 @@ import numpy as np
 
 from termcolor import colored
 
-from general_utils import to_str_timestamp
+from utils.general_utils import to_str_timestamp
 from typing import Union
 
 
@@ -80,16 +80,20 @@ class Measurement(object):
         # TODO: check each key
 
     # #### checks for measurement ####
-    def check_frequency(self, expected_delta, eps):
-        for df in self.measurement_dict.values():
+    def check_frequency(self, expected_delta_ms: int, eps: int) -> bool:
+        for keys, df in self.measurement_dict.items():
             if df is not None:
                 time_stamps = df["timestamp_ms"].values
                 deltas = np.diff(time_stamps)
-                if np.any(deltas < expected_delta - eps) or np.any(deltas > expected_delta + eps):
+                if np.any(deltas < expected_delta_ms - eps) or np.any(deltas > expected_delta_ms + eps):
                     self.log_list.append(colored("frequency is not correct,"
-                                                 " min: {}, max: {}, avg: {}".format(np.min(deltas),
+                                                 " with key: {}"
+                                                 " min: {}, max: {}, avg: {}".format(keys,
+                                                                                     np.min(deltas),
                                                                                      np.max(deltas),
                                                                                      np.mean(deltas)), "red"))
+                    return False
+        return True
 
     def get_missing_keys(self) -> list:
         missing_keys = list()
@@ -97,6 +101,9 @@ class Measurement(object):
             if meas is None:
                 missing_keys.append(key)
         return missing_keys
+
+    def check_length(self, length: int) -> bool:
+        return (self.get_last_timestamp_ms() - self.get_first_timestamp_ms()) > length
 
     def print_log(self):
         for log in self.log_list:
@@ -235,8 +242,8 @@ class Measurement(object):
             if length > len(result):
                 raise NotEnoughData("After filtering we have less data ({}) than expected ({})".format(len(result),
                                                                                                        length))
-
-            result = result[-length:]
+            else:
+                result = result[-length:]
 
         assert len(result) > 0, "len(result) = 0"
         return result

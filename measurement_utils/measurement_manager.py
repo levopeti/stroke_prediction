@@ -1,20 +1,19 @@
 import pandas as pd
-import pytz
 
 from typing import Union
 from datetime import datetime, timedelta
 
-from general_utils import to_int_timestamp, to_str_timestamp, get_data_info
-from measurement import key_map
+from utils.general_utils import to_int_timestamp
+from measurement_utils.measurement import key_map
 
 pd.set_option('display.max_rows', 500)
 
 
 class MeasurementManager(object):
-    def __init__(self, config_dict: dict, timezone: pytz.timezone):
+    def __init__(self, config_dict: dict):
         self.config_dict = config_dict
         self.all_measurement_dict = dict()
-        self.timezone = timezone
+        self.timezone = config_dict["timezone"]
 
     def get_last_timestamp(self, measurement_id: str) -> Union[int, None]:
         if measurement_id in self.all_measurement_dict:
@@ -37,12 +36,15 @@ class MeasurementManager(object):
 
     def add_data(self, measurement_id: str, data_list: list, time_of_request: datetime):
         """ columns: limb, side, timestamp, type, x, y, z"""
+        if len(data_list) == 0:
+            return
 
         if measurement_id not in self.all_measurement_dict:
             self.all_measurement_dict[measurement_id] = pd.DataFrame()
 
         data_df = pd.DataFrame(data_list)
         data_df["timestamp_ms"] = data_df.apply(lambda row: to_int_timestamp(row.timestamp), axis=1)
+        # TODO: get rid of this
         data_df["keys_tuple"] = data_df.apply(lambda row: key_map[(row.side, row.limb, row.type)], axis=1)
         data_df["time_of_request"] = time_of_request
         # get_data_info({measurement_id: data_df}, "new")

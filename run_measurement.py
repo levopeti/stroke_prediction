@@ -1,14 +1,14 @@
+import argparse
 import random
 import pytz
 import zmq
 
-from pprint import pprint
 from datetime import datetime, timedelta
 
-# from openapi_client import Configuration, ApiClient, ApiException
-# from openapi_client.apis.tags.motion_scan_restapi_end_points_api import MotionScanRESTAPIEndPointsApi
-# from api_utils import get_configuration
-
+from openapi_client import ApiClient, ApiException
+from openapi_client.apis.tags.motion_scan_restapi_end_points_api import MotionScanRESTAPIEndPointsApi
+from utils.api_utils import get_configuration
+from utils.general_utils import to_str_timestamp
 
 key_list = [("l", "a", "a"),
             ("l", "a", "g"),
@@ -21,9 +21,9 @@ key_list = [("l", "a", "a"),
 
 
 
-def normal_mode(id_list: list):
-    timestamp_data = datetime.now()
-    print(timestamp_data.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z")
+def normal_mode(id_list: list, timezone):
+    timestamp_data = datetime.now(timezone)
+    print(to_str_timestamp(timestamp_data))
     time_stamp_dict = {m_id: timestamp_data for m_id in id_list}
     time_delta_millis = 40
 
@@ -33,7 +33,7 @@ def normal_mode(id_list: list):
             measure = list()
             for i in range(100):
                 time_stamp_dict[measurement_id] += timedelta(milliseconds=time_delta_millis)
-                timestamp_data_string = time_stamp_dict[measurement_id].strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+                timestamp_data_string = to_str_timestamp(time_stamp_dict[measurement_id])
 
                 for key in key_list:
                     measure.append({
@@ -71,7 +71,7 @@ def normal_mode(id_list: list):
                     print("Exception when calling MotionScanRESTAPIEndPointsApi->save_measurements: %s\n" % e)
             uploaded_data += 100
         print(uploaded_data / (25 * 60 * 60))
-        print(time_stamp_dict[id_list[0]].strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z")
+        print(to_str_timestamp(time_stamp_dict[id_list[0]]))
         print(id_list)
         print()
 
@@ -81,7 +81,7 @@ def local_mode(id_list, timezone):
         measure = list()
         for i in range(number_of_steps):
             time_stamp_dict[measurement_id] += time_delta_millis
-            timestamp_data_string = time_stamp_dict[measurement_id].strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+            timestamp_data_string = to_str_timestamp(time_stamp_dict[measurement_id])
 
             for key in key_list:
                 measure.append({
@@ -109,7 +109,7 @@ def local_mode(id_list, timezone):
     while True:
         time_delta_to_start = timedelta(minutes=90)
         start_timestamp = datetime.now(timezone) - time_delta_to_start
-        print("start ts: {}".format(start_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"))
+        print("start ts: {}".format(to_str_timestamp(start_timestamp)))
         time_stamp_dict = {m_id: start_timestamp for m_id in id_list}
         time_delta_millis = timedelta(milliseconds=40)
         steps_till_now = int(time_delta_to_start / time_delta_millis)
@@ -136,7 +136,7 @@ def local_mode(id_list, timezone):
                     # update always until now()
                     last_timestamp = time_stamp_dict[meas_id]
                     time_delta_to_start = datetime.now(timezone) - last_timestamp
-                    print("start ts: {}".format(last_timestamp.strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"))
+                    print("start ts: {}".format(to_str_timestamp(last_timestamp)))
                     steps_till_now = int(time_delta_to_start / time_delta_millis)
 
                 test_body = get_measurements(steps_till_now, measurement_id=int(message))
@@ -146,15 +146,21 @@ def local_mode(id_list, timezone):
                 socket.send_string("wrong message: {}".format(message))
 
 
-
-
 if __name__ == "__main__":
-    # _config_dict = {"host_url_and_token_path": "./host_url_and_token.json"}
-    # _configuration = get_configuration(_config_dict)
+    parser = argparse.ArgumentParser(description="Provide data for main.py.")
+    parser.add_argument("--local_mode", default=False, action="store_true", help="Local data flow through zmq.")
+    args = parser.parse_args()
+
+    _id_list = [5]  # [8, 9, 10] [5, 6, 7]
     _timezone = pytz.timezone("Europe/Budapest")
 
-    _id_list = [5, 6, 7]  # [8, 9, 10]
+    if args.local_mode:
+        local_mode(_id_list, _timezone)
+    else:
+        _config_dict = {"host_url_and_token_path": "./host_url_and_token.json"}
+        _configuration = get_configuration(_config_dict)
+        normal_mode(_id_list, _timezone)
 
-    # normal_mode(_id_list, _timezone)
-    local_mode(_id_list, _timezone)
+
+
 
