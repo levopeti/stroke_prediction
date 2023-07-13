@@ -71,13 +71,15 @@ def local_mode():
     socket = context.socket(zmq.PULL)
     socket.connect("tcp://localhost:5556")
 
-    prediction_body = socket.recv_pyobj()
+    while True:
+        prediction_body = socket.recv_pyobj()
 
-    if len(prediction_body["predictions"]) == 1:
-        pprint(prediction_body)
-    else:
-        print(prediction_body["measurementId"])
-        print(len(prediction_body["predictions"]))
+        if len(prediction_body["predictions"]) == 1:
+            pprint(prediction_body)
+        else:
+            pprint(prediction_body["predictions"])
+            print(prediction_body["measurementId"], len(prediction_body["predictions"]))
+            print()
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Provide data for main.py.")

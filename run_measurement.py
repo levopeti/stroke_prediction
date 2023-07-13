@@ -151,7 +151,7 @@ if __name__ == "__main__":
     parser.add_argument("--local_mode", default=False, action="store_true", help="Local data flow through zmq.")
     args = parser.parse_args()
 
-    _id_list = [5]  # [8, 9, 10] [5, 6, 7]
+    _id_list = [5, 6, 7]  # [8, 9, 10] [5, 6, 7]
     _timezone = pytz.timezone("Europe/Budapest")
 
     if args.local_mode:

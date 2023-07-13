@@ -3,7 +3,7 @@ from typing import Tuple, Union
 from ai_utils.mlp import MLP
 from measurement_utils.measurement import Measurement, NotEnoughData, TimeStampTooHigh, SynchronizationError
 from measurement_utils.measurement_manager import MeasurementManager
-from utils.general_utils import to_str_timestamp
+from utils.general_utils import to_str_timestamp, min_to_millisec
 
 
 def upload_error_message(error_code: str, measurement_id: str) -> dict:
@@ -75,8 +75,8 @@ def check_and_synch_measurement(measurement: Measurement, config_dict: dict) -> 
         return "synchron_NOK", "Error 4"
 
     # check if the measurement is long enough
-    length = config_dict["frequency"] * 60 * config_dict["meas_length_min"] + 1000
-    if not measurement.check_length(length):
+    length_ms = min_to_millisec(config_dict["meas_length_min"])
+    if not measurement.check_length(length_ms):
         return "length_NOK", "Error 5"
 
     return "OK", "NO Error"
@@ -96,8 +96,8 @@ def get_instances(measurement: Measurement,
     instance_list = list()
     inference_ts_list = list()
     i = 0
-    print("first_timestamp_ms: {}".format(to_str_timestamp(first_timestamp_ms)))
-    print("last_timestamp_ms: {}".format(to_str_timestamp(measurement.get_last_timestamp_ms())))
+    # print("first_timestamp_ms: {}".format(to_str_timestamp(first_timestamp_ms)))
+    # print("last_timestamp_ms: {}".format(to_str_timestamp(measurement.get_last_timestamp_ms())))
     while True:
         end_ts = int(first_timestamp_ms + inference_step_size_ms * i)
         i += 1
@@ -110,10 +110,10 @@ def get_instances(measurement: Measurement,
                 ratio_mean = measurement.get_limb_ratio_mean(key[0], key[1], length, end_ts=end_ts,
                                                              mean_first=False)
             except NotEnoughData as e:
-                print(e)
+                # print(e)
                 break
             except TimeStampTooHigh as e:
-                print(e)
+                # print(e)
                 return instance_list, inference_ts_list
 
             _instance.append([diff_mean, ratio_mean_first, ratio_mean])

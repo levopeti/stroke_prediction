@@ -5,6 +5,23 @@ from datetime import datetime
 from typing import Union
 
 
+def get_meas_info(meas):
+    print("measurement_dict")
+    for key, values_df in meas.measurement_dict.items():
+        print(key)
+        min_ts = values_df.timestamp_ms.min()
+        max_ts = values_df.timestamp_ms.max()
+        print("min ts: {}, {}".format(to_str_timestamp(min_ts), min_ts))
+        print("max ts: {}, {}".format(to_str_timestamp(max_ts), max_ts))
+        print("length: {}\n".format(len(values_df)))
+
+    print("diff_dict")
+    for key in meas.diff_dict.keys():
+        print(key)
+        meas.calculate_diff(key)
+        values = meas.diff_dict[key]
+        print("length: {}\n".format(len(values)))
+
 def to_int_timestamp(timestamp_str: str) -> int:
     """ timestamp in microseconds
         first case: 2023-04-28T14:47:00Z

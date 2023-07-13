@@ -7,7 +7,7 @@ from ai_utils.mlp import MLP
 from utils.discord import DiscordBot
 
 from utils.api_utils import get_measurement_ids, get_configuration, get_data_for_prediction, upload_prediction
-from utils.general_utils import to_str_timestamp, from_int_to_datetime, min_to_millisec, get_data_info
+from utils.general_utils import to_str_timestamp, from_int_to_datetime, min_to_millisec, get_data_info, get_meas_info
 from utils.arg_parser_and_config import get_config_dict
 from measurement_utils.measurement_manager import MeasurementManager
 from openapi_client import Configuration
@@ -313,6 +313,7 @@ def main_loop_local_mode(model: MLP, config_dict: dict, *args, **kwargs):
             mm.add_data(measurement_id, data_list, datetime.now(timezone))
             print("get_measurement")
             measurement = get_measurement(mm, measurement_id)
+            # get_meas_info(measurement)
 
             # keys_ok, frequency_ok, synchron_ok, length_ok
             print("check")

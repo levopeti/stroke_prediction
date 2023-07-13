@@ -208,6 +208,7 @@ class Measurement(object):
             timestamps = meas["timestamp_ms"].values
 
         if self.diff_dict[key] is not None:
+            # TODO: use_abs ???
             return self.diff_dict[key], timestamps
 
         x_y_z = [meas[("x", "y", "z")[i]] for i in range(3)]
