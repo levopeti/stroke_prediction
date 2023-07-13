@@ -6,10 +6,11 @@ from measurement_utils.measurement_manager import MeasurementManager
 from utils.general_utils import to_str_timestamp, min_to_millisec
 
 
-def upload_error_message(error_code: str, measurement_id: str) -> dict:
-    predictions = [{"probabilities": [1],
-                    "labels": [None],
-                    "is_stroke": [error_code]}]
+def make_error_body(error_code: str, measurement_id: str, last_ts: int) -> dict:
+    predictions = [{"prediction": error_code,
+                    "probability": 1.0,
+                    "timestamp": to_str_timestamp(last_ts)
+                    }]
 
     body = {
         "predictions": predictions,
@@ -19,7 +20,7 @@ def upload_error_message(error_code: str, measurement_id: str) -> dict:
     }
     return body
 
-def make_body_local(prediction_dict: dict, measurement_id: str):
+def make_body(prediction_dict: dict, measurement_id: str):
     predictions = list()
     for i in range(len(prediction_dict["is_stroke"])):
         prediction = "stroke" if prediction_dict["is_stroke"][i] else "ok"

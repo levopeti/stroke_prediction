@@ -101,7 +101,7 @@ def save_predictions(configuration: Configuration, body: dict):
                 header_params=header_params,
                 body=body,
             )
-            print(x)
+            # print(x)
         except ApiException as e:
             print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
             raise Exception("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)

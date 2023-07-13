@@ -1,5 +1,7 @@
 import argparse
 import random
+from time import time, sleep
+
 import pytz
 import zmq
 
@@ -22,17 +24,29 @@ key_list = [("l", "a", "a"),
 
 
 def normal_mode(id_list: list, timezone):
-    timestamp_data = datetime.now(timezone)
-    print(to_str_timestamp(timestamp_data))
-    time_stamp_dict = {m_id: timestamp_data for m_id in id_list}
-    time_delta_millis = 40
+    time_delta_to_start = timedelta(minutes=90)
+    start_timestamp = datetime.now(timezone) - time_delta_to_start
+    print("start ts: {}".format(to_str_timestamp(start_timestamp)))
+    time_stamp_dict = {m_id: start_timestamp for m_id in id_list}
+    time_delta_millis = timedelta(milliseconds=40)
+    # steps_till_now = int(time_delta_to_start / time_delta_millis)
+    # first_request = {m_id: True for m_id in id_list}
+
+    # timestamp_data = datetime.now(timezone)
+    # print(to_str_timestamp(timestamp_data))
+    # time_stamp_dict = {m_id: timestamp_data for m_id in id_list}
+    # time_delta_millis = 40
 
     uploaded_data = 0
     while True:
+        start = time()
         for measurement_id in id_list:
             measure = list()
+            if time_stamp_dict[measurement_id] + (time_delta_millis * 100) > datetime.now(timezone):
+                continue
+
             for i in range(100):
-                time_stamp_dict[measurement_id] += timedelta(milliseconds=time_delta_millis)
+                time_stamp_dict[measurement_id] += time_delta_millis
                 timestamp_data_string = to_str_timestamp(time_stamp_dict[measurement_id])
 
                 for key in key_list:
@@ -74,6 +88,9 @@ def normal_mode(id_list: list, timezone):
         print(to_str_timestamp(time_stamp_dict[id_list[0]]))
         print(id_list)
         print()
+        if time() - start < 60:
+            print("1 minutes sleep")
+            sleep(60)
 
 
 def local_mode(id_list, timezone):

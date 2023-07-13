@@ -6,12 +6,12 @@ from datetime import datetime, timedelta
 from ai_utils.mlp import MLP
 from utils.discord import DiscordBot
 
-from utils.api_utils import get_measurement_ids, get_configuration, get_data_for_prediction, upload_prediction
-from utils.general_utils import to_str_timestamp, from_int_to_datetime, min_to_millisec, get_data_info, get_meas_info
+from utils.api_utils import get_measurement_ids, get_configuration, get_data_for_prediction, upload_prediction, save_predictions
+from utils.general_utils import to_str_timestamp, from_int_to_datetime, min_to_millisec, get_data_info
 from utils.arg_parser_and_config import get_config_dict
 from measurement_utils.measurement_manager import MeasurementManager
 from openapi_client import Configuration
-from utils.main_loop_utils import get_measurement, get_instances_and_make_predictions, check_and_synch_measurement, upload_error_message, get_instances, make_body_local
+from utils.main_loop_utils import get_measurement, check_and_synch_measurement, make_error_body, get_instances, make_body
 
 
 # # def get_measurements(am_df: AllMeasurementsDF) -> List[Measurement]:
@@ -225,7 +225,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
         full_start = time()
         if measurement_ids is None:
             print("\nNo measurements in the last {} minutes ({})".format(config_dict["meas_length_to_keep_min"],
-                                                                       to_str_timestamp(now_ts)))
+                                                                         to_str_timestamp(now_ts)))
             sleep(5 * 60)
             continue
 
@@ -250,24 +250,51 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
                                                                   min_to_millisec(config_dict["interval_min"]))
                 print("\nget data for prediction ({}), from {} to {} ({:.2f}s)".format(len(data_list), from_ts, to_ts,
                                                                                        elapsed_time))
-
-                if len(data_list) > 0:
-                    mm.add_data(measurement_id, data_list, datetime.now(timezone))
+                print("add_data")
+                mm.add_data(measurement_id, data_list, datetime.now(timezone))
 
                 from_ts += timedelta(minutes=config_dict["interval_min"])
-
                 if from_ts > datetime.now(timezone):
                     # from_ts is in the future
                     break
 
+            print("get_measurement")
             measurement = get_measurement(mm, measurement_id)
+            # get_meas_info(measurement)
 
-            if measurement is None:
-                print("no prediction for measurement {}".format(measurement_id))
-                continue
+            # keys_ok, frequency_ok, synchron_ok, length_ok
+            print("check")
+            check_message, error_code = check_and_synch_measurement(measurement, config_dict)
+            if check_message != "OK":
+                print(error_code)
+                if error_code != "Error 1":
+                    body = make_error_body(error_code, measurement_id, measurement.get_last_timestamp_ms())
+                else:
+                    print("There is no measurement!")
+                    continue
+            else:
+                print("check is ok")
+                instances, inference_ts_list = get_instances(measurement, config_dict)
+                prediction_dict = model.compute_prediction(instances, inference_ts_list)
+                body = make_body(prediction_dict, measurement_id)
 
-            prediction_dict = get_instances_and_make_predictions(model, measurement, config_dict)
-            upload_prediction(configuration, prediction_dict, measurement_id)
+            #     if len(data_list) > 0:
+            #         mm.add_data(measurement_id, data_list, datetime.now(timezone))
+            #
+
+            #
+            # measurement = get_measurement(mm, measurement_id)
+            #
+            # if measurement is None:
+            #     print("no prediction for measurement {}".format(measurement_id))
+            #     continue
+            #
+            # prediction_dict = get_instances_and_make_predictions(model, measurement, config_dict)
+            # upload_prediction(configuration, prediction_dict, measurement_id)
+            save_predictions(configuration, body)
+            print("uploaded {} prediction(s) with measurement id {} ({:.0f}s)".format(len(body["predictions"]),
+                                                                                      measurement_id,
+                                                                                      time() - start))
             print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
 
         mm.drop_old_data()
@@ -320,12 +347,12 @@ def main_loop_local_mode(model: MLP, config_dict: dict, *args, **kwargs):
             check_message, error_code = check_and_synch_measurement(measurement, config_dict)
             if check_message != "OK":
                 print(error_code)
-                body = upload_error_message(error_code, measurement_id)
+                body = make_error_body(error_code, measurement_id, measurement.get_last_timestamp_ms())
             else:
                 print("check is ok")
                 instances, inference_ts_list = get_instances(measurement, config_dict)
                 prediction_dict = model.compute_prediction(instances, inference_ts_list)
-                body = make_body_local(prediction_dict, measurement_id)
+                body = make_body(prediction_dict, measurement_id)
 
             socket_push.send_pyobj(body)
             print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
@@ -366,5 +393,3 @@ if __name__ == "__main__":
         discord.send_message(fields=[{"name": "stroke ai has stopped",
                                       "value": "stopped by keyboard interrupt (infinity loop ends)",
                                       "inline": True}])
-
-
