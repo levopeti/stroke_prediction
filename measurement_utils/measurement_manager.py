@@ -22,6 +22,7 @@ class MeasurementManager(object):
             return None
 
     def drop_old_data(self):
+        meas_ids_to_drop = list()
         for measurement_id in self.all_measurement_dict.keys():
             ts_now = datetime.now(self.timezone)
             until_ok_ts = ts_now - timedelta(minutes=self.config_dict["meas_length_to_keep_min"])
@@ -29,9 +30,12 @@ class MeasurementManager(object):
             self.all_measurement_dict[measurement_id] = df[df["timestamp_ms"] >= until_ok_ts.timestamp() * 1000]
 
             if len(self.all_measurement_dict[measurement_id]) == 0:
-                del self.all_measurement_dict[measurement_id]
+                meas_ids_to_drop.append(measurement_id)
             else:
                 assert self.all_measurement_dict[measurement_id]["timestamp_ms"].min() >= until_ok_ts.timestamp() * 1000
+
+        for measurement_id in meas_ids_to_drop:
+            del self.all_measurement_dict[measurement_id]
 
     def add_data(self, measurement_id: str, data_list: list, time_of_request: datetime):
         """ columns: limb, side, timestamp, type, x, y, z"""
