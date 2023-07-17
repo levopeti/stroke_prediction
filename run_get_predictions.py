@@ -14,6 +14,7 @@ from utils.general_utils import min_to_millisec, to_str_timestamp
 from openapi_client.apis.tags import motion_scan_restapi_end_points_api
 from utils.api_utils import get_configuration
 
+
 def normal_mode():
     def get_prediction(_timestamp_data_string, _interval):
         start = time()
@@ -51,7 +52,6 @@ def normal_mode():
     while True:
         timestamp_data = datetime.now(_timezone) - timedelta(minutes=minutes)
         timestamp_data_string = to_str_timestamp(timestamp_data)
-        print(timestamp_data_string)
         interval = min_to_millisec(minutes)
         api_response, elapsed_time = get_prediction(timestamp_data_string, interval)
 
@@ -90,6 +90,7 @@ def local_mode():
             print(prediction_body["measurementId"], len(prediction_body["predictions"]))
             print()
 
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Provide data for main.py.")
     parser.add_argument("--local_mode", default=False, action="store_true", help="Local data flow through zmq.")
@@ -99,3 +100,4 @@ if __name__ == "__main__":
         local_mode()
     else:
         normal_mode()
+

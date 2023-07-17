@@ -6,15 +6,18 @@ from datetime import datetime, timedelta
 from ai_utils.mlp import MLP
 from utils.discord import DiscordBot
 
-from utils.api_utils import get_measurement_ids, get_configuration, get_data_for_prediction, upload_prediction, save_predictions
-from utils.general_utils import to_str_timestamp, from_int_to_datetime, min_to_millisec, get_data_info
+from utils.api_utils import get_measurement_ids, get_configuration, get_data_for_prediction, upload_prediction, \
+    save_predictions
+from utils.general_utils import to_str_timestamp, from_int_to_datetime, min_to_millisec, get_data_info, \
+    write_discord_log
 from utils.arg_parser_and_config import get_config_dict
 from measurement_utils.measurement_manager import MeasurementManager
 from openapi_client import Configuration
-from utils.main_loop_utils import get_measurement, check_and_synch_measurement, make_error_body, get_instances, make_body
+from utils.main_loop_utils import get_measurement, check_and_synch_measurement, make_error_body, get_instances, \
+    make_body
 
 
-def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
+def main_loop(model: MLP, configuration: Configuration, config_dict: dict, discord: DiscordBot):
     timezone = config_dict["timezone"]
     mm = MeasurementManager(config_dict)
 
@@ -32,10 +35,13 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
             sleep(5 * 60)
             continue
 
-        print("\nMeasurement ids to process: {} ({})".format(measurement_ids, to_str_timestamp(now_ts)))
+        # print("\nMeasurement ids to process: {} ({})".format(measurement_ids, to_str_timestamp(now_ts)))
+        write_discord_log("\nMeasurement ids to process: {} ({})".format(measurement_ids, to_str_timestamp(now_ts)),
+                          discord)
 
         for measurement_id in measurement_ids:
-            print("\nprocess measurement {}".format(measurement_id))
+            # print("\nprocess measurement {}".format(measurement_id))
+            write_discord_log("\nprocess measurement {}".format(measurement_id), discord)
             start = time()
             from_ts = from_int_to_datetime(mm.get_last_timestamp(measurement_id))
 
@@ -67,13 +73,15 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
 
             # keys_ok, frequency_ok, synchron_ok, length_ok
             print("check")
-            check_message, error_code = check_and_synch_measurement(measurement, config_dict)
+            check_message, error_code = check_and_synch_measurement(measurement, config_dict, discord)
             if check_message != "OK":
-                print(error_code)
+                # print(error_code)
+                write_discord_log(error_code, discord)
                 if error_code != "Error 1":
                     body = make_error_body(error_code, measurement_id, measurement.get_last_timestamp_ms())
                 else:
-                    print("There is no measurement!")
+                    # print("There is no measurement!")
+                    write_discord_log("There is no measurement!", discord)
                     continue
             else:
                 print("check is ok")
@@ -81,33 +89,27 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
                 prediction_dict = model.compute_prediction(instances, inference_ts_list)
                 body = make_body(prediction_dict, measurement_id)
 
-            #     if len(data_list) > 0:
-            #         mm.add_data(measurement_id, data_list, datetime.now(timezone))
-            #
-
-            #
-            # measurement = get_measurement(mm, measurement_id)
-            #
-            # if measurement is None:
-            #     print("no prediction for measurement {}".format(measurement_id))
-            #     continue
-            #
-            # prediction_dict = get_instances_and_make_predictions(model, measurement, config_dict)
-            # upload_prediction(configuration, prediction_dict, measurement_id)
             save_predictions(configuration, body)
-            print("uploaded {} prediction(s) with measurement id {} ({:.0f}s)".format(len(body["predictions"]),
-                                                                                      measurement_id,
-                                                                                      time() - start))
-            print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
+            # print("uploaded {} prediction(s) with measurement id {} ({:.0f}s)".format(len(body["predictions"]),
+            #                                                                           measurement_id,
+            #                                                                           time() - start))
+            write_discord_log(
+                "uploaded {} prediction(s) with measurement id {} ({:.0f}s)".format(len(body["predictions"]),
+                                                                                    measurement_id,
+                                                                                    time() - start), discord)
+            # print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
+            write_discord_log(
+                "process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start), discord)
 
         mm.drop_old_data()
         get_data_info(mm.all_measurement_dict, "all")
         if time() - full_start < 60:
-            print("2 minutes sleep")
+            # print("2 minutes sleep")
+            write_discord_log("2 minutes sleep", discord)
             sleep(2 * 60)
 
 
-def main_loop_local_mode(model: MLP, config_dict: dict, *args, **kwargs):
+def main_loop_local_mode(model: MLP, config_dict: dict, discord: DiscordBot, *args, **kwargs):
     timezone = config_dict["timezone"]
     mm = MeasurementManager(config_dict)
 
@@ -147,7 +149,7 @@ def main_loop_local_mode(model: MLP, config_dict: dict, *args, **kwargs):
 
             # keys_ok, frequency_ok, synchron_ok, length_ok
             print("check")
-            check_message, error_code = check_and_synch_measurement(measurement, config_dict)
+            check_message, error_code = check_and_synch_measurement(measurement, config_dict, discord)
             if check_message != "OK":
                 print(error_code)
                 body = make_error_body(error_code, measurement_id, measurement.get_last_timestamp_ms())
@@ -173,26 +175,27 @@ if __name__ == "__main__":
     _configuration = get_configuration(_config_dict)
     _model = MLP(_config_dict)
 
-    discord = DiscordBot(active=_config_dict["discord"])
+    _discord = DiscordBot(active=_config_dict["discord"])
 
     if _config_dict["local_mode"]:
         current_main_loop = main_loop_local_mode
     else:
         current_main_loop = main_loop
 
-    try:
-        while True:
-            discord.send_message(fields=[{"name": "stroke ai has started",
-                                          "value": "new session has started (in an infinity loop)",
-                                          "inline": True}])
-            current_main_loop(_model, configuration=_configuration, config_dict=_config_dict)
+    while True:
+        try:
+            _discord.send_message(fields=[{"name": "stroke ai has started",
+                                           "value": "new session has started (in an infinity loop)",
+                                           "inline": True}])
+            current_main_loop(_model, configuration=_configuration, config_dict=_config_dict, discord=_discord)
             sleep(10)
-    except Exception:
-        print(traceback.format_exc())
-        discord.send_message(fields=[{"name": "stroke ai has stopped",
-                                      "value": "error: {}".format(traceback.format_exc()),
-                                      "inline": True}])
-    except KeyboardInterrupt:
-        discord.send_message(fields=[{"name": "stroke ai has stopped",
-                                      "value": "stopped by keyboard interrupt (infinity loop ends)",
-                                      "inline": True}])
+        except Exception:
+            print(traceback.format_exc())
+            _discord.send_message(fields=[{"name": "stroke ai has stopped",
+                                           "value": "error: {}".format(traceback.format_exc()),
+                                           "inline": True}])
+        except KeyboardInterrupt:
+            _discord.send_message(fields=[{"name": "stroke ai has stopped",
+                                           "value": "stopped by keyboard interrupt (infinity loop ends)",
+                                           "inline": True}])
+            break

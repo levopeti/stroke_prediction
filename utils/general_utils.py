@@ -3,6 +3,17 @@ import numpy as np
 from termcolor import colored
 from datetime import datetime
 from typing import Union
+from utils.discord import DiscordBot
+
+
+def write_discord_log(log: str, discord: DiscordBot, print_out: bool = True):
+    if discord.active:
+        discord.send_message(fields=[{"name": "log",
+                                      "value": log,
+                                      "inline": True}])
+
+    if print_out:
+        print(log)
 
 
 def get_meas_info(meas):
@@ -21,6 +32,7 @@ def get_meas_info(meas):
         meas.calculate_diff(key)
         values = meas.diff_dict[key]
         print("length: {}\n".format(len(values)))
+
 
 def to_int_timestamp(timestamp_str: str) -> int:
     """ timestamp in microseconds
