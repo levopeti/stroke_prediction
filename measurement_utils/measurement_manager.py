@@ -71,3 +71,10 @@ class MeasurementManager(object):
         else:
             print("{} is not found in measurement manager ({})".format(measurement_id,
                                                                        self.all_measurement_dict.keys()))
+
+    def save_each_measurement(self):
+        for measurement_id in self.all_measurement_dict.keys():
+            path = "{}_{}.csv".format(measurement_id, datetime.now(self.timezone))
+            self.all_measurement_dict[measurement_id].to_csv(path, index=False)
+            print("saved measurement with path: {}".format(path))
+

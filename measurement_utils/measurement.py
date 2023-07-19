@@ -87,10 +87,10 @@ class Measurement(object):
                 time_stamps = df["timestamp_ms"].values
                 deltas = np.diff(time_stamps)
                 if np.any(deltas < expected_delta_ms - eps) or np.any(deltas > expected_delta_ms + eps):
-                    log = "frequency is not correct, with key: {} min: {}, max: {}, avg: {}".format(keys,
-                                                                                                    np.min(deltas),
-                                                                                                    np.max(deltas),
-                                                                                                    np.mean(deltas))
+                    log = "frequency is not correct, with key: {} min: {}, max: {}, avg: {:.2f}".format(keys,
+                                                                                                        np.min(deltas),
+                                                                                                        np.max(deltas),
+                                                                                                        np.mean(deltas))
                     write_discord_log(log, discord)
                     self.log_list.append(colored(log, "red"))
                     return False

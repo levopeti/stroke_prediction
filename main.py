@@ -101,6 +101,9 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict, disco
             write_discord_log(
                 "process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start), discord)
 
+        if config_dict["save_df"]:
+            mm.save_each_measurement()
+
         mm.drop_old_data()
         get_data_info(mm.all_measurement_dict, "all")
         if time() - full_start < 60:

@@ -43,17 +43,13 @@ def get_args() -> argparse.Namespace:
     parser = argparse.ArgumentParser(description='Run AI to predict strokes.')
     parser.add_argument('--meas_length_to_keep_min', default=100, type=int, help='Only keep this time range until now.')
     parser.add_argument('--interval_min', default=30, type=int, help='Time chunk length to get the data.')
-
-
-    # parser.add_argument('--timedelta_from_now_h', default=0, type=float,
-    #                     help='Hours from now in the past to get the from timestamp.')
-    # parser.add_argument('--interval_milliseconds', default=300000, type=int, help='Time interval in milliseconds.')
     parser.add_argument('--meas_length_min', default=90, type=int, help='Considered time for prediction in minutes.')
     parser.add_argument('--inference_step_size_sec', default=30, type=int,
                         help='Time delay between two measurements in seconds.')
     parser.add_argument('--test_mode', default=False, action='store_true',  help='Run in test mode.')
     parser.add_argument('--discord', default=False, action='store_true', help='Run discord webhook.')
     parser.add_argument('--local_mode', default=False, action='store_true', help='Local data flow through zmq.')
+    parser.add_argument('--save_df', default=False, action='store_true', help='Save each measurement df into csv.')
 
     args = parser.parse_args()
     return args
