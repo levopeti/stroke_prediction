@@ -217,7 +217,6 @@ class Measurement(object):
                 _meas_df = pd.read_csv(self.measurement_path_dict[_key])  # , usecols=columns_key_dict[_key[2]])
                 column_mask = _meas_df.columns.str.contains("axis|epoc")
                 _meas_df = _meas_df[_meas_df.columns[column_mask]]
-                print("bbb")
             except ValueError:
                 _meas_df = pd.read_csv(self.measurement_path_dict[_key])
                 print(columns_key_dict[_key[2]])
@@ -227,11 +226,7 @@ class Measurement(object):
                 _meas_df.rename(columns={c_name: c_name.split(' ')[0]}, inplace=True)
 
             _meas_df.rename(columns={"epoc": "epoch"}, inplace=True)
-
-            try:
-                _meas_df = cut_valid_part(_meas_df)
-            except Exception:
-                breakpoint()
+            _meas_df = cut_valid_part(_meas_df)
             return _meas_df
 
         def cut_for_mutual_part(_measurement_dict):
