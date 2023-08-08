@@ -214,11 +214,14 @@ class Measurement(object):
 
         def read_csv(_key):
             try:
-                _meas_df = pd.read_csv(self.measurement_path_dict[_key], usecols=columns_key_dict[_key[2]])
+                _meas_df = pd.read_csv(self.measurement_path_dict[_key])  # , usecols=columns_key_dict[_key[2]])
+                column_mask = _meas_df.columns.str.contains("axis|epoc")
+                _meas_df = _meas_df[_meas_df.columns[column_mask]]
             except ValueError:
                 _meas_df = pd.read_csv(self.measurement_path_dict[_key])
                 print(columns_key_dict[_key[2]])
                 raise ValueError("{} could not be loaded because of columns:\n{}\nexpected: {}".format(self.measurement_name, _meas_df.columns, columns_key_dict[_key[2]]))
+
             for c_name in _meas_df.columns:
                 _meas_df.rename(columns={c_name: c_name.split(' ')[0]}, inplace=True)
                 
