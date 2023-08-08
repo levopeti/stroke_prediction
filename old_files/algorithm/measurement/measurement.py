@@ -228,8 +228,11 @@ class Measurement(object):
                 
                 if c_name == "epoc":
                     _meas_df.rename(columns={"epoc": "epoch"}, inplace=True)
-                    
-            _meas_df = cut_valid_part(_meas_df)
+
+            try:
+                _meas_df = cut_valid_part(_meas_df)
+            except Exception:
+                breakpoint()
             return _meas_df
 
         def cut_for_mutual_part(_measurement_dict):
