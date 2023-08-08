@@ -225,9 +225,8 @@ class Measurement(object):
 
             for c_name in _meas_df.columns:
                 _meas_df.rename(columns={c_name: c_name.split(' ')[0]}, inplace=True)
-                
-                if c_name == "epoc":
-                    _meas_df.rename(columns={"epoc": "epoch"}, inplace=True)
+
+            _meas_df.rename(columns={"epoc": "epoch"}, inplace=True)
 
             try:
                 _meas_df = cut_valid_part(_meas_df)
