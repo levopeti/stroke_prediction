@@ -217,6 +217,7 @@ class Measurement(object):
                 _meas_df = pd.read_csv(self.measurement_path_dict[_key])  # , usecols=columns_key_dict[_key[2]])
                 column_mask = _meas_df.columns.str.contains("axis|epoc")
                 _meas_df = _meas_df[_meas_df.columns[column_mask]]
+                print("bbb")
             except ValueError:
                 _meas_df = pd.read_csv(self.measurement_path_dict[_key])
                 print(columns_key_dict[_key[2]])
