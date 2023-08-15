@@ -173,8 +173,11 @@ class Measurement(object):
             np.datetime64 ({}, {})".format(type(self.valid_end_time), self.valid_end_time))
 
     def print_log(self):
-        print(colored("### {} ({}, {}) ###".format(self.measurement_name, *[self.get_limb_class_value("arm"),
-                                                                            self.get_limb_class_value("leg")]), "blue"))
+        print(colored("### {} (la: {}, ll: {}, ra: {}, rl: {}) ###".format(self.measurement_name,
+                                                                           *[self.class_value_dict[("left", "arm")],
+                                                                             self.class_value_dict[("left", "leg")],
+                                                                             self.class_value_dict[("right", "arm")],
+                                                                             self.class_value_dict[("right", "leg")]]), "blue"))
         for log in self.log_list:
             print(log)
 
