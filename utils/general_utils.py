@@ -1,7 +1,7 @@
 import numpy as np
 
 from termcolor import colored
-from datetime import datetime
+from datetime import datetime, timedelta
 from typing import Union
 from utils.discord import DiscordBot
 
@@ -67,6 +67,10 @@ def hour_to_millisec(hour: Union[int, float]) -> int:
 def min_to_millisec(minute: Union[int, float]) -> int:
     return int(minute * 60 * 1000)
 
+def get_length_from_timestamps(start_ts: int, end_ts: int) -> timedelta:
+    start = datetime.fromtimestamp(start_ts / 1000)
+    end = datetime.fromtimestamp(end_ts / 1000)
+    return end- start
 
 def get_data_info(data_dict: dict, prefix: str = ""):
     """ columns: limb, side, timestamp, type, x, y, z, timestamp_ms, keys_tuple"""
