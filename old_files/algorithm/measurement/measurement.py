@@ -131,11 +131,11 @@ class Measurement(object):
 
         self.log_list.append(colored("no limb with class 5".format(self.measurement_name), "red"))
 
-    def check_loading(self):
+    def check_loading(self, only_valid=True):
         for k in self.measurement_path_dict.keys():
             if k is not None:
                 try:
-                    self.get_measurement_df(k, only_valid=True)
+                    self.get_measurement_df(k, only_valid=only_valid)
                 except ValueError as e:
                     self.log_list.append(colored("{}, {}, {}".format(self.measurement_name,
                                                                      self.measurement_path_dict[k], e), "red"))
