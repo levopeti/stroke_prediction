@@ -6,7 +6,7 @@ from datetime import datetime
 from termcolor import colored
 from random import randint
 
-from utils.general_utils import min_to_millisec
+from ....utils.general_utils import min_to_millisec
 from .get_measurement_utils import read_csv, synchronize
 
 class Measurement(object):
