@@ -6,8 +6,7 @@ from datetime import datetime
 from termcolor import colored
 from random import randint
 
-from ....utils.general_utils import min_to_millisec
-from .get_measurement_utils import read_csv, synchronize
+from .get_measurement_utils import read_csv, synchronize, min_to_millisec
 
 class Measurement(object):
     def __init__(self, measurement_name, row_id, neurology_df, synchronizing=True, lightweight=False, ratio=None):

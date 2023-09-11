@@ -1,6 +1,11 @@
 import pandas as pd
+
+from typing import Union
 from termcolor import colored
 
+
+def min_to_millisec(minute: Union[int, float]) -> int:
+    return int(minute * 60 * 1000)
 
 def cut_valid_part(_meas_df, meas, only_valid):
     if only_valid and meas.valid_start_time is not None and meas.valid_end_time is not None:
