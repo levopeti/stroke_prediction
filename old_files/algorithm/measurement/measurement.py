@@ -1,10 +1,13 @@
-import pandas as pd
+from typing import Union
+
 import numpy as np
 
 from datetime import datetime
 from termcolor import colored
 from random import randint
 
+from utils.general_utils import min_to_millisec
+from .get_measurement_utils import read_csv, synchronize
 
 class Measurement(object):
     def __init__(self, measurement_name, row_id, neurology_df, synchronizing=True, lightweight=False, ratio=None):
@@ -207,94 +210,22 @@ class Measurement(object):
         columns_key_dict = {"acc": ("epoch (ms)", "epoc (ms)", "x-axis (g)", "y-axis (g)", "z-axis (g)"),
                             "gyr": ("epoch (ms)", "epoc (ms)", "x-axis (deg/s)", "y-axis (deg/s)", "z-axis (deg/s)")}
 
-        def cut_valid_part(_meas_df):
-            if only_valid and self.valid_start_time is not None and self.valid_end_time is not None:
-                # _meas_df = _meas_df[_meas_df["epoch"] > self.valid_start_time.timestamp() * 1000]
-                # _meas_df = _meas_df[_meas_df["epoch"] < self.valid_end_time.timestamp() * 1000]
-                _meas_df = _meas_df[_meas_df["epoch"] > self.valid_start_time]
-                _meas_df = _meas_df[_meas_df["epoch"] < self.valid_end_time]
-            return _meas_df
-
-        def read_csv(_key):
-            try:
-                _meas_df = pd.read_csv(self.measurement_path_dict[_key])  # , usecols=columns_key_dict[_key[2]])
-                column_mask = _meas_df.columns.str.contains("axis|epoc")
-                _meas_df = _meas_df[_meas_df.columns[column_mask]]
-            except ValueError:
-                _meas_df = pd.read_csv(self.measurement_path_dict[_key])
-                print(columns_key_dict[_key[2]])
-                raise ValueError("{} could not be loaded because of columns:\n{}\nexpected: {}".format(self.measurement_name, _meas_df.columns, columns_key_dict[_key[2]]))
-
-            for c_name in _meas_df.columns:
-                _meas_df.rename(columns={c_name: c_name.split(' ')[0]}, inplace=True)
-
-            _meas_df.rename(columns={"epoc": "epoch"}, inplace=True)
-            _meas_df = cut_valid_part(_meas_df)
-            return _meas_df
-
-        def cut_for_mutual_part(_measurement_dict):
-            min_ts = 0
-            max_ts = float('inf')
-
-            for meas in _measurement_dict.values():
-                if meas["epoch"].min() > min_ts:
-                    min_ts = meas["epoch"].min()
-
-                if meas["epoch"].max() < max_ts:
-                    max_ts = meas["epoch"].max()
-
-            for _k, meas in _measurement_dict.items():
-                # print(len(meas[(meas["epoch"] >= min_ts) & (meas["epoch"] <= max_ts)]))
-                _measurement_dict[_k] = meas[(meas["epoch"] >= min_ts) & (meas["epoch"] <= max_ts)]
-
-            return _measurement_dict
-
-        def synchronize(_measurement_dict):
-            _measurement_dict = cut_for_mutual_part(_measurement_dict)
-
-            base_df = None
-            for _k, _df in _measurement_dict.items():
-                if base_df is None:
-                    base_df = _df.sort_values('epoch')
-                else:
-                    _df = _df.sort_values('epoch')
-                    merged_df = pd.merge_asof(base_df, _df, on="epoch", tolerance=40, direction='nearest')
-                    assert merged_df.isna().sum().sum() == 0
-
-                    columns_for_drop = list()
-                    for c_name in merged_df.columns:
-                        if c_name.find("_x") != -1:
-                            columns_for_drop.append(c_name)
-                    merged_df.drop(columns_for_drop, inplace=True, axis=1)
-
-                    # remove _y
-                    for c_name in merged_df.columns:
-                        if c_name.find("_y") != -1:
-                            merged_df.rename(columns={c_name: c_name[:-2]}, inplace=True)
-
-                    _measurement_dict[_k] = merged_df
-
-            for _k, _df in _measurement_dict.items():
-                if len(_df) == 0:
-                    print(colored("zero length of data {}, {}".format(self.measurement_name, _k), "red"))
-            return _measurement_dict
-
         if not self.lightweight and self.measurement_dict[key] is not None:
             meas_df = self.measurement_dict[key]
         else:
             if self.synchronizing:
                 tmp_measurement_dict = dict()
                 for k in self.measurement_path_dict.keys():
-                    meas_df = read_csv(k)
+                    meas_df = read_csv(k, self, columns_key_dict, only_valid)
                     tmp_measurement_dict[k] = meas_df
 
-                tmp_measurement_dict = synchronize(tmp_measurement_dict)
+                tmp_measurement_dict = synchronize(tmp_measurement_dict, self)
                 meas_df = tmp_measurement_dict[key]
 
                 if not self.lightweight:
                     self.measurement_dict = tmp_measurement_dict
             else:
-                meas_df = read_csv(key)
+                meas_df = read_csv(key, self, columns_key_dict, only_valid)
                 if not self.lightweight:
                     self.measurement_dict[key] = meas_df
 
@@ -324,6 +255,11 @@ class Measurement(object):
                      (right_meas["epoch"] <= left_meas["epoch"].max())
 
         return left_mask, right_mask
+
+    def shift_all_measurements(self, delay_min: Union[int, float]):
+        for key in self.measurement_dict.keys():
+            assert self.measurement_dict[key] is not None, "self.measurement_dict[{}] is None".format(key)
+            self.measurement_dict[key] += min_to_millisec(delay_min)
 
     def calculate_diff(self, key, use_abs=True, only_valid=True):
         if not self.lightweight and self.diff_dict[key] is not None:
