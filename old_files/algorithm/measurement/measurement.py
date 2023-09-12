@@ -258,7 +258,7 @@ class Measurement(object):
     def shift_all_measurements(self, delay_min: Union[int, float]):
         for key in self.measurement_dict.keys():
             assert self.measurement_dict[key] is not None, "self.measurement_dict[{}] is None".format(key)
-            self.measurement_dict[key] += min_to_millisec(delay_min)
+            self.measurement_dict[key]["epoch"] += min_to_millisec(delay_min)
 
     def calculate_diff(self, key, use_abs=True, only_valid=True):
         if not self.lightweight and self.diff_dict[key] is not None:
