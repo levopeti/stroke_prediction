@@ -6,6 +6,7 @@ from typing import Tuple
 from openapi_client import Configuration, ApiClient, ApiException
 from openapi_client.apis.tags.motion_scan_restapi_end_points_api import MotionScanRESTAPIEndPointsApi
 from utils.general_utils import to_str_timestamp
+from utils.log_maker import write_log
 
 
 def get_configuration(config_dict: dict) -> Configuration:
@@ -84,7 +85,9 @@ def get_predictions_from_time_point(configuration: Configuration, _from: str, _i
                 header_params=header_params,
             )
         except ApiException as e:
-            print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
+            # print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
+            write_log("python_api.txt", "Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e,
+                      title="GetPred", print_out=True, color="red", add_date=True)
 
         return json.loads(api_response.response.data)
 
@@ -103,7 +106,9 @@ def save_predictions(configuration: Configuration, body: dict):
             )
             # print(x)
         except ApiException as e:
-            print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
+            # print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
+            write_log("python_api.txt", "Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e,
+                      title="SavePred", print_out=True, color="red", add_date=True)
             raise Exception("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
 
 

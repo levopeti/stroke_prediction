@@ -5,6 +5,7 @@ from datetime import datetime, timedelta
 
 from utils.general_utils import to_int_timestamp
 from measurement_utils.measurement import key_map
+from utils.log_maker import write_log
 
 pd.set_option('display.max_rows', 500)
 
@@ -69,5 +70,8 @@ class MeasurementManager(object):
         if measurement_id in self.all_measurement_dict:
             return self.all_measurement_dict[measurement_id]
         else:
-            print("{} is not found in measurement manager ({})".format(measurement_id,
-                                                                       self.all_measurement_dict.keys()))
+            # print("{} is not found in measurement manager ({})".format(measurement_id,
+            #                                                            self.all_measurement_dict.keys()))
+            write_log("meas_manager.txt", "{} is not found in measurement manager ({})".format(measurement_id,
+                                                                       self.all_measurement_dict.keys()),
+                      title="NotFound", print_out=True, color="red", add_date=True)

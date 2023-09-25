@@ -20,6 +20,7 @@ def make_error_body(error_code: str, measurement_id: str, last_ts: int) -> dict:
     }
     return body
 
+
 def make_body(prediction_dict: dict, measurement_id: str):
     predictions = list()
     for i in range(len(prediction_dict["is_stroke"])):
@@ -37,6 +38,7 @@ def make_body(prediction_dict: dict, measurement_id: str):
         "APIVersion": "MotionScan API 1.0"
     }
     return body
+
 
 def get_measurement(mm: MeasurementManager, measurement_id: str) -> Union[Measurement, None]:
     meas = Measurement(measurement_id)
@@ -93,7 +95,6 @@ def get_instances(measurement: Measurement,
                      ("arm", "gyr"),
                      ("leg", "gyr"))
 
-
     instance_list = list()
     inference_ts_list = list()
     i = 0
@@ -124,9 +125,8 @@ def get_instances(measurement: Measurement,
             inference_ts_list.append(end_ts)
 
 
-
 def get_instances_old(measurement: Measurement,
-                  config_dict: dict) -> Tuple[list, Union[list, None]]:
+                      config_dict: dict) -> Tuple[list, Union[list, None]]:
     first_timestamp_ms = measurement.get_first_timestamp_ms()
     length = config_dict["frequency"] * 60 * config_dict["meas_length_min"]
     inference_step_size_ms = config_dict["inference_step_size_sec"] * 1e3

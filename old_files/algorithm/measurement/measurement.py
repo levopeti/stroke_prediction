@@ -170,7 +170,7 @@ class Measurement(object):
             self.valid_end_time = int(self.valid_end_time.astype(datetime) / 1e6)
         else:
             raise TypeError("valid end time neither datetime nor \
-            np.datetime64 ({}, {})".format(type(self.valid_end_time), self.valid_end_time))
+            np.datetime64 ({}, {})".format(type(self.valid_start_time), self.valid_end_time))
 
     def print_log(self):
         print(colored("### {} ({}, {}) ###".format(self.measurement_name, *[self.get_limb_class_value("arm"),

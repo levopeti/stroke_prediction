@@ -1,7 +1,9 @@
 import os
 import threading
 import functools
+
 from time import sleep
+from datetime import datetime
 from numpy import ndarray as np_array
 
 try:
@@ -26,11 +28,12 @@ def new_thread(func):
 
 
 class LogMaker(object):
-    def __init__(self):
+    def __init__(self, config_dict: dict):
         self.log_dir_path = None
         self.log_files = list()
         self.log_id = -1
         self.current_log_id = 0
+        self.timezone = config_dict["timezone"]
 
     def make_log_dir(self, log_dir_path: str):
         self.log_dir_path = log_dir_path
@@ -40,24 +43,30 @@ class LogMaker(object):
         self.log_id += 1
         return self.log_id
 
-    def write_log(self, file_name: str, log_message):
+    def write_log(self, file_name: str, log_message: str, add_date: False):
+        if add_date:
+            now = datetime.now(self.timezone)
+            date = now.strftime("%m/%d/%Y, %H:%M:%S") + "\n"
+        else:
+            date = ""
+
         if file_name in self.log_files:
             log_file_path = os.path.join(self.log_dir_path, file_name)
             with open(log_file_path, 'a') as log_file:
-                log_file.write(log_message + '\n')
+                log_file.write(date + log_message + '\n')
         else:
             self.log_files.append(file_name)
             log_file_path = os.path.join(self.log_dir_path, file_name)
             with open(log_file_path, 'w') as log_file:
-                log_file.write(log_message + '\n')
+                log_file.write(date + log_message + '\n')
 
 
 log_maker = None
 
 
-def start_log_maker():
+def start_log_maker(config_dict: dict):
     global log_maker
-    log_maker = LogMaker()
+    log_maker = LogMaker(config_dict)
 
 
 def set_log_dir_path(log_dir_path: str):
@@ -69,7 +78,7 @@ def set_log_dir_path(log_dir_path: str):
 
 
 def write_log(file_name: str, log_message, title: str = None, blank_line: bool = True,
-              separate_into_lines: bool = True, print_out: bool = False, color: str = None):
+              separate_into_lines: bool = True, print_out: bool = False, color: str = None, add_date: bool = False):
     """
     file_name: name of the log file, where the log message belongs
     log_message: the string, list, tuple or string, that is the log message
@@ -91,18 +100,18 @@ def write_log(file_name: str, log_message, title: str = None, blank_line: bool =
     if isinstance(log_message, (str, int, float, complex)) or not separate_into_lines:
         if title is not None:
             log_maker.write_log(file_name, title.upper())
-        log_maker.write_log(file_name, str(log_message))
+        log_maker.write_log(file_name, str(log_message), add_date)
     elif isinstance(log_message, (list, tuple, np_array)):
         if title is not None:
             log_maker.write_log(file_name, title.upper())
         for message in log_message:
-            log_maker.write_log(file_name, str(message))
+            log_maker.write_log(file_name, str(message), add_date)
     elif isinstance(log_message, dict):
         if title is not None:
             log_maker.write_log(file_name, title.upper())
         for key, value in log_message.items():
             message = str(key) + ': ' + str(value)
-            log_maker.write_log(file_name, message)
+            log_maker.write_log(file_name, message, add_date)
     else:
         raise TypeError("Not allow to write {} type into the log!".format(type(log_message)))
 
