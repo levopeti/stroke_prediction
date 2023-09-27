@@ -6,10 +6,13 @@ from time import sleep
 from datetime import datetime
 from numpy import ndarray as np_array
 
+from utils.discord import DiscordBot
+
 try:
     from termcolor import colored
 except ModuleNotFoundError:
     print("Warning: termcolor could not be imported")
+
 
     def colored(msg, color):
         return msg
@@ -28,12 +31,13 @@ def new_thread(func):
 
 
 class LogMaker(object):
-    def __init__(self, config_dict: dict):
+    def __init__(self, config_dict: dict, discord: DiscordBot):
         self.log_dir_path = None
         self.log_files = list()
         self.log_id = -1
         self.current_log_id = 0
         self.timezone = config_dict["timezone"]
+        self.discord = discord
 
     def make_log_dir(self, log_dir_path: str):
         self.log_dir_path = log_dir_path
@@ -43,7 +47,7 @@ class LogMaker(object):
         self.log_id += 1
         return self.log_id
 
-    def write_log(self, file_name: str, log_message: str, add_date: False):
+    def write_log(self, file_name: str, log_message: str, add_date: bool, write_discord: bool):
         if add_date:
             now = datetime.now(self.timezone)
             date = now.strftime("%m/%d/%Y, %H:%M:%S") + "\n"
@@ -60,13 +64,25 @@ class LogMaker(object):
             with open(log_file_path, 'w') as log_file:
                 log_file.write(date + log_message + '\n')
 
+        if write_discord:
+            self.write_discord_log(log_message, False)
+
+    def write_discord_log(self, log: str, print_out: bool = False):
+        if self.discord.active:
+            self.discord.send_message(fields=[{"name": "log",
+                                               "value": log,
+                                               "inline": True}])
+
+        if print_out:
+            print(log)
+
 
 log_maker = None
 
 
-def start_log_maker(config_dict: dict):
+def start_log_maker(config_dict: dict, discord: DiscordBot):
     global log_maker
-    log_maker = LogMaker(config_dict)
+    log_maker = LogMaker(config_dict, discord)
 
 
 def set_log_dir_path(log_dir_path: str):
@@ -78,7 +94,8 @@ def set_log_dir_path(log_dir_path: str):
 
 
 def write_log(file_name: str, log_message, title: str = None, blank_line: bool = True,
-              separate_into_lines: bool = True, print_out: bool = False, color: str = None, add_date: bool = False):
+              separate_into_lines: bool = True, print_out: bool = False, color: str = None,
+              add_date: bool = False, write_discord: bool = False):
     """
     file_name: name of the log file, where the log message belongs
     log_message: the string, list, tuple or string, that is the log message
@@ -100,18 +117,18 @@ def write_log(file_name: str, log_message, title: str = None, blank_line: bool =
     if isinstance(log_message, (str, int, float, complex)) or not separate_into_lines:
         if title is not None:
             log_maker.write_log(file_name, title.upper())
-        log_maker.write_log(file_name, str(log_message), add_date)
+        log_maker.write_log(file_name, str(log_message), add_date, write_discord)
     elif isinstance(log_message, (list, tuple, np_array)):
         if title is not None:
             log_maker.write_log(file_name, title.upper())
         for message in log_message:
-            log_maker.write_log(file_name, str(message), add_date)
+            log_maker.write_log(file_name, str(message), add_date, write_discord)
     elif isinstance(log_message, dict):
         if title is not None:
             log_maker.write_log(file_name, title.upper())
         for key, value in log_message.items():
             message = str(key) + ': ' + str(value)
-            log_maker.write_log(file_name, message, add_date)
+            log_maker.write_log(file_name, message, add_date, write_discord)
     else:
         raise TypeError("Not allow to write {} type into the log!".format(type(log_message)))
 
@@ -119,4 +136,3 @@ def write_log(file_name: str, log_message, title: str = None, blank_line: bool =
         log_maker.write_log(file_name, '')
 
     log_maker.current_log_id += 1
-
