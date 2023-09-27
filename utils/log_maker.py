@@ -47,7 +47,10 @@ class LogMaker(object):
         self.log_id += 1
         return self.log_id
 
-    def write_log(self, file_name: str, log_message: str, add_date: bool, write_discord: bool):
+    def write_log(self, file_name: str,
+                  log_message: str,
+                  add_date: bool = False,
+                  write_discord: bool = False):
         if add_date:
             now = datetime.now(self.timezone)
             date = now.strftime("%m/%d/%Y, %H:%M:%S") + "\n"

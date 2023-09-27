@@ -3,7 +3,7 @@ import numpy as np
 
 from termcolor import colored
 
-from utils.general_utils import to_str_timestamp, write_discord_log
+from utils.general_utils import to_str_timestamp
 from typing import Union
 from utils.discord import DiscordBot
 
@@ -81,7 +81,7 @@ class Measurement(object):
         # TODO: check each key
 
     # #### checks for measurement ####
-    def check_frequency(self, expected_delta_ms: int, eps: int, discord: DiscordBot) -> bool:
+    def check_frequency(self, expected_delta_ms: int, eps: int) -> bool:
         for keys, df in self.measurement_dict.items():
             if df is not None:
                 time_stamps = df["timestamp_ms"].values
@@ -91,7 +91,6 @@ class Measurement(object):
                                                                                                         np.min(deltas),
                                                                                                         np.max(deltas),
                                                                                                         np.mean(deltas))
-                    write_discord_log(log, discord)
                     self.log_list.append(colored(log, "red"))
                     return False
 
@@ -307,7 +306,7 @@ class Measurement(object):
         right_diff = self.get_diff(right_key, length, end_ts, use_abs, right_mask)
 
         if mean_first:
-            result = left_diff.sum() / right_diff.sum()
+            result = (left_diff.sum() + 0.1) / (right_diff.sum() + 0.1)
             # if self.class_value_dict[("left", limb)] > self.class_value_dict[("right", limb)]:
             #     result = left_diff.sum() / right_diff.sum()
             # else:

@@ -16,7 +16,7 @@ from utils.main_loop_utils import get_measurement, check_and_synch_measurement, 
 from utils.log_maker import start_log_maker, set_log_dir_path, write_log
 
 
-def main_loop(model: MLP, configuration: Configuration, config_dict: dict, discord: DiscordBot):
+def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
     timezone = config_dict["timezone"]
     mm = MeasurementManager(config_dict)
 
@@ -72,7 +72,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict, disco
 
             # keys_ok, frequency_ok, synchron_ok, length_ok
             print("check")
-            check_message, error_code = check_and_synch_measurement(measurement, config_dict, discord)
+            check_message, error_code = check_and_synch_measurement(measurement, config_dict)
             if check_message != "OK":
                 write_log("main_loop.txt", "Error message: {}, {}".format(check_message, error_code),
                           title="Error", print_out=True, color="red", add_date=True, write_discord=True)
@@ -103,7 +103,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict, disco
             sleep(2 * 60)
 
 
-def main_loop_local_mode(model: MLP, config_dict: dict, discord: DiscordBot, *args, **kwargs):
+def main_loop_local_mode(model: MLP, config_dict: dict, *args, **kwargs):
     timezone = config_dict["timezone"]
     mm = MeasurementManager(config_dict)
 
@@ -143,7 +143,7 @@ def main_loop_local_mode(model: MLP, config_dict: dict, discord: DiscordBot, *ar
 
             # keys_ok, frequency_ok, synchron_ok, length_ok
             print("check")
-            check_message, error_code = check_and_synch_measurement(measurement, config_dict, discord)
+            check_message, error_code = check_and_synch_measurement(measurement, config_dict)
             if check_message != "OK":
                 print(error_code)
                 body = make_error_body(error_code, measurement_id, measurement.get_last_timestamp_ms())
@@ -171,7 +171,7 @@ if __name__ == "__main__":
 
     _discord = DiscordBot(active=_config_dict["discord"])
 
-    start_log_maker(_config_dict["timezone"], _discord)
+    start_log_maker(_config_dict, _discord)
     set_log_dir_path(_config_dict["log_dir_path"])
 
     if _config_dict["local_mode"]:
@@ -183,7 +183,7 @@ if __name__ == "__main__":
         try:
             write_log("main_loop.txt", "Stroke ai has started. New session has started (in an infinity loop)",
                       title="UploadInfo", print_out=True, color="blue", add_date=True, write_discord=True)
-            current_main_loop(_model, configuration=_configuration, config_dict=_config_dict, discord=_discord)
+            current_main_loop(_model, configuration=_configuration, config_dict=_config_dict)
             sleep(10)
         except Exception:
             print(traceback.format_exc())

@@ -22,7 +22,7 @@ key_list = [("l", "a", "a"),
             ("r", "l", "g")]
 
 
-def normal_mode(id_list: list, timezone):
+def normal_mode(id_list: list, timezone, only_zero_id_list):
     time_delta_to_start = timedelta(minutes=90)
     start_timestamp = datetime.now(timezone) - time_delta_to_start
     print("start ts: {}".format(to_str_timestamp(start_timestamp)))
@@ -54,9 +54,9 @@ def normal_mode(id_list: list, timezone):
                         "side": key[0],
                         "timestamp": timestamp_data_string,
                         "type": key[2],
-                        "x": random.random(),
-                        "y": random.random(),
-                        "z": random.random()
+                        "x": 0 if measurement_id in only_zero_id_list else random.random(),
+                        "y": 0 if measurement_id in only_zero_id_list else random.random(),
+                        "z": 0 if measurement_id in only_zero_id_list else random.random()
                     })
 
             test_body = {
@@ -92,7 +92,7 @@ def normal_mode(id_list: list, timezone):
             sleep(60)
 
 
-def local_mode(id_list, timezone):
+def local_mode(id_list, timezone, only_zero_id_list):
     def get_measurements(number_of_steps, measurement_id):
         measure = list()
         for i in range(number_of_steps):
@@ -105,9 +105,9 @@ def local_mode(id_list, timezone):
                     "side": key[0],
                     "timestamp": timestamp_data_string,
                     "type": key[2],
-                    "x": random.random(),
-                    "y": random.random(),
-                    "z": random.random()
+                    "x": 0 if measurement_id in only_zero_id_list else random.random(),
+                    "y": 0 if measurement_id in only_zero_id_list else random.random(),
+                    "z": 0 if measurement_id in only_zero_id_list else random.random()
                 })
 
         _test_body = {
@@ -165,17 +165,24 @@ def local_mode(id_list, timezone):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Provide data for main.py.")
     parser.add_argument("--local_mode", default=False, action="store_true", help="Local data flow through zmq.")
+    parser.add_argument("--mocking_mode", default=False, action="store_true", help="First id in list gets only zero values.")
     args = parser.parse_args()
 
-    _id_list = [5, 6, 7]  # [8, 9, 10] [5, 6, 7]
+    _id_list = [5, 6]  # [8, 9, 10] [5, 6, 7]
+
+    if args.mocking_mode:
+        _only_zero_id_list = [_id_list[0]]
+    else:
+        _only_zero_id_list = list()
+
     _timezone = pytz.timezone("Europe/Budapest")
 
     if args.local_mode:
-        local_mode(_id_list, _timezone)
+        local_mode(_id_list, _timezone, _only_zero_id_list)
     else:
         _config_dict = {"host_url_and_token_path": "./host_url_and_token.json"}
         _configuration = get_configuration(_config_dict)
-        normal_mode(_id_list, _timezone)
+        normal_mode(_id_list, _timezone, _only_zero_id_list)
 
 
 

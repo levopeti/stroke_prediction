@@ -4,8 +4,26 @@ from tensorflow import keras
 
 class MLP(object):
     def __init__(self, config_dict):
-        self.model = keras.models.load_model(config_dict["model_path"])
-        self.model.summary()
+        if config_dict["mocked_model"]:
+            def mocked_prediction(input_array: np.ndarray) -> np.ndarray:
+                """ If every input value is zero it returns with STROKE otherwise OK"""
+                output_array = np.zeros_like(input_array)
+
+                if input_array.sum() == input_array.shape[0] * 8:
+                    # mocked input for one timestamp:[0. 1. 1. 0. 1. 1. 0. 1. 1. 0. 1. 1.]
+                    # stroke
+                    output_array[:, 0] = 1
+                else:
+                    # not stroke (OK) -> class 5
+                    output_array[:, 5] = 1
+                return output_array
+
+            # create object with one prediction method defined above
+            self.model = type("mocked_model", (object,), dict(predict=mocked_prediction))
+
+        else:
+            self.model = keras.models.load_model(config_dict["model_path"])
+            self.model.summary()
 
     @staticmethod
     def preprocessing(input_data):

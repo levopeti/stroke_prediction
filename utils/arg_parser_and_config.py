@@ -50,6 +50,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument('--discord', default=False, action='store_true', help='Run discord webhook.')
     parser.add_argument('--local_mode', default=False, action='store_true', help='Local data flow through zmq.')
     parser.add_argument('--save_df', default=False, action='store_true', help='Save each measurement df into csv.')
+    parser.add_argument('--mocked_model', default=False, action='store_true', help='AI model predicts stroke only if every value is zero.')
 
     args = parser.parse_args()
     return args
@@ -59,6 +60,7 @@ def get_other_config() -> dict:
     other_config_dict = {
         "model_path": "./models/model_90_1000000_all",
         "host_url_and_token_path": "./host_url_and_token.json",
+        "log_dir_path": "./log",
         "frequency": 25,  # Hz, T = 40 ms
         "frequency_check_eps": 3,  # ms
         "timezone": pytz.timezone("Europe/Budapest")
