@@ -1,6 +1,6 @@
 import argparse
 import random
-from time import time, sleep
+from time import sleep
 
 import pytz
 import zmq
@@ -38,11 +38,13 @@ def normal_mode(id_list: list, timezone, only_zero_id_list):
 
     uploaded_data = 0
     while True:
-        start = time()
+        all_reach_the_future = True
         for measurement_id in id_list:
             measure = list()
             if time_stamp_dict[measurement_id] + (time_delta_millis * 100) > datetime.now(timezone):
                 continue
+
+            all_reach_the_future = False
 
             for i in range(100):
                 time_stamp_dict[measurement_id] += time_delta_millis
@@ -83,11 +85,12 @@ def normal_mode(id_list: list, timezone, only_zero_id_list):
                 except ApiException as e:
                     print("Exception when calling MotionScanRESTAPIEndPointsApi->save_measurements: %s\n" % e)
             uploaded_data += 100
-        print(uploaded_data / (25 * 60 * 60))
+        print(uploaded_data / (25 * 60 * 60))  # number of hours
         print(to_str_timestamp(time_stamp_dict[id_list[0]]))
         print(id_list)
         print()
-        if time() - start < 60:
+        if all_reach_the_future:
+            # if each measurement is up-to-date (we do not want to step in the future)
             print("1 minutes sleep")
             sleep(60)
 
@@ -168,7 +171,7 @@ if __name__ == "__main__":
     parser.add_argument("--mocking_mode", default=False, action="store_true", help="First id in list gets only zero values.")
     args = parser.parse_args()
 
-    _id_list = [5, 6]  # [8, 9, 10] [5, 6, 7]
+    _id_list = [8, 9]  # [8, 9, 10] [5, 6, 7]
 
     if args.mocking_mode:
         _only_zero_id_list = [_id_list[0]]
