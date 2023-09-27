@@ -22,7 +22,6 @@ key_list = [("l", "a", "a"),
             ("r", "l", "g")]
 
 
-
 def normal_mode(id_list: list, timezone):
     time_delta_to_start = timedelta(minutes=90)
     start_timestamp = datetime.now(timezone) - time_delta_to_start

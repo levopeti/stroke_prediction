@@ -3,8 +3,9 @@ import numpy as np
 
 from termcolor import colored
 
-from utils.general_utils import to_str_timestamp
+from utils.general_utils import to_str_timestamp, write_discord_log
 from typing import Union
+from utils.discord import DiscordBot
 
 
 class NotEnoughData(Exception):
@@ -80,19 +81,20 @@ class Measurement(object):
         # TODO: check each key
 
     # #### checks for measurement ####
-    def check_frequency(self, expected_delta_ms: int, eps: int) -> bool:
+    def check_frequency(self, expected_delta_ms: int, eps: int, discord: DiscordBot) -> bool:
         for keys, df in self.measurement_dict.items():
             if df is not None:
                 time_stamps = df["timestamp_ms"].values
                 deltas = np.diff(time_stamps)
                 if np.any(deltas < expected_delta_ms - eps) or np.any(deltas > expected_delta_ms + eps):
-                    self.log_list.append(colored("frequency is not correct,"
-                                                 " with key: {}"
-                                                 " min: {}, max: {}, avg: {}".format(keys,
-                                                                                     np.min(deltas),
-                                                                                     np.max(deltas),
-                                                                                     np.mean(deltas)), "red"))
+                    log = "frequency is not correct, with key: {} min: {}, max: {}, avg: {:.2f}".format(keys,
+                                                                                                        np.min(deltas),
+                                                                                                        np.max(deltas),
+                                                                                                        np.mean(deltas))
+                    write_discord_log(log, discord)
+                    self.log_list.append(colored(log, "red"))
                     return False
+
         return True
 
     def get_missing_keys(self) -> list:

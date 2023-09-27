@@ -1,9 +1,10 @@
 from typing import Tuple, Union
+from utils.discord import DiscordBot
 
 from ai_utils.mlp import MLP
 from measurement_utils.measurement import Measurement, NotEnoughData, TimeStampTooHigh, SynchronizationError
 from measurement_utils.measurement_manager import MeasurementManager
-from utils.general_utils import to_str_timestamp, min_to_millisec
+from utils.general_utils import to_str_timestamp, min_to_millisec, write_discord_log
 
 
 def make_error_body(error_code: str, measurement_id: str, last_ts: int) -> dict:
@@ -51,7 +52,7 @@ def get_measurement(mm: MeasurementManager, measurement_id: str) -> Union[Measur
         return meas
 
 
-def check_and_synch_measurement(measurement: Measurement, config_dict: dict) -> Tuple[str, str]:
+def check_and_synch_measurement(measurement: Measurement, config_dict: dict, discord: DiscordBot) -> Tuple[str, str]:
     # check if measurement in not None
     if measurement is None:
         return "raw_measurement_NOK", "Error 1"
@@ -59,12 +60,14 @@ def check_and_synch_measurement(measurement: Measurement, config_dict: dict) -> 
     # check if measurement has data for each key
     missing_keys = measurement.get_missing_keys()
     if len(missing_keys) != 0:
+        write_discord_log("missing keys: {}".format(missing_keys), discord)
+        # print("missing keys: {}".format(missing_keys))
         return "missing_key", "Error 2"
 
     # check if frequency is okay for each key
     expected_delta_ms = (1 / config_dict["frequency"]) * 1000  # ms
     eps = config_dict["frequency_check_eps"]  # ms
-    if not measurement.check_frequency(expected_delta_ms, eps=eps):
+    if not measurement.check_frequency(expected_delta_ms, eps=eps, discord=discord):
         return "frequency_NOK", "Error 3"
 
     # synchronize data along timestamp_ms
