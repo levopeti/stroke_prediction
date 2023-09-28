@@ -70,31 +70,34 @@ class Measurement(object):
                 ("right", "leg"): None,
             }
 
-    def add_measurement_path(self, path):
+    def add_measurement_path(self, path: str):
         self.valid = True
         key = [None, None, None]
         # ['202110230', 'MetaWear-R-L', '2021-10-24T01.42.26.469', 'D087CCFD3C25', 'Accelerometer', '1.6.2.csv']
 
-        if path.split('/')[-1].split('_')[1].split('-')[1] == 'L':
-            key[0] = "left"
-        elif path.split('/')[-1].split('_')[1].split('-')[1] == 'R':
-            key[0] = "right"
-        else:
-            raise ValueError("Bad measurement path: {}".format(path))
+        try:
+            if path.split('/')[-1].split('_')[1].split('-')[1] == 'L':
+                key[0] = "left"
+            elif path.split('/')[-1].split('_')[1].split('-')[1] == 'R':
+                key[0] = "right"
+            else:
+                raise ValueError("Bad measurement path: {}".format(path))
 
-        if path.split('/')[-1].split('_')[1].split('-')[2] == 'L':
-            key[1] = "leg"
-        elif path.split('/')[-1].split('_')[1].split('-')[2] == 'A':
-            key[1] = "arm"
-        else:
-            raise ValueError("Bad measurement path: {}".format(path))
+            if path.split('/')[-1].split('_')[1].split('-')[2] == 'L':
+                key[1] = "leg"
+            elif path.split('/')[-1].split('_')[1].split('-')[2] == 'A':
+                key[1] = "arm"
+            else:
+                raise ValueError("Bad measurement path: {}".format(path))
 
-        if path.split('/')[-1].find("Gyroscope") != -1:
-            key[2] = "gyr"
-        elif path.split('/')[-1].find("Accelerometer") != -1:
-            key[2] = "acc"
-        else:
-            raise ValueError("Bad measurement path: {}".format(path))
+            if path.split('/')[-1].find("Gyroscope") != -1:
+                key[2] = "gyr"
+            elif path.split('/')[-1].find("Accelerometer") != -1:
+                key[2] = "acc"
+            else:
+                raise ValueError("Bad measurement path: {}".format(path))
+        except IndexError:
+            raise IndexError("Problem with path: {}".format(path))
 
         assert tuple(key) in self.measurement_path_dict
         self.measurement_path_dict[tuple(key)] = path

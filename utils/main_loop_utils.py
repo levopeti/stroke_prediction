@@ -52,6 +52,13 @@ def get_measurement(mm: MeasurementManager, measurement_id: str) -> Union[Measur
 
 
 def check_and_synch_measurement(measurement: Measurement, config_dict: dict) -> Tuple[str, str]:
+    """
+    Error 1: Raw measurement error (wrong format, etc.). You can get it only in the log, not in the prediction.
+    Error 2: Missing keys error. You can see specific missing keys in the log.
+    Error 3: Frequency error. There is a too-large or too-short time gap in the data.
+    Error 4: Synchronization error. The 8 measurements can not be synchronized.
+    Error 5: Length error. The measurement is not long enough (expected 90 min).
+    """
     # check if measurement in not None
     if measurement is None:
         return "raw_measurement_NOK", "Error 1"
