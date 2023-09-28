@@ -97,7 +97,7 @@ class Measurement(object):
             else:
                 raise ValueError("Bad measurement path: {}".format(path))
         except IndexError:
-            raise IndexError("Problem with path: {}".format(path))
+            raise IndexError("Bad measurement path: {}".format(path))
 
         assert tuple(key) in self.measurement_path_dict
         self.measurement_path_dict[tuple(key)] = path
