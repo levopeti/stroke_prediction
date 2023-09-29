@@ -264,6 +264,14 @@ class Measurement(object):
             assert self.measurement_dict[key] is not None, "self.measurement_dict[{}] is None".format(key)
             self.measurement_dict[key]["epoch"] += min_to_millisec(delay_min)
 
+    def cut_start_end_all_measurements(self, cut_min: Union[int, float]):
+        for key in self.measurement_dict.keys():
+            assert self.measurement_dict[key] is not None, "self.measurement_dict[{}] is None".format(key)
+            min_value = self.measurement_dict[key]["epoch"].min() + min_to_millisec(cut_min)
+            max_value = self.measurement_dict[key]["epoch"].max() - min_to_millisec(cut_min)
+            self.measurement_dict[key] = self.measurement_dict[key][self.measurement_dict[key]["epoch"] > min_value]
+            self.measurement_dict[key] = self.measurement_dict[key][self.measurement_dict[key]["epoch"] < max_value]
+
     def calculate_diff(self, key, use_abs=True, only_valid=True):
         if not self.lightweight and self.diff_dict[key] is not None:
             result = self.diff_dict[key]
