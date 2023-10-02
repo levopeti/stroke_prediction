@@ -50,7 +50,7 @@ def cache(func):
                     key = kwargs[k]
 
             os.makedirs("./cache", exist_ok=True)
-            cache_path = "cache/" + key + '_' + func.__name__ + ".pkl"
+            cache_path = "./cache/" + key + '_' + func.__name__ + ".pkl"
             return_object = load_cache(cache_path)
 
             if return_object is not None:

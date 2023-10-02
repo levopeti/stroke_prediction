@@ -8,7 +8,7 @@ from datetime import datetime
 from sklearn.metrics import confusion_matrix
 
 from ..measurement.measurement_collector import MeasurementCollector
-from ..utils.cache_utils import cache
+from utils.cache_utils import cache
 
 import matplotlib.pyplot as plt
 import matplotlib.dates as md
@@ -18,6 +18,8 @@ matplotlib.rcParams['figure.figsize'] = [15, 15]
 
 # seconds between two measurements
 TIME_DELTA_SEC = 0.04
+
+POINTS_PER_SEC = 25
 
 
 @cache
@@ -301,7 +303,7 @@ def start_evaluation(_param_dict):
     _class_values_to_use = _param_dict["class_values_to_use"]
     mc = MeasurementCollector(_base_path, _db_path, _m_path, _ucanaccess_path, class_values_to_use=_class_values_to_use)
 
-    length = int(TIME_DELTA_SEC * 60 * _param_dict["minutes"])
+    length = int(POINTS_PER_SEC * 60 * _param_dict["minutes"])
     step_size = _param_dict["step_size"]
     limb = _param_dict["limb"]
     type_of_set = _param_dict["type_of_set"]

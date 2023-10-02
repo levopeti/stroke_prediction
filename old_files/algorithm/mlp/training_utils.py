@@ -10,8 +10,7 @@ from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 from tensorflow.keras.utils import to_categorical
 
 from ..measurement.measurement_collector import MeasurementCollector
-from ..utils.confusion_matrix_keras import plot_cm_keras
-from ..utils.cache_utils import cache
+from utils.confusion_matrix_keras import plot_cm_keras
 
 # seconds between two measurements
 TIME_DELTA_SEC = 0.04
