@@ -130,10 +130,10 @@ if __name__ == "__main__":
     save_params(params)
 
     # Generators
-    training_generator = DataGenerator("train", clear_measurements, params["train_batch_size"], params["output_size"],
-                                       params["length"], params["train_sample_per_meas"], params["output_shape"])
-    test_generator = DataGenerator("test", clear_measurements, params["test_batch_size"], params["output_size"],
-                                   params["length"], params["test_sample_per_meas"], params["output_shape"])
+    training_generator = DataGenerator("train", clear_measurements, params["train_batch_size"], params["output_shape"],
+                                       params["length"], params["train_sample_per_meas"])
+    test_generator = DataGenerator("test", clear_measurements, params["test_batch_size"], params["output_shape"],
+                                   params["length"], params["test_sample_per_meas"])
 
     # Design model
     model = define_model(**params)
