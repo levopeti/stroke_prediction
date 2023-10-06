@@ -50,6 +50,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
                 from_ts = now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])
             else:
                 from_ts = timezone.localize(from_ts)
+
             while True:
                 to_ts = from_ts + timedelta(minutes=config_dict["interval_min"])
                 data_list, elapsed_time = get_data_for_prediction(configuration,
