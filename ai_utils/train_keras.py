@@ -15,8 +15,8 @@ from tensorflow.keras.utils import to_categorical
 
 from ai_utils.training_utils.clear_measurements import ClearMeasurements
 from ai_utils.training_utils.func_utils import get_input_from_df
-from ai_utils.training_utils.loss_and_accuracy import stroke_loss_regression, stroke_loss_classification, \
-    stroke_accuracy_regression, stroke_accuracy_classification
+from ai_utils.training_utils.loss_and_accuracy import stroke_loss_reg, stroke_loss_clas, \
+    stroke_accuracy_reg, stroke_accuracy_clas
 from measurement_utils.measure_db import MeasureDB
 
 
@@ -34,12 +34,12 @@ def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_l
 
     if output_shape == 1:
         op = Dense(units=output_shape, name="prediction", activation="sigmoid")(x)
-        custom_loss = stroke_loss_regression(stroke_loss_factor)
-        stroke_accuracy = stroke_accuracy_regression
+        custom_loss = stroke_loss_reg(stroke_loss_factor)
+        stroke_accuracy = stroke_accuracy_reg
     else:
         op = Dense(units=output_shape, name="prediction", activation="softmax")(x)
-        custom_loss = stroke_loss_classification(stroke_loss_factor)
-        stroke_accuracy = stroke_accuracy_classification
+        custom_loss = stroke_loss_clas(stroke_loss_factor)
+        stroke_accuracy = stroke_accuracy_clas
 
     _model = Model(inputs=ip, outputs=op, name="full_model")
     _model.summary()
@@ -92,6 +92,8 @@ class DataGenerator(Sequence):
 
         if self.n_classes != 1:
             labels = to_categorical(labels, num_classes=self.n_classes)
+        else:
+            labels = np.expand_dims(np.array(labels), axis=1)
 
         return np.concatenate(batch_array, axis=0), labels
 

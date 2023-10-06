@@ -1,9 +1,10 @@
 import tensorflow as tf
 
 from tensorflow.keras.losses import CategoricalCrossentropy, MeanSquaredError
+# tf.config.run_functions_eagerly(True)
 
 
-def stroke_loss_classification(stroke_loss_factor):
+def stroke_loss_clas(stroke_loss_factor):
     def inner_loss(y_true, y_pred):
         cce = CategoricalCrossentropy()
         cce_loss = cce(y_true, y_pred)
@@ -16,8 +17,9 @@ def stroke_loss_classification(stroke_loss_factor):
     return inner_loss
 
 
-def stroke_loss_regression(stroke_loss_factor):
+def stroke_loss_reg(stroke_loss_factor):
     def inner_loss(y_true, y_pred):
+        y_pred *= 5
         mse = MeanSquaredError()
         mse_loss = mse(y_true, y_pred)
 
@@ -28,10 +30,11 @@ def stroke_loss_regression(stroke_loss_factor):
     return inner_loss
 
 
-def stroke_accuracy_classification(y_true, y_pred):
+def stroke_accuracy_clas(y_true, y_pred):
     return tf.reduce_mean(
-        tf.cast(tf.logical_and(tf.argmax(y_true, axis=1) == 5, tf.argmax(y_pred, axis=1) == 5), tf.float32))
+        tf.cast(tf.math.logical_not(tf.math.logical_xor(tf.argmax(y_true, axis=1) == 5, tf.argmax(y_pred, axis=1) == 5), tf.float32)))
 
 
-def stroke_accuracy_regression(y_true, y_pred):
-    return tf.reduce_mean(tf.cast(tf.logical_and(y_true == 5, tf.round(y_pred) == 5), tf.float32))
+def stroke_accuracy_reg(y_true, y_pred):
+    y_pred *= 5
+    return tf.reduce_mean(tf.cast(tf.math.logical_not(tf.math.logical_xor(y_true == 5, tf.round(y_pred) == 5)), tf.float32))
