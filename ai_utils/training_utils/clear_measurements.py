@@ -4,11 +4,12 @@ import random
 import pandas as pd
 
 from glob import glob
-
+from measurement_utils.measure_db import MeasureDB
 
 class ClearMeasurements(object):
-    def __init__(self, folder_path: str, clear_json_path: str, cache_size: int = 1) -> None:
+    def __init__(self, measDB: MeasureDB, folder_path: str, clear_json_path: str, cache_size: int = 1) -> None:
         assert cache_size > 0, "cache_size must be positive integer"
+        self.measDB = measDB
         self.cache_size = cache_size
         self.id_path_dict = dict()
         self.cache_dict = dict()
@@ -19,6 +20,15 @@ class ClearMeasurements(object):
 
     def get_meas_id_list(self, data_type: str) -> list:
         return sorted(self.clear_ids_dict[data_type])
+
+    def get_class_value_dict(self, meas_id: int):
+        class_value_dict = self.measDB.get_class_value_dict(meas_id=meas_id)
+        return class_value_dict
+
+    def get_min_class_value(self, meas_id: int):
+        class_value_dict = self.measDB.get_class_value_dict(meas_id=meas_id)
+        min_class_value = min(class_value_dict.values())
+        return min_class_value
 
     def read_clear_json(self, clear_json_path: str) -> None:
         with open(clear_json_path, "r") as read_file:
@@ -59,3 +69,20 @@ class ClearMeasurements(object):
             # if len(self.cache_dict) > self.cache_size:
             #     print("Number of cached measurements ({}) is more than the cache size ({})".format(len(self.cache_dict), self.cache_size))
         return df
+
+    def print_stat(self):
+        stat_dict = dict()
+        for type_of_set, id_list in self.clear_ids_dict.items():
+            stat_dict[type_of_set] = {class_value: 0 for class_value in range(0, 6)}
+
+            for meas_id in id_list:
+                min_class_value = self.get_min_class_value(meas_id)
+                stat_dict[type_of_set][min_class_value] += 1
+
+        for type_of_set, class_value_dict in stat_dict.items():
+            total = sum(class_value_dict.values())
+            print("\n", type_of_set)
+            for class_value in range(0, 6):
+                print("{}: {} {:.1f}%".format(class_value,
+                                          class_value_dict[class_value],
+                                          100 * class_value_dict[class_value] / total))

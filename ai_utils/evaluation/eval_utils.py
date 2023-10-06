@@ -5,12 +5,14 @@ import seaborn as sns
 
 from tqdm import tqdm
 from tensorflow import keras
+from tensorflow.keras.optimizers import Adam
 from datetime import datetime
 import matplotlib.pyplot as plt
 import matplotlib.dates as md
 import matplotlib
 from sklearn.metrics import confusion_matrix, RocCurveDisplay
 
+from ai_utils.train_keras import custom_loss, stroke_accuracy
 from ai_utils.training_utils.func_utils import get_limb_diff_mean, get_limb_ratio_mean
 from measurement_utils.measure_db import MeasureDB
 from utils.cache_utils import cache
@@ -256,7 +258,8 @@ def sens_spec_window(result_dict: dict, step_size: int, save_path: str, minutes:
 
 
 def load_model(_model_path):
-    _model = keras.models.load_model(_model_path)
+    _model = keras.models.load_model(_model_path, compile=False)  # custom_objects={"custom_loss": custom_loss, "stroke_accuracy": stroke_accuracy})
+    _model.compile(loss=custom_loss(stroke_loss_factor=0.1), optimizer=Adam(), metrics=["accuracy", stroke_accuracy])
     _model.summary()
 
     return _model
@@ -275,7 +278,6 @@ def make_prediction(_model, _data_dict: dict):
 @cache
 def generate_infer_data(meas_id: int,
                         length: int,
-                        measDB: MeasureDB,
                         clear_measurements: ClearMeasurements,
                         step_size: int,
                         use_cache: bool,
@@ -285,8 +287,8 @@ def generate_infer_data(meas_id: int,
                      ("arm", "gyr"),
                      ("leg", "gyr"))
 
-    class_value_dict = measDB.get_class_value_dict(meas_id=meas_id)
-    class_value = min(class_value_dict.values())
+    class_value_dict = clear_measurements.get_class_value_dict(meas_id=meas_id)
+    class_value = clear_measurements.get_min_class_value(meas_id=meas_id)
     meas_df = clear_measurements.get_measurement(meas_id)
     result_dict = {"X": list(),
                    "y": list()}
@@ -341,12 +343,12 @@ def start_evaluation(_param_dict):
     _model = load_model(model_path)
 
     measDB = MeasureDB(_db_path, _ucanaccess_path)
-    clear_measurements = ClearMeasurements(_base_path, param_dict["clear_json_path"])
+    clear_measurements = ClearMeasurements(measDB, _base_path, param_dict["clear_json_path"])
 
     result_dict = dict()
     for meas_id in clear_measurements.get_meas_id_list(type_of_set):  # tqdm(clear_measurements.get_meas_id_list(type_of_set), "make evaluation"):
         key = "_".join([str(item) for item in [meas_id, length, step_size, type_of_set]])
-        infer_data = generate_infer_data(meas_id, length, measDB, clear_measurements, step_size, use_cache=True, key=key)
+        infer_data = generate_infer_data(meas_id, length, clear_measurements, step_size, use_cache=True, key=key)
         prediction_dict = make_prediction(_model, infer_data)
         make_plot(meas_id, prediction_dict, _param_dict["minutes"], step_size, save_path=save_path, type_of_set=type_of_set)
         result_dict[meas_id] = prediction_dict
@@ -367,10 +369,13 @@ if __name__ == "__main__":
         "base_path": "./data/clear_data",
         "db_path": "./data/WUS-v4measure202307311.accdb",
         "ucanaccess_path": "./ucanaccess/",
-        "model_path": "./models/2023-04-20-09-27",
+        "model_path": "./models/2023-10-04-13-43",
         "clear_json_path": "./data/clear_train_test_ids.json"
     }
 
     param_dict["save_path"] = param_dict["model_path"]
 
+    start_evaluation(param_dict)
+
+    param_dict["type_of_set"] = "train"
     start_evaluation(param_dict)

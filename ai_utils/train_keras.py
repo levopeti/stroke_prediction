@@ -1,20 +1,42 @@
-from datetime import datetime
-
+import json
+import os
 import numpy as np
+import tensorflow as tf
+
+from pprint import pprint
+from datetime import datetime
 
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.losses import CategoricalCrossentropy
 from tensorflow.keras.utils import to_categorical
 
 from ai_utils.training_utils.clear_measurements import ClearMeasurements
 from ai_utils.training_utils.func_utils import get_input_from_df
 from measurement_utils.measure_db import MeasureDB
 
+# tf.config.run_functions_eagerly(True)
 
-def define_model(input_shape, output_shape, layer_sizes):
+
+def custom_loss(stroke_loss_factor):
+    def inner_loss(y_true, y_pred):
+        cce = CategoricalCrossentropy()
+        cce_loss = cce(y_true, y_pred)
+
+        stroke_loss = tf.reduce_sum(tf.cast(tf.math.logical_xor(tf.argmax(y_true, axis=1) == 5, tf.argmax(y_pred, axis=1) == 5), tf.float32)) * stroke_loss_factor
+        loss = tf.reduce_mean(stroke_loss + cce_loss)
+        return loss
+    return inner_loss
+
+
+def stroke_accuracy(y_true, y_pred):
+    return tf.reduce_mean(tf.cast(tf.logical_and(tf.argmax(y_true, axis=1) == 5, tf.argmax(y_pred, axis=1) == 5), tf.float32))
+
+
+def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_loss_factor, **kwargs):
     assert len(layer_sizes) > 0, layer_sizes
 
     ip = Input(shape=(input_shape,), name="input")
@@ -27,17 +49,21 @@ def define_model(input_shape, output_shape, layer_sizes):
     _model = Model(inputs=ip, outputs=op, name="full_model")
     _model.summary()
 
-    learning_rate = 0.001
     optimizer = Adam(learning_rate, amsgrad=True)
-    _model.compile(loss="categorical_crossentropy", optimizer=optimizer, metrics=["accuracy"])
+    _model.compile(loss=custom_loss(stroke_loss_factor), optimizer=optimizer, metrics=["accuracy", stroke_accuracy])  # "categorical_crossentropy"
     return _model
+
+
+def save_params(_params: dict):
+    os.makedirs(_params["model_base_path"], exist_ok=True)
+    with open(os.path.join(_params["model_base_path"], "params.json"), "w") as f:
+        json.dump(_params, f)
 
 
 class DataGenerator(Sequence):
     def __init__(self,
                  data_type: str,  # train or test
                  clear_measurements: ClearMeasurements,
-                 measDB: MeasureDB,
                  batch_size: int,
                  n_classes: int,
                  length: int,
@@ -46,7 +72,6 @@ class DataGenerator(Sequence):
 
         self.meas_id_list = clear_measurements.get_meas_id_list(data_type)
         self.clear_measurements = clear_measurements
-        self.measDB = measDB
         self.sample_per_meas = sample_per_meas
         self.length = length
         self.n_classes = n_classes
@@ -62,9 +87,9 @@ class DataGenerator(Sequence):
             meas_id = self.meas_id_list[meas_idx]
             meas_df = self.clear_measurements.get_measurement(meas_id)
 
-            class_value_dict = self.measDB.get_class_value_dict(meas_id=meas_id)
+            class_value_dict = self.clear_measurements.get_class_value_dict(meas_id=meas_id)
             input_array = get_input_from_df(meas_df, self.length, class_value_dict)
-            label = min(class_value_dict.values())
+            label = self.clear_measurements.get_min_class_value(meas_id)
 
             batch_array.append(input_array)
             labels.append(label)
@@ -72,48 +97,59 @@ class DataGenerator(Sequence):
 
 
 if __name__ == "__main__":
-    db_path = "./data/WUS-v4measure202307311.accdb"
-    ucanaccess_path = "./ucanaccess/"
-    folder_path = "./data/clear_data/"
-    clear_json_path = "./data/clear_train_test_ids.json"
-    now = datetime.now().strftime('%Y-%m-%d-%H-%M')
-    model_base_path = "./models/{}".format(now)
-    print(model_base_path)
+    params = {"accdb_path": "./data/WUS-v4measure202307311.accdb",
+              "ucanaccess_path": "./ucanaccess/",
+              "folder_path": "./data/clear_data/",
+              "clear_json_path": "./data/clear_train_test_ids.json",
+              "model_base_path": "./models/{}".format(datetime.now().strftime('%Y-%m-%d-%H-%M')),
+              "length": int(1.5 * 60 * 60 * 25),  # 1.5 hours, 25 Hz
+              "train_sample_per_meas": 10,
+              "test_sample_per_meas": 100,
+              "train_batch_size": 100,
+              "test_batch_size": 100,
+              "input_shape": 12,
+              "output_shape": 6,
+              "layer_sizes": [1024, 512, 256],
+              "output_size": 6,
+              "patience": 20,
+              "learning_rate": 0.001,
+              "wd": 0,
+              "num_epoch": 1000,
+              "steps_per_epoch": 100,
+              "stroke_loss_factor": 0.1,
+              "cache_size": 1
+              }
 
-    length = int(1.5 * 60 * 60 * 25)  # 1.5 hours, 25 Hz
-    sample_per_meas = 3
-    batch_size = 12
-    input_size = 12
-    layer_sizes = [1024, 512, 128]
-    output_size = 6
+    pprint(params)
+    measDB = MeasureDB(params["accdb_path"], params["ucanaccess_path"])
+    clear_measurements = ClearMeasurements(measDB, params["folder_path"], params["clear_json_path"], cache_size=params["cache_size"])
+    clear_measurements.print_stat()
 
-    measDB = MeasureDB(db_path, ucanaccess_path)
-    clear_measurements = ClearMeasurements(folder_path, clear_json_path, cache_size=18)
+    params["train_id_list"] = clear_measurements.get_meas_id_list("train")
+    params["test_id_list"] = clear_measurements.get_meas_id_list("test")
+    save_params(params)
 
     # Generators
-    training_generator = DataGenerator("train", clear_measurements, measDB, batch_size, output_size, length, sample_per_meas)
-    test_generator = DataGenerator("test", clear_measurements, measDB, batch_size, output_size, length, sample_per_meas)
-
-    lr = 0.001
-    wd = 0
-    num_epoch = 1000
+    training_generator = DataGenerator("train", clear_measurements, params["train_batch_size"], params["output_size"], params["length"], params["train_sample_per_meas"])
+    test_generator = DataGenerator("test", clear_measurements, params["test_batch_size"], params["output_size"], params["length"], params["test_sample_per_meas"])
 
     # Design model
-    model = define_model(input_size, output_size, layer_sizes)
+    model = define_model(**params)
 
     cp = ModelCheckpoint(
-        filepath=model_base_path,
+        filepath=params["model_base_path"],
         save_weights_only=False,
-        monitor='val_loss',
+        monitor='loss',
         mode='auto',
         save_best_only=True)
 
-    es = EarlyStopping(monitor='val_loss', patience=20)
+    es = EarlyStopping(monitor='loss', patience=params["patience"])
 
     # Train model on dataset
     model.fit_generator(generator=training_generator,
                         validation_data=test_generator,
-                        epochs=num_epoch,
+                        steps_per_epoch=params["steps_per_epoch"],
+                        epochs=params["num_epoch"],
                         callbacks=[es, cp],
                         shuffle=False,
                         use_multiprocessing=False,
