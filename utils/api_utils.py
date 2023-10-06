@@ -66,7 +66,10 @@ def get_data_for_prediction(configuration: Configuration,
         return json.loads(api_response.response.data), time() - start
 
 
-def get_predictions_from_time_point(configuration: Configuration, _from: str, _interval: int = 15000) -> list:
+def get_predictions_from_time_point(configuration: Configuration,
+                                    _from: str,
+                                    _interval: int = 15000,
+                                    _measurement_id: str = None) -> list:
     with ApiClient(configuration) as api_client:
         # Create an instance of the API class
         api_instance = MotionScanRESTAPIEndPointsApi(api_client)
@@ -76,17 +79,21 @@ def get_predictions_from_time_point(configuration: Configuration, _from: str, _i
             'from': _from,
             'interval': _interval,
         }
+
+        if _measurement_id is not None:
+            query_params["measurement-id"] = _measurement_id
+
         header_params = {
             'x-motionscan-name': 'motionscandemo',
         }
         try:
-            api_response = api_instance.get_data_for_prediction(
+            api_response = api_instance.get_predictions_from_timepoint(
                 query_params=query_params,
                 header_params=header_params,
             )
         except ApiException as e:
             # print("Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e)
-            write_log("python_api.txt", "Exception when calling MotionScanRESTAPIEndPointsApi->get_data_for_prediction: %s\n" % e,
+            write_log("python_api.txt", "Exception when calling MotionScanRESTAPIEndPointsApi->get_predictions_from_timepoint: %s\n" % e,
                       title="GetPred", print_out=True, color="red", add_date=True)
 
         return json.loads(api_response.response.data)
