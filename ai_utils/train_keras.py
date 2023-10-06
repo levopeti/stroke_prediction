@@ -1,7 +1,6 @@
 import json
 import os
 import numpy as np
-import tensorflow as tf
 
 from pprint import pprint
 from datetime import datetime
@@ -11,29 +10,17 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-from tensorflow.keras.losses import CategoricalCrossentropy
+
 from tensorflow.keras.utils import to_categorical
 
 from ai_utils.training_utils.clear_measurements import ClearMeasurements
 from ai_utils.training_utils.func_utils import get_input_from_df
+from ai_utils.training_utils.loss_and_accuracy import stroke_loss_regression, stroke_loss_classification, \
+    stroke_accuracy_regression, stroke_accuracy_classification
 from measurement_utils.measure_db import MeasureDB
 
+
 # tf.config.run_functions_eagerly(True)
-
-
-def custom_loss(stroke_loss_factor):
-    def inner_loss(y_true, y_pred):
-        cce = CategoricalCrossentropy()
-        cce_loss = cce(y_true, y_pred)
-
-        stroke_loss = tf.reduce_sum(tf.cast(tf.math.logical_xor(tf.argmax(y_true, axis=1) == 5, tf.argmax(y_pred, axis=1) == 5), tf.float32)) * stroke_loss_factor
-        loss = tf.reduce_mean(stroke_loss + cce_loss)
-        return loss
-    return inner_loss
-
-
-def stroke_accuracy(y_true, y_pred):
-    return tf.reduce_mean(tf.cast(tf.logical_and(tf.argmax(y_true, axis=1) == 5, tf.argmax(y_pred, axis=1) == 5), tf.float32))
 
 
 def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_loss_factor, **kwargs):
@@ -45,12 +32,21 @@ def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_l
     for i, layer_size in enumerate(layer_sizes[1:]):
         x = Dense(units=layer_size, name="hidden_layer_{}".format(i + 2), activation="relu")(x)
 
-    op = Dense(units=output_shape, name="prediction", activation="softmax")(x)
+    if output_shape == 1:
+        op = Dense(units=output_shape, name="prediction", activation="sigmoid")(x)
+        custom_loss = stroke_loss_regression(stroke_loss_factor)
+        stroke_accuracy = stroke_accuracy_regression
+    else:
+        op = Dense(units=output_shape, name="prediction", activation="softmax")(x)
+        custom_loss = stroke_loss_classification(stroke_loss_factor)
+        stroke_accuracy = stroke_accuracy_classification
+
     _model = Model(inputs=ip, outputs=op, name="full_model")
     _model.summary()
 
     optimizer = Adam(learning_rate, amsgrad=True)
-    _model.compile(loss=custom_loss(stroke_loss_factor), optimizer=optimizer, metrics=["accuracy", stroke_accuracy])  # "categorical_crossentropy"
+    _model.compile(loss=custom_loss, optimizer=optimizer,
+                   metrics=["accuracy", stroke_accuracy])  # "categorical_crossentropy"
     return _model
 
 
@@ -67,7 +63,8 @@ class DataGenerator(Sequence):
                  batch_size: int,
                  n_classes: int,
                  length: int,
-                 sample_per_meas: int) -> None:
+                 sample_per_meas: int,
+                 output_shape: int) -> None:
         self.batch_size = batch_size
 
         self.meas_id_list = clear_measurements.get_meas_id_list(data_type)
@@ -75,6 +72,7 @@ class DataGenerator(Sequence):
         self.sample_per_meas = sample_per_meas
         self.length = length
         self.n_classes = n_classes
+        self.output_shape = output_shape
 
     def __len__(self):
         return int(len(self.meas_id_list) * self.sample_per_meas / self.batch_size)
@@ -93,7 +91,11 @@ class DataGenerator(Sequence):
 
             batch_array.append(input_array)
             labels.append(label)
-        return np.concatenate(batch_array, axis=0), to_categorical(labels, num_classes=self.n_classes)
+
+        if self.output_shape != 1:
+            labels = to_categorical(labels, num_classes=self.n_classes)
+
+        return np.concatenate(batch_array, axis=0), labels
 
 
 if __name__ == "__main__":
@@ -108,9 +110,8 @@ if __name__ == "__main__":
               "train_batch_size": 100,
               "test_batch_size": 100,
               "input_shape": 12,
-              "output_shape": 6,
+              "output_shape": 1,
               "layer_sizes": [1024, 512, 256],
-              "output_size": 6,
               "patience": 20,
               "learning_rate": 0.001,
               "wd": 0,
@@ -122,7 +123,8 @@ if __name__ == "__main__":
 
     pprint(params)
     measDB = MeasureDB(params["accdb_path"], params["ucanaccess_path"])
-    clear_measurements = ClearMeasurements(measDB, params["folder_path"], params["clear_json_path"], cache_size=params["cache_size"])
+    clear_measurements = ClearMeasurements(measDB, params["folder_path"], params["clear_json_path"],
+                                           cache_size=params["cache_size"])
     clear_measurements.print_stat()
 
     params["train_id_list"] = clear_measurements.get_meas_id_list("train")
@@ -130,8 +132,10 @@ if __name__ == "__main__":
     save_params(params)
 
     # Generators
-    training_generator = DataGenerator("train", clear_measurements, params["train_batch_size"], params["output_size"], params["length"], params["train_sample_per_meas"])
-    test_generator = DataGenerator("test", clear_measurements, params["test_batch_size"], params["output_size"], params["length"], params["test_sample_per_meas"])
+    training_generator = DataGenerator("train", clear_measurements, params["train_batch_size"], params["output_size"],
+                                       params["length"], params["train_sample_per_meas"], params["output_shape"])
+    test_generator = DataGenerator("test", clear_measurements, params["test_batch_size"], params["output_size"],
+                                   params["length"], params["test_sample_per_meas"], params["output_shape"])
 
     # Design model
     model = define_model(**params)
