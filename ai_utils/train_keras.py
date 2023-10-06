@@ -63,8 +63,7 @@ class DataGenerator(Sequence):
                  batch_size: int,
                  n_classes: int,
                  length: int,
-                 sample_per_meas: int,
-                 output_shape: int) -> None:
+                 sample_per_meas: int) -> None:
         self.batch_size = batch_size
 
         self.meas_id_list = clear_measurements.get_meas_id_list(data_type)
@@ -72,7 +71,6 @@ class DataGenerator(Sequence):
         self.sample_per_meas = sample_per_meas
         self.length = length
         self.n_classes = n_classes
-        self.output_shape = output_shape
 
     def __len__(self):
         return int(len(self.meas_id_list) * self.sample_per_meas / self.batch_size)
@@ -92,7 +90,7 @@ class DataGenerator(Sequence):
             batch_array.append(input_array)
             labels.append(label)
 
-        if self.output_shape != 1:
+        if self.n_classes != 1:
             labels = to_categorical(labels, num_classes=self.n_classes)
 
         return np.concatenate(batch_array, axis=0), labels
