@@ -10,8 +10,8 @@ configuration = get_configuration(_config_dict)
 timezone = pytz.timezone("Europe/Budapest")
 now_ts = datetime.now(timezone)
 
-_from = "2023-10-05T13:29:39.362Z"  # to_str_timestamp(now_ts - timedelta(minutes=90))
-_interval = min_to_millisec(200)
+_from = to_str_timestamp(now_ts - timedelta(minutes=90))  # to_str_timestamp(now_ts - timedelta(minutes=90))  "2023-10-05T13:29:39.362Z"
+_interval = min_to_millisec(90)
 
 measurement_ids = get_measurement_ids(configuration,
                                       _from=_from,
@@ -30,7 +30,7 @@ for meas_id in measurement_ids:
     predictions = get_predictions_from_time_point(configuration,
                                                   _from=_from,
                                                   _interval=_interval,
-                                                  # _measurement_id=meas_id
+                                                  _measurement_id=meas_id
                                                   )
 
     print(predictions)
