@@ -19,7 +19,9 @@ def stroke_loss_clas(stroke_loss_factor):
 
 def stroke_loss_reg(stroke_loss_factor):
     def inner_loss(y_true, y_pred):
-        y_pred *= 5
+        y_pred *= 6
+        y_pred -= 0.5
+        # y_pred = tf.cond(y_pred > 5.49, lambda: y_pred - 0.1, lambda: y_pred)
         mse = MeanSquaredError()
         mse_loss = mse(y_true, y_pred)
 
@@ -36,5 +38,10 @@ def stroke_accuracy_clas(y_true, y_pred):
 
 
 def stroke_accuracy_reg(y_true, y_pred):
-    y_pred *= 5
+    y_pred *= 6
+    y_pred -= 0.5
+    # y_pred = tf.cond(y_pred > 5.49, lambda: y_pred - 0.1, lambda: y_pred)
     return tf.reduce_mean(tf.cast(tf.math.logical_not(tf.math.logical_xor(y_true == 5, tf.round(y_pred) == 5)), tf.float32))
+
+# TODO sens/spec
+

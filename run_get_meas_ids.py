@@ -10,8 +10,8 @@ configuration = get_configuration(_config_dict)
 timezone = pytz.timezone("Europe/Budapest")
 now_ts = datetime.now(timezone)
 
-_from = to_str_timestamp(now_ts - timedelta(minutes=90))  # to_str_timestamp(now_ts - timedelta(minutes=90))  "2023-10-05T13:29:39.362Z"
-_interval = min_to_millisec(90)
+_from = to_str_timestamp(now_ts - timedelta(minutes=120))  # to_str_timestamp(now_ts - timedelta(minutes=90))  "2023-10-05T13:29:39.362Z"
+_interval = min_to_millisec(120)
 
 measurement_ids = get_measurement_ids(configuration,
                                       _from=_from,

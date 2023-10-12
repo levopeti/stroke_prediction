@@ -4,28 +4,40 @@ import random
 import pandas as pd
 
 from glob import glob
+
+# from pympler.asizeof import asizeof
+
 from measurement_utils.measure_db import MeasureDB
 
 class ClearMeasurements(object):
-    def __init__(self, measDB: MeasureDB, folder_path: str, clear_json_path: str, cache_size: int = 1) -> None:
+    def __init__(self,
+                 measDB: MeasureDB,
+                 folder_path: str,
+                 clear_json_path: str,
+                 cache_size: int = 1) -> None:
         assert cache_size > 0, "cache_size must be positive integer"
         self.measDB = measDB
         self.cache_size = cache_size
         self.id_path_dict = dict()
         self.cache_dict = dict()
         self.clear_ids_dict = dict()
+        self.healthy_ids = list()
+
+        self.current_meas_id = None
+        self.current_df = None
 
         self.read_csv_path(folder_path)
         self.read_clear_json(clear_json_path)
+        self.collect_healthy_ids()
 
     def get_meas_id_list(self, data_type: str) -> list:
         return sorted(self.clear_ids_dict[data_type])
 
-    def get_class_value_dict(self, meas_id: int):
+    def get_class_value_dict(self, meas_id: int)-> dict:
         class_value_dict = self.measDB.get_class_value_dict(meas_id=meas_id)
         return class_value_dict
 
-    def get_min_class_value(self, meas_id: int):
+    def get_min_class_value(self, meas_id: int)-> int:
         class_value_dict = self.measDB.get_class_value_dict(meas_id=meas_id)
         min_class_value = min(class_value_dict.values())
         return min_class_value
@@ -47,33 +59,43 @@ class ClearMeasurements(object):
             meas_id = file_name.split("-")[0]
             self.id_path_dict[int(meas_id)] = csv_path
 
-    def drop_random_from_cache_dict(self):
+    def drop_random_from_cache_dict(self)-> None:
         self.cache_dict.pop(random.choice(list(self.cache_dict.keys())))
 
     def get_measurement(self, meas_id: int) -> pd.DataFrame:
-        if meas_id in self.cache_dict:
-            #print("use cache")
-            df = self.cache_dict[meas_id]
+        csv_path = self.id_path_dict[meas_id]
+        if self.cache_size == 1:
+            if meas_id == self.current_meas_id:
+                df = self.current_df
+            else:
+                df = pd.read_csv(csv_path)
+                self.current_df = df
+                self.current_meas_id = meas_id
         else:
-            #print("read new")
-            while len(self.cache_dict) >= self.cache_size:
-                # print("drop from cache")
-                self.drop_random_from_cache_dict()
-
-            csv_path = self.id_path_dict[meas_id]
-            #print("read csv")
-            df = pd.read_csv(csv_path)
-            #print("done")
-            self.cache_dict[meas_id] = df
-            # assert len(self.cache_dict) <= self.cache_size, (len(self.cache_dict), self.cache_size)
-            # if len(self.cache_dict) > self.cache_size:
-            #     print("Number of cached measurements ({}) is more than the cache size ({})".format(len(self.cache_dict), self.cache_size))
+            if meas_id in self.cache_dict:
+                df = self.cache_dict[meas_id]
+            else:
+                while len(self.cache_dict) >= self.cache_size:
+                    self.drop_random_from_cache_dict()
+                df = pd.read_csv(csv_path)
+                self.cache_dict[meas_id] = df
+                # assert len(self.cache_dict) <= self.cache_size, (len(self.cache_dict), self.cache_size)
+                # if len(self.cache_dict) > self.cache_size:
+                #     print("Number of cached measurements ({}) is more than the cache size ({})".format(len(self.cache_dict), self.cache_size))
+        # print(" {}: {:.2f}".format(type(self).__name__, asizeof(self) / 1e6))
         return df
 
-    def print_stat(self):
+    def collect_healthy_ids(self) -> None:
+        for meas_id in self.clear_ids_dict["train"]:
+            min_class_value = self.get_min_class_value(meas_id)
+
+            if min_class_value == 5:
+                self.healthy_ids.append(meas_id)
+
+    def print_stat(self)-> None:
         stat_dict = dict()
         for type_of_set, id_list in self.clear_ids_dict.items():
-            stat_dict[type_of_set] = {class_value: 0 for class_value in range(0, 6)}
+            stat_dict[type_of_set] = {class_value: 0 for class_value in range(6)}
 
             for meas_id in id_list:
                 min_class_value = self.get_min_class_value(meas_id)
@@ -82,7 +104,7 @@ class ClearMeasurements(object):
         for type_of_set, class_value_dict in stat_dict.items():
             total = sum(class_value_dict.values())
             print("\n", type_of_set)
-            for class_value in range(0, 6):
+            for class_value in range(6):
                 print("{}: {} {:.1f}%".format(class_value,
                                           class_value_dict[class_value],
                                           100 * class_value_dict[class_value] / total))
