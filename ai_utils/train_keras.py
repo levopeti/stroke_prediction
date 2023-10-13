@@ -1,10 +1,17 @@
 import gc
 import json
 import os
+import pickle
+
 import numpy as np
 
 from pprint import pprint
 from datetime import datetime
+# from pympler.asizeof import asizeof
+
+# import tensorflow as tf
+
+# tf.compat.v1.disable_eager_execution()
 
 from tensorflow.keras import backend as k
 from tensorflow.keras.callbacks import Callback
@@ -98,6 +105,7 @@ class DataGenerator(Sequence):
         else:
             labels = np.expand_dims(np.array(labels), axis=1)
 
+        # print(" {}: {:.2f}".format(type(self).__name__, asizeof(self) / 1e6))
         return np.concatenate(batch_array, axis=0), labels
 
 
@@ -146,7 +154,6 @@ if __name__ == "__main__":
     test_generator = DataGenerator("test", clear_measurements, params["test_batch_size"], params["output_shape"],
                                    params["length"], params["test_sample_per_meas"])
 
-    # Design model
     model = define_model(**params)
 
     cp = ModelCheckpoint(
@@ -156,6 +163,14 @@ if __name__ == "__main__":
         mode='auto',
         save_best_only=True)
 
+    history = model.fit_generator(generator=training_generator,
+                                  validation_data=test_generator,
+                                  steps_per_epoch=params["steps_per_epoch"],
+                                  epochs=params["num_epoch"],
+                                  callbacks=[es],  # cp
+                                  shuffle=False,
+                                  use_multiprocessing=False,
+                                  workers=6)
     es = EarlyStopping(monitor='loss', patience=params["patience"])
     cm = ClearMemory()
 
@@ -168,3 +183,10 @@ if __name__ == "__main__":
                         shuffle=False,
                         use_multiprocessing=False,
                         workers=6)
+
+    # save model
+    model.save(os.path.join(params["model_base_path"], "model.keras"))
+
+    # save history
+    with open(os.path.join(params["model_base_path"], "history.pkl"), "wb") as file_pi:
+        pickle.dump(history.history, file_pi)
