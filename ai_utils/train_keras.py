@@ -163,29 +163,21 @@ if __name__ == "__main__":
         mode='auto',
         save_best_only=True)
 
-    history = model.fit_generator(generator=training_generator,
-                                  validation_data=test_generator,
-                                  steps_per_epoch=params["steps_per_epoch"],
-                                  epochs=params["num_epoch"],
-                                  callbacks=[es],  # cp
-                                  shuffle=False,
-                                  use_multiprocessing=False,
-                                  workers=6)
     es = EarlyStopping(monitor='loss', patience=params["patience"])
     cm = ClearMemory()
 
     # Train model on dataset
-    model.fit_generator(generator=training_generator,
-                        validation_data=test_generator,
-                        steps_per_epoch=params["steps_per_epoch"],
-                        epochs=params["num_epoch"],
-                        callbacks=[es, cp, cm],
-                        shuffle=False,
-                        use_multiprocessing=False,
-                        workers=6)
+    history = model.fit_generator(generator=training_generator,
+                                  validation_data=test_generator,
+                                  steps_per_epoch=params["steps_per_epoch"],
+                                  epochs=params["num_epoch"],
+                                  callbacks=[es, cp, cm],
+                                  shuffle=False,
+                                  use_multiprocessing=False,
+                                  workers=6)
 
     # save model
-    model.save(os.path.join(params["model_base_path"], "model.keras"))
+    # model.save(os.path.join(params["model_base_path"], "model.keras"))
 
     # save history
     with open(os.path.join(params["model_base_path"], "history.pkl"), "wb") as file_pi:
