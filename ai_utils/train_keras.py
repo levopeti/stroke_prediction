@@ -1,3 +1,4 @@
+import gc
 import json
 import os
 import numpy as np
@@ -5,6 +6,8 @@ import numpy as np
 from pprint import pprint
 from datetime import datetime
 
+from tensorflow.keras import backend as k
+from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Input, Dense
@@ -98,6 +101,12 @@ class DataGenerator(Sequence):
         return np.concatenate(batch_array, axis=0), labels
 
 
+class ClearMemory(Callback):
+    def on_epoch_end(self, epoch, logs=None):
+        gc.collect()
+        k.clear_session()
+
+
 if __name__ == "__main__":
     params = {"accdb_path": "./data/WUS-v4measure202307311.accdb",
               "ucanaccess_path": "./ucanaccess/",
@@ -148,13 +157,14 @@ if __name__ == "__main__":
         save_best_only=True)
 
     es = EarlyStopping(monitor='loss', patience=params["patience"])
+    cm = ClearMemory()
 
     # Train model on dataset
     model.fit_generator(generator=training_generator,
                         validation_data=test_generator,
                         steps_per_epoch=params["steps_per_epoch"],
                         epochs=params["num_epoch"],
-                        callbacks=[es, cp],
+                        callbacks=[es, cp, cm],
                         shuffle=False,
                         use_multiprocessing=False,
                         workers=6)
