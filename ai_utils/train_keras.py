@@ -13,15 +13,23 @@ from datetime import datetime
 
 # tf.compat.v1.disable_eager_execution()
 
-from tensorflow.keras import backend as k
-from tensorflow.keras.callbacks import Callback
-from tensorflow.keras.utils import Sequence
-from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense, ReLU
-from tensorflow.keras.optimizers import Adam
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+# from tensorflow.keras import backend as k
+# from tensorflow.keras.callbacks import Callback
+# from tensorflow.keras.utils import Sequence
+# from tensorflow.keras.models import Model
+# from tensorflow.keras.layers import Input, Dense, ReLU
+# from tensorflow.keras.optimizers import Adam
+# from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+# from tensorflow.keras.utils import to_categorical
 
-from tensorflow.keras.utils import to_categorical
+from keras import backend as k
+from keras.callbacks import Callback
+from keras.utils import Sequence
+from keras.models import Model
+from keras.layers import Input, Dense, ReLU
+from keras.optimizers import Adam
+from keras.callbacks import EarlyStopping, ModelCheckpoint
+from keras.utils import to_categorical
 
 from ai_utils.training_utils.clear_measurements import ClearMeasurements
 from ai_utils.training_utils.func_utils import get_input_from_df
@@ -59,7 +67,7 @@ def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_l
     optimizer = Adam(learning_rate, amsgrad=True)
     _model.compile(loss=custom_loss,
                    optimizer=optimizer,
-                   run_eagerly=True,
+                   # run_eagerly=True,
                    metrics=["accuracy", stroke_accuracy])  # "categorical_crossentropy"
     return _model
 
