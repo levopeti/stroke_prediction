@@ -59,7 +59,7 @@ def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_l
     optimizer = Adam(learning_rate, amsgrad=True)
     _model.compile(loss=custom_loss,
                    optimizer=optimizer,
-                   # run_eagerly=True,
+                   run_eagerly=True,
                    metrics=["accuracy", stroke_accuracy])  # "categorical_crossentropy"
     return _model
 
