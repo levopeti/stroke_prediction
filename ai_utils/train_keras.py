@@ -37,7 +37,8 @@ def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_l
     assert len(layer_sizes) > 0, layer_sizes
 
     ip = Input(shape=(input_shape,), name="input")
-    x = Dense(units=layer_sizes[0], name="hidden_layer", activation="relu")(ip)
+    x = Dense(units=layer_sizes[0], name="hidden_layer", activation=None)(ip)  # "relu"
+    x = ReLU()(x)
 
     for i, layer_size in enumerate(layer_sizes[1:]):
         x = Dense(units=layer_size, name="hidden_layer_{}".format(i + 2), activation=None)(x)  # "relu"
