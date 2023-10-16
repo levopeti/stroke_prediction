@@ -17,7 +17,7 @@ from tensorflow.keras import backend as k
 from tensorflow.keras.callbacks import Callback
 from tensorflow.keras.utils import Sequence
 from tensorflow.keras.models import Model
-from tensorflow.keras.layers import Input, Dense
+from tensorflow.keras.layers import Input, Dense, ReLU
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
@@ -40,7 +40,8 @@ def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_l
     x = Dense(units=layer_sizes[0], name="hidden_layer", activation="relu")(ip)
 
     for i, layer_size in enumerate(layer_sizes[1:]):
-        x = Dense(units=layer_size, name="hidden_layer_{}".format(i + 2), activation="relu")(x)
+        x = Dense(units=layer_size, name="hidden_layer_{}".format(i + 2), activation=None)(x)  # "relu"
+        x = ReLU()(x)
 
     if output_shape == 1:
         op = Dense(units=output_shape, name="prediction", activation="sigmoid")(x)
@@ -55,7 +56,9 @@ def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_l
     _model.summary()
 
     optimizer = Adam(learning_rate, amsgrad=True)
-    _model.compile(loss=custom_loss, optimizer=optimizer,
+    _model.compile(loss=custom_loss,
+                   optimizer=optimizer,
+                   # run_eagerly=True,
                    metrics=["accuracy", stroke_accuracy])  # "categorical_crossentropy"
     return _model
 
@@ -164,14 +167,14 @@ if __name__ == "__main__":
         save_best_only=True)
 
     es = EarlyStopping(monitor='loss', patience=params["patience"])
-    cm = ClearMemory()
+    # cm = ClearMemory()
 
     # Train model on dataset
     history = model.fit_generator(generator=training_generator,
                                   validation_data=test_generator,
                                   steps_per_epoch=params["steps_per_epoch"],
                                   epochs=params["num_epoch"],
-                                  callbacks=[es, cp, cm],
+                                  callbacks=[es, cp],  # , cm
                                   shuffle=False,
                                   use_multiprocessing=False,
                                   workers=6)
@@ -180,5 +183,5 @@ if __name__ == "__main__":
     # model.save(os.path.join(params["model_base_path"], "model.keras"))
 
     # save history
-    with open(os.path.join(params["model_base_path"], "history.pkl"), "wb") as file_pi:
-        pickle.dump(history.history, file_pi)
+    with open(os.path.join(params["model_base_path"], "history.pkl"), "wb") as file:
+        pickle.dump(history.history, file)
