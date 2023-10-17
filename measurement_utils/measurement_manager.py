@@ -22,6 +22,9 @@ class MeasurementManager(object):
         else:
             return None
 
+    def del_measurement(self, measurement_id: str) -> None:
+        del self.all_measurement_dict[measurement_id]
+
     def drop_old_data(self):
         meas_ids_to_drop = list()
         for measurement_id in self.all_measurement_dict.keys():
