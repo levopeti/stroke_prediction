@@ -87,7 +87,6 @@ class DataGenerator(Sequence):
                  length: int,
                  sample_per_meas: int) -> None:
         self.batch_size = batch_size
-
         self.meas_id_list = clear_measurements.get_meas_id_list(data_type)
         self.clear_measurements = clear_measurements
         self.sample_per_meas = sample_per_meas

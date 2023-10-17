@@ -62,7 +62,7 @@ def get_other_config() -> dict:
         "host_url_and_token_path": "./host_url_and_token.json",
         "log_dir_path": "./log",
         "frequency": 25,  # Hz, T = 40 ms
-        "frequency_check_eps": 3,  # ms
+        "frequency_check_eps": 4,  # ms
         "timezone": pytz.timezone("Europe/Budapest")
     }
     return other_config_dict
