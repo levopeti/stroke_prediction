@@ -38,6 +38,10 @@ class LogMaker(object):
         self.current_log_id = 0
         self.timezone = config_dict["timezone"]
         self.discord = discord
+        self.current_meas_id = None
+
+    def set_current_meas_id(self, meas_id: int):
+        self.current_meas_id = meas_id
 
     def make_log_dir(self, log_dir_path: str):
         self.log_dir_path = log_dir_path
@@ -72,7 +76,7 @@ class LogMaker(object):
 
     def write_discord_log(self, log: str, print_out: bool = False):
         if self.discord.active:
-            self.discord.send_message(fields=[{"name": "log",
+            self.discord.send_message(fields=[{"name": self.current_meas_id,
                                                "value": log,
                                                "inline": True}])
 
@@ -94,6 +98,13 @@ def set_log_dir_path(log_dir_path: str):
         return
     # assert log_maker is not None, "Log maker aren't started yet."
     log_maker.make_log_dir(log_dir_path)
+
+
+def set_log_meas_id(meas_id: int):
+    if log_maker is None:
+        print(colored("Log maker aren't started yet, so base path will not be set..", color="red"))
+        return
+    log_maker.set_current_meas_id(meas_id)
 
 
 def write_log(file_name: str, log_message, title: str = None, blank_line: bool = True,

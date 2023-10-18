@@ -13,7 +13,7 @@ from measurement_utils.measurement_manager import MeasurementManager
 from openapi_client import Configuration
 from utils.main_loop_utils import get_measurement, check_and_synch_measurement, make_error_body, get_instances, \
     make_body
-from utils.log_maker import start_log_maker, set_log_dir_path, write_log
+from utils.log_maker import start_log_maker, set_log_dir_path, set_log_meas_id, write_log
 
 
 def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
@@ -39,6 +39,7 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
                   title="MeasurementIds", print_out=True, color="blue", add_date=True, write_discord=True)
 
         for measurement_id in measurement_ids:
+            set_log_meas_id(measurement_id)
             write_log("main_loop.txt", "Process measurement {}".format(measurement_id),
                       title="Process", print_out=True, color="blue", add_date=True, write_discord=True)
             start = time()
@@ -66,6 +67,13 @@ def main_loop(model: MLP, configuration: Configuration, config_dict: dict):
                 if from_ts > datetime.now(timezone):
                     # from_ts is in the future
                     break
+
+            # if len(data_list) == 0:
+            #     # last request is empty, but last one process could be needed
+            #     mm.del_measurement(measurement_id)
+            #     write_log("main_loop.txt", "Error message: {}, {}".format(check_message, error_code),
+            #               title="Error", print_out=True, color="red", add_date=True, write_discord=True)
+            #     continue
 
             print("get_measurement")
             measurement = get_measurement(mm, measurement_id)

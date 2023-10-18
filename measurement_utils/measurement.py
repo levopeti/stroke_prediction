@@ -6,6 +6,7 @@ from termcolor import colored
 from utils.general_utils import to_str_timestamp
 from typing import Union
 from utils.discord import DiscordBot
+from utils.log_maker import write_log
 
 
 class NotEnoughData(Exception):
@@ -82,19 +83,40 @@ class Measurement(object):
 
     # #### checks for measurement ####
     def check_frequency(self, expected_delta_ms: int, eps: int) -> bool:
+        check_ok = True
         for keys, df in self.measurement_dict.items():
             if df is not None:
                 time_stamps = df["timestamp_ms"].values
                 deltas = np.diff(time_stamps)
                 if np.any(deltas < expected_delta_ms - eps) or np.any(deltas > expected_delta_ms + eps):
-                    log = "frequency is not correct, with key: {} min: {}, max: {}, avg: {:.2f}".format(keys,
-                                                                                                        np.min(deltas),
-                                                                                                        np.max(deltas),
-                                                                                                        np.mean(deltas))
-                    self.log_list.append(colored(log, "red"))
-                    return False
+                    less_mask = deltas < expected_delta_ms - eps
+                    more_mask = deltas > expected_delta_ms + eps
 
-        return True
+                    less_deltas = deltas[less_mask]
+                    more_deltas = deltas[more_mask]
+
+                    # less_timestamps = time_stamps[:-1][less_mask]
+                    # more_timestamps = time_stamps[:-1][more_mask]
+
+                    less_timestamps = ", ".join(
+                        ["{} ({})".format(to_str_timestamp(time_stamps[:-1][less_mask][i]), less_deltas[i]) for i in
+                         range(len(less_deltas))])
+                    more_timestamps = ", ".join(
+                        ["{} ({})".format(to_str_timestamp(time_stamps[:-1][more_mask][i]), more_deltas[i]) for i in
+                         range(len(more_deltas))])
+
+                    log = ("frequency is not correct, with key: {} min: {}, max: {}, avg: {:.2f}\n"
+                           "less timestamps: {}\nmore timestamps: {}".format(keys,
+                                                                             np.min(deltas),
+                                                                             np.max(deltas),
+                                                                             np.mean(deltas),
+                                                                             less_timestamps,
+                                                                             more_timestamps))
+                    write_log("main_loop.txt", log, title="SynchronizationError", print_out=True, color="red",
+                              add_date=True, write_discord=True)
+                    self.log_list.append(colored(log, "red"))
+                    check_ok = False
+        return check_ok
 
     def get_missing_keys(self) -> list:
         missing_keys = list()
