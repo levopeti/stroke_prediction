@@ -76,7 +76,7 @@ class LogMaker(object):
 
     def write_discord_log(self, log: str, print_out: bool = False):
         if self.discord.active:
-            self.discord.send_message(fields=[{"name": self.current_meas_id,
+            self.discord.send_message(fields=[{"name": str(self.current_meas_id),
                                                "value": log,
                                                "inline": True}])
 
