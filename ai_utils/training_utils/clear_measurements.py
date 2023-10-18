@@ -9,6 +9,7 @@ from glob import glob
 
 from measurement_utils.measure_db import MeasureDB
 
+
 class ClearMeasurements(object):
     def __init__(self,
                  measDB: MeasureDB,
@@ -21,23 +22,22 @@ class ClearMeasurements(object):
         self.id_path_dict = dict()
         self.cache_dict = dict()
         self.clear_ids_dict = dict()
-        self.healthy_ids = list()
+        self.all_meas_ids = list()
 
         self.current_meas_id = None
         self.current_df = None
 
         self.read_csv_path(folder_path)
         self.read_clear_json(clear_json_path)
-        self.collect_healthy_ids()
 
     def get_meas_id_list(self, data_type: str) -> list:
         return sorted(self.clear_ids_dict[data_type])
 
-    def get_class_value_dict(self, meas_id: int)-> dict:
+    def get_class_value_dict(self, meas_id: int) -> dict:
         class_value_dict = self.measDB.get_class_value_dict(meas_id=meas_id)
         return class_value_dict
 
-    def get_min_class_value(self, meas_id: int)-> int:
+    def get_min_class_value(self, meas_id: int) -> int:
         class_value_dict = self.measDB.get_class_value_dict(meas_id=meas_id)
         min_class_value = min(class_value_dict.values())
         return min_class_value
@@ -46,12 +46,12 @@ class ClearMeasurements(object):
         with open(clear_json_path, "r") as read_file:
             self.clear_ids_dict = json.load(read_file)
 
-        all_meas_ids = set(self.id_path_dict.keys())
+        self.all_meas_ids = sorted(set(self.id_path_dict.keys()))
         for meas_id in self.clear_ids_dict["train"]:
-            assert meas_id in all_meas_ids
+            assert meas_id in self.all_meas_ids
 
         for meas_id in self.clear_ids_dict["test"]:
-            assert meas_id in all_meas_ids
+            assert meas_id in self.all_meas_ids
 
     def read_csv_path(self, folder_path: str) -> None:
         for csv_path in sorted(glob(os.path.join(folder_path, "*.csv"))):
@@ -59,7 +59,7 @@ class ClearMeasurements(object):
             meas_id = file_name.split("-")[0]
             self.id_path_dict[int(meas_id)] = csv_path
 
-    def drop_random_from_cache_dict(self)-> None:
+    def drop_random_from_cache_dict(self) -> None:
         self.cache_dict.pop(random.choice(list(self.cache_dict.keys())))
 
     def get_measurement(self, meas_id: int) -> pd.DataFrame:
@@ -85,14 +85,27 @@ class ClearMeasurements(object):
         # print(" {}: {:.2f}".format(type(self).__name__, asizeof(self) / 1e6))
         return df
 
-    def collect_healthy_ids(self) -> None:
-        for meas_id in self.clear_ids_dict["train"]:
+    def collect_healthy_ids(self, data_type) -> list:
+        healthy_ids = list()
+        ids = self.all_meas_ids if data_type == "all" else self.clear_ids_dict[data_type]
+        for meas_id in ids:
             min_class_value = self.get_min_class_value(meas_id)
 
             if min_class_value == 5:
-                self.healthy_ids.append(meas_id)
+                healthy_ids.append(meas_id)
+        return healthy_ids
 
-    def print_stat(self)-> None:
+    def collect_stroke_ids(self, data_type) -> list:
+        stroke_ids = list()
+        ids = self.all_meas_ids if data_type == "all" else self.clear_ids_dict[data_type]
+        for meas_id in ids:
+            min_class_value = self.get_min_class_value(meas_id)
+
+            if min_class_value < 5:
+                stroke_ids.append(meas_id)
+        return stroke_ids
+
+    def print_stat(self) -> None:
         stat_dict = dict()
         for type_of_set, id_list in self.clear_ids_dict.items():
             stat_dict[type_of_set] = {class_value: 0 for class_value in range(6)}
@@ -106,5 +119,5 @@ class ClearMeasurements(object):
             print("\n", type_of_set)
             for class_value in range(6):
                 print("{}: {} {:.1f}%".format(class_value,
-                                          class_value_dict[class_value],
-                                          100 * class_value_dict[class_value] / total))
+                                              class_value_dict[class_value],
+                                              100 * class_value_dict[class_value] / total))

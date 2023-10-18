@@ -9,7 +9,7 @@ from pprint import pprint
 from datetime import datetime
 # from pympler.asizeof import asizeof
 
-# import tensorflow as tf
+import tensorflow as tf
 
 # tf.compat.v1.disable_eager_execution()
 
@@ -38,7 +38,7 @@ from ai_utils.training_utils.loss_and_accuracy import stroke_loss_reg, stroke_lo
 from measurement_utils.measure_db import MeasureDB
 
 
-# tf.config.run_functions_eagerly(True)
+tf.config.run_functions_eagerly(True)
 
 
 def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_loss_factor, **kwargs):
@@ -67,7 +67,7 @@ def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_l
     optimizer = Adam(learning_rate, amsgrad=True)
     _model.compile(loss=custom_loss,
                    optimizer=optimizer,
-                   # run_eagerly=True,
+                   run_eagerly=True,
                    metrics=["accuracy", stroke_accuracy])  # "categorical_crossentropy"
     return _model
 
@@ -176,14 +176,14 @@ if __name__ == "__main__":
         save_best_only=True)
 
     es = EarlyStopping(monitor='loss', patience=params["patience"])
-    # cm = ClearMemory()
+    cm = ClearMemory()
 
     # Train model on dataset
     history = model.fit_generator(generator=training_generator,
                                   validation_data=test_generator,
                                   steps_per_epoch=params["steps_per_epoch"],
                                   epochs=params["num_epoch"],
-                                  callbacks=[es, cp],  # , cm
+                                  callbacks=[es, cp, cm],  # , cm
                                   shuffle=False,
                                   use_multiprocessing=False,
                                   workers=6)
