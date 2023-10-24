@@ -4,7 +4,7 @@ from typing import Union
 from datetime import datetime, timedelta
 
 from utils.general_utils import to_int_timestamp
-from measurement_utils.measurement import key_map
+from measurement_utils.measurement import key_map, key_list
 from utils.log_maker import write_log
 
 pd.set_option('display.max_rows', 500)
@@ -18,7 +18,12 @@ class MeasurementManager(object):
 
     def get_last_timestamp(self, measurement_id: str) -> Union[int, None]:
         if measurement_id in self.all_measurement_dict:
-            return self.all_measurement_dict[measurement_id]["timestamp_ms"].max()
+            current_df = self.all_measurement_dict[measurement_id]
+            max_list = list()
+            for key in key_list:
+                max_list.append(current_df[current_df["keys_tuple"] == key]["timestamp_ms"].max())
+
+            return min(max_list)
         else:
             return None
 

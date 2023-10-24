@@ -2,43 +2,40 @@ import gc
 import json
 import os
 import pickle
-
 import numpy as np
 
 from pprint import pprint
 from datetime import datetime
 # from pympler.asizeof import asizeof
 
-import tensorflow as tf
+# import tensorflow as tf
 
 # tf.compat.v1.disable_eager_execution()
+# tf.config.run_functions_eagerly(True)
 
-# from tensorflow.keras import backend as k
-# from tensorflow.keras.callbacks import Callback
-# from tensorflow.keras.utils import Sequence
-# from tensorflow.keras.models import Model
-# from tensorflow.keras.layers import Input, Dense, ReLU
-# from tensorflow.keras.optimizers import Adam
-# from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
-# from tensorflow.keras.utils import to_categorical
+from tensorflow.keras import backend as k
+from tensorflow.keras.callbacks import Callback
+from tensorflow.keras.utils import Sequence
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Input, Dense, ReLU
+from tensorflow.keras.optimizers import Adam
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+from tensorflow.keras.utils import to_categorical
 
-from keras import backend as k
-from keras.callbacks import Callback
-from keras.utils import Sequence
-from keras.models import Model
-from keras.layers import Input, Dense, ReLU
-from keras.optimizers import Adam
-from keras.callbacks import EarlyStopping, ModelCheckpoint
-from keras.utils import to_categorical
+# from keras import backend as k
+# from keras.callbacks import Callback
+# from keras.utils import Sequence
+# from keras.models import Model
+# from keras.layers import Input, Dense, ReLU
+# from keras.optimizers import Adam
+# from keras.callbacks import EarlyStopping, ModelCheckpoint
+# from keras.utils import to_categorical
 
 from ai_utils.training_utils.clear_measurements import ClearMeasurements
 from ai_utils.training_utils.func_utils import get_input_from_df
 from ai_utils.training_utils.loss_and_accuracy import stroke_loss_reg, stroke_loss_clas, \
     stroke_accuracy_reg, stroke_accuracy_clas
 from measurement_utils.measure_db import MeasureDB
-
-
-tf.config.run_functions_eagerly(True)
 
 
 def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_loss_factor, **kwargs):
@@ -65,10 +62,10 @@ def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_l
     _model.summary()
 
     optimizer = Adam(learning_rate, amsgrad=True)
-    _model.compile(loss=custom_loss,
+    _model.compile(loss="mse",  # "categorical_crossentropy", custom_loss
                    optimizer=optimizer,
                    run_eagerly=True,
-                   metrics=["accuracy", stroke_accuracy])  # "categorical_crossentropy"
+                   metrics=["accuracy"])  # , stroke_accuracy
     return _model
 
 
@@ -144,7 +141,7 @@ if __name__ == "__main__":
               "learning_rate": 0.001,
               "wd": 0,
               "num_epoch": 1000,
-              "steps_per_epoch": 100,
+              "steps_per_epoch": 50,  # 100
               "stroke_loss_factor": 0.1,
               "cache_size": 1
               }
@@ -170,22 +167,22 @@ if __name__ == "__main__":
     cp = ModelCheckpoint(
         filepath=params["model_base_path"],
         save_weights_only=False,
-        monitor='loss',
-        mode='auto',
+        monitor="loss",
+        mode="auto",
         save_best_only=True)
 
-    es = EarlyStopping(monitor='loss', patience=params["patience"])
+    es = EarlyStopping(monitor="loss", patience=params["patience"])
     cm = ClearMemory()
 
     # Train model on dataset
-    history = model.fit_generator(generator=training_generator,
-                                  validation_data=test_generator,
-                                  steps_per_epoch=params["steps_per_epoch"],
-                                  epochs=params["num_epoch"],
-                                  callbacks=[es, cp, cm],  # , cm
-                                  shuffle=False,
-                                  use_multiprocessing=False,
-                                  workers=6)
+    history = model.fit(training_generator,
+                        validation_data=test_generator,
+                        steps_per_epoch=params["steps_per_epoch"],
+                        epochs=params["num_epoch"],
+                        # callbacks=[es, cp, cm],  # , cm
+                        shuffle=False,
+                        use_multiprocessing=False,
+                        workers=1)
 
     # save model
     # model.save(os.path.join(params["model_base_path"], "model.keras"))
