@@ -2,6 +2,8 @@ import gc
 import json
 import os
 import pickle
+
+import dill
 import numpy as np
 
 from pprint import pprint
@@ -32,13 +34,13 @@ from tensorflow.keras.utils import to_categorical
 # from keras.utils import to_categorical
 
 from ai_utils.training_utils.clear_measurements import ClearMeasurements
-from ai_utils.training_utils.func_utils import get_input_from_df
+from ai_utils.training_utils.func_utils import get_input_from_df, save_params
 from ai_utils.training_utils.loss_and_accuracy import stroke_loss_reg, stroke_loss_clas, \
     stroke_accuracy_reg, stroke_accuracy_clas
 from measurement_utils.measure_db import MeasureDB
 
 
-def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_loss_factor, **kwargs):
+def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_loss_factor, **kwargs) -> Model:
     assert len(layer_sizes) > 0, layer_sizes
 
     ip = Input(shape=(input_shape,), name="input")
@@ -69,12 +71,6 @@ def define_model(input_shape, output_shape, layer_sizes, learning_rate, stroke_l
     return _model
 
 
-def save_params(_params: dict):
-    os.makedirs(_params["model_base_path"], exist_ok=True)
-    with open(os.path.join(_params["model_base_path"], "params.json"), "w") as f:
-        json.dump(_params, f)
-
-
 class DataGenerator(Sequence):
     def __init__(self,
                  data_type: str,  # train or test
@@ -82,22 +78,28 @@ class DataGenerator(Sequence):
                  batch_size: int,
                  n_classes: int,
                  length: int,
-                 sample_per_meas: int) -> None:
+                 sample_per_meas: int,
+                 steps_per_epoch: int) -> None:
+        self.data_type = data_type
         self.batch_size = batch_size
         self.meas_id_list = clear_measurements.get_meas_id_list(data_type)
         self.clear_measurements = clear_measurements
         self.sample_per_meas = sample_per_meas
         self.length = length
         self.n_classes = n_classes
+        self.steps_per_epoch = steps_per_epoch
 
     def __len__(self):
-        return int(len(self.meas_id_list) * self.sample_per_meas / self.batch_size)
+        if self.data_type == "test":
+            return int(len(self.meas_id_list) * self.sample_per_meas / self.batch_size)
+        elif self.data_type == "train":
+            return self.steps_per_epoch
 
     def __getitem__(self, batch_idx):
         batch_array = list()
         labels = list()
         for idx in range(batch_idx * self.batch_size, (batch_idx + 1) * self.batch_size):
-            meas_idx = idx // self.sample_per_meas
+            meas_idx = idx // self.sample_per_meas % len(self.meas_id_list)
             meas_id = self.meas_id_list[meas_idx]
             meas_df = self.clear_measurements.get_measurement(meas_id)
 
@@ -111,7 +113,7 @@ class DataGenerator(Sequence):
         if self.n_classes != 1:
             labels = to_categorical(labels, num_classes=self.n_classes)
         else:
-            labels = np.expand_dims(np.array(labels), axis=1)
+            labels = np.expand_dims(np.array(labels), axis=1) / 5
 
         # print(" {}: {:.2f}".format(type(self).__name__, asizeof(self) / 1e6))
         return np.concatenate(batch_array, axis=0), labels
@@ -141,7 +143,7 @@ if __name__ == "__main__":
               "learning_rate": 0.001,
               "wd": 0,
               "num_epoch": 1000,
-              "steps_per_epoch": 50,  # 100
+              "steps_per_epoch": 10,  # 100
               "stroke_loss_factor": 0.1,
               "cache_size": 1
               }
@@ -158,9 +160,10 @@ if __name__ == "__main__":
 
     # Generators
     training_generator = DataGenerator("train", clear_measurements, params["train_batch_size"], params["output_shape"],
-                                       params["length"], params["train_sample_per_meas"])
+                                       params["length"], params["train_sample_per_meas"], params["steps_per_epoch"])
     test_generator = DataGenerator("test", clear_measurements, params["test_batch_size"], params["output_shape"],
-                                   params["length"], params["test_sample_per_meas"])
+                                   params["length"], params["test_sample_per_meas"], params["steps_per_epoch"])
+    print("len of train generator: {}".format(len(training_generator)))
 
     model = define_model(**params)
 
@@ -182,7 +185,7 @@ if __name__ == "__main__":
                         # callbacks=[es, cp, cm],  # , cm
                         shuffle=False,
                         use_multiprocessing=False,
-                        workers=1)
+                        workers=6)
 
     # save model
     # model.save(os.path.join(params["model_base_path"], "model.keras"))

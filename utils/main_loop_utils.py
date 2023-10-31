@@ -69,8 +69,14 @@ def check_and_synch_measurement(measurement: Measurement, config_dict: dict) -> 
         return "missing keys: {}".format(missing_keys), "Error 2"
 
     # check if frequency is okay for each key
+    # warning
     expected_delta_ms = (1 / config_dict["frequency"]) * 1000  # ms
-    eps = config_dict["frequency_check_eps"]  # ms
+    eps = config_dict["frequency_check_eps_warning"]  # ms
+    measurement.check_frequency(expected_delta_ms, eps=eps)
+
+    # error
+    expected_delta_ms = (1 / config_dict["frequency"]) * 1000  # ms
+    eps = config_dict["frequency_check_eps_error"]  # ms
     if not measurement.check_frequency(expected_delta_ms, eps=eps):
         return "frequency_NOK", "Error 3"
 

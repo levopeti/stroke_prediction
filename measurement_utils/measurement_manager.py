@@ -46,7 +46,7 @@ class MeasurementManager(object):
         for measurement_id in meas_ids_to_drop:
             del self.all_measurement_dict[measurement_id]
 
-    def add_data(self, measurement_id: str, data_list: list, time_of_request: datetime):
+    def add_data(self, measurement_id: str, data_list: list, time_of_request: datetime) -> None:
         """ columns: limb, side, timestamp, type, x, y, z"""
         if len(data_list) == 0:
             return
@@ -84,7 +84,7 @@ class MeasurementManager(object):
                                                                        self.all_measurement_dict.keys()),
                       title="NotFound", print_out=True, color="red", add_date=True)
 
-    def save_each_measurement(self):
+    def save_each_measurement(self) -> None:
         for measurement_id in self.all_measurement_dict.keys():
             path = "{}_{}.csv".format(measurement_id, datetime.now(self.timezone))
             self.all_measurement_dict[measurement_id].to_csv(path, index=False)

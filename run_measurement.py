@@ -22,12 +22,11 @@ key_list = [("l", "a", "a"),
             ("r", "l", "g")]
 
 
-def normal_mode(id_list: list, timezone, only_zero_id_list):
+def normal_mode(id_list: list, timezone, only_zero_id_list, random_freq):
     time_delta_to_start = timedelta(minutes=90)
     start_timestamp = datetime.now(timezone) - time_delta_to_start
     print("start ts: {}".format(to_str_timestamp(start_timestamp)))
-    time_stamp_dict = {m_id: start_timestamp for m_id in id_list}
-    time_delta_millis = timedelta(milliseconds=40)
+    time_stamp_dict = {m_id: {key: start_timestamp for key in key_list} for m_id in id_list}
     # steps_till_now = int(time_delta_to_start / time_delta_millis)
     # first_request = {m_id: True for m_id in id_list}
 
@@ -35,22 +34,25 @@ def normal_mode(id_list: list, timezone, only_zero_id_list):
     # print(to_str_timestamp(timestamp_data))
     # time_stamp_dict = {m_id: timestamp_data for m_id in id_list}
     # time_delta_millis = 40
-
+    num_of_steps = 100
     uploaded_data = 0
     while True:
         all_reach_the_future = True
         for measurement_id in id_list:
             measure = list()
-            if time_stamp_dict[measurement_id] + (time_delta_millis * 100) > datetime.now(timezone):
+            avg_time_delta_millis = timedelta(milliseconds=40)
+            if min(time_stamp_dict[measurement_id].values()) + (avg_time_delta_millis * num_of_steps) > datetime.now(timezone):
                 continue
 
             all_reach_the_future = False
 
-            for i in range(100):
-                time_stamp_dict[measurement_id] += time_delta_millis
-                timestamp_data_string = to_str_timestamp(time_stamp_dict[measurement_id])
-
+            for i in range(num_of_steps):
                 for key in key_list:
+                    milliseconds = random.randrange(-random_freq, random_freq) if random_freq else 40
+                    time_delta_millis = timedelta(milliseconds=milliseconds)
+                    time_stamp_dict[measurement_id][key] += time_delta_millis
+                    timestamp_data_string = to_str_timestamp(time_stamp_dict[measurement_id][key])
+
                     measure.append({
                         "limb": key[1],
                         "side": key[0],
@@ -86,7 +88,7 @@ def normal_mode(id_list: list, timezone, only_zero_id_list):
                     print("Exception when calling MotionScanRESTAPIEndPointsApi->save_measurements: %s\n" % e)
             uploaded_data += 100
         print(uploaded_data / (25 * 60 * 60))  # number of hours
-        print(to_str_timestamp(time_stamp_dict[id_list[0]]))
+        print(to_str_timestamp(min(time_stamp_dict[id_list[0]].values())))
         print(id_list)
         print()
         if all_reach_the_future:
@@ -95,7 +97,7 @@ def normal_mode(id_list: list, timezone, only_zero_id_list):
             sleep(60)
 
 
-def local_mode(id_list, timezone, only_zero_id_list):
+def local_mode(id_list, timezone, only_zero_id_list, random_freq):
     def get_measurements(number_of_steps, measurement_id):
         measure = list()
         for i in range(number_of_steps):
@@ -169,9 +171,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Provide data for main.py.")
     parser.add_argument("--local_mode", default=False, action="store_true", help="Local data flow through zmq.")
     parser.add_argument("--mocking_mode", default=False, action="store_true", help="First id in list gets only zero values.")
+    parser.add_argument("--random_freq", default=None, type=int, help="Frequency is not constant.")
     args = parser.parse_args()
 
-    _id_list = [8, 9]  # [8, 9, 10] [5, 6, 7]
+    _id_list = [8]  # [8, 9, 10] [5, 6, 7]
 
     if args.mocking_mode:
         _only_zero_id_list = [_id_list[0]]
@@ -181,11 +184,11 @@ if __name__ == "__main__":
     _timezone = pytz.timezone("Europe/Budapest")
 
     if args.local_mode:
-        local_mode(_id_list, _timezone, _only_zero_id_list)
+        local_mode(_id_list, _timezone, _only_zero_id_list, args.random_freq)
     else:
         _config_dict = {"host_url_and_token_path": "./host_url_and_token.json"}
         _configuration = get_configuration(_config_dict)
-        normal_mode(_id_list, _timezone, _only_zero_id_list)
+        normal_mode(_id_list, _timezone, _only_zero_id_list, args.random_freq)
 
 
 

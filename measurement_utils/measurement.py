@@ -88,10 +88,9 @@ class Measurement(object):
             if df is not None:
                 time_stamps = df["timestamp_ms"].values
                 deltas = np.diff(time_stamps)
-                if np.any(deltas < expected_delta_ms - eps) or np.any(deltas > expected_delta_ms + eps):
-                    less_mask = deltas < expected_delta_ms - eps
-                    more_mask = deltas > expected_delta_ms + eps
-
+                less_mask = deltas < expected_delta_ms - eps
+                more_mask = deltas > expected_delta_ms + eps
+                if np.any(less_mask) or np.any(more_mask):
                     less_deltas = deltas[less_mask]
                     more_deltas = deltas[more_mask]
 

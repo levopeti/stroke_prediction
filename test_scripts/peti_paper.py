@@ -127,5 +127,5 @@ if __name__ == "__main__":
         print_list = [_acc_sum_dict[("right", "arm")][0] / _acc_sum_dict["right", "arm"][1],
                       _acc_sum_dict[("left", "arm")][0] / _acc_sum_dict["left", "arm"][1],
                       _acc_sum_dict[("right", "leg")][0] / _acc_sum_dict["right", "leg"][1],
-                      _acc_sum_dict[("right", "leg")][0] / _acc_sum_dict["right", "leg"][1]]
+                      _acc_sum_dict[("left", "leg")][0] / _acc_sum_dict["left", "leg"][1]]
         print("{},{:.2f},{:.2f},{:.2f},{:.2f}".format(_meas_id, *print_list))

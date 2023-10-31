@@ -1,7 +1,14 @@
+import json
+import os
 import random
 
 import numpy as np
 import pandas as pd
+
+def save_params(_params: dict):
+    os.makedirs(_params["model_base_path"], exist_ok=True)
+    with open(os.path.join(_params["model_base_path"], "params.json"), "w") as f:
+        json.dump(_params, f)
 
 
 def calculate_diff(x_y_z, meas_type_acc) -> np.ndarray:
