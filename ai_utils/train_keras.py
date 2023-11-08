@@ -1,9 +1,7 @@
 import gc
-import json
 import os
 import pickle
 
-import dill
 import numpy as np
 
 from pprint import pprint
@@ -35,7 +33,7 @@ from tensorflow.keras.utils import to_categorical
 
 from ai_utils.training_utils.clear_measurements import ClearMeasurements
 from ai_utils.training_utils.func_utils import get_input_from_df, save_params
-from ai_utils.training_utils.loss_and_accuracy import stroke_loss_reg, stroke_loss_clas, \
+from ai_utils.training_utils.keras_utils.loss_and_accuracy import stroke_loss_reg, stroke_loss_clas, \
     stroke_accuracy_reg, stroke_accuracy_clas
 from measurement_utils.measure_db import MeasureDB
 

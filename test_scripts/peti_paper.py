@@ -10,7 +10,7 @@ from measurement_utils.measure_db import MeasureDB
 frequency = 25  # Hz
 
 
-def get_acc_sum(meas_df, _min_h=None, _max_h=None):
+def get_sum(meas_df, _meas_type="acc", _min_h=None, _max_h=None):
     meas_df["hour"] = meas_df.epoch.apply(lambda x: datetime.fromtimestamp(x / 1000).hour)
 
     if _min_h is not None and _max_h is not None:
@@ -19,8 +19,8 @@ def get_acc_sum(meas_df, _min_h=None, _max_h=None):
         else:
             meas_df = meas_df[(meas_df["hour"] >= _min_h) | (meas_df["hour"] < _max_h)]
 
-    keys_in_order = (("arm", "acc"),
-                     ("leg", "acc"))
+    keys_in_order = (("arm", _meas_type),
+                     ("leg", _meas_type))
 
     acc_sum_dict = dict()
     for key in keys_in_order:
@@ -60,7 +60,7 @@ def get_id_list(_stroke_side, _stroke_limb, _threshold):
 
 
 def get_stat():
-    print("stroke_side: {}, stroke_limb: {}, threshold: {}, min_h: {}, max_h: {}".format(stroke_side, stroke_limb, threshold, min_h, max_h))
+    print("stroke_side: {}, stroke_limb: {}, meas type: {}, threshold: {}, min_h: {}, max_h: {}".format(stroke_side, stroke_limb, meas_type, threshold, min_h, max_h))
     print(len(id_list))
     print(id_list)
     meas_acc_sum_dict = {("right", "arm"): [0, 0],
@@ -70,7 +70,7 @@ def get_stat():
                          }
     for _meas_id in id_list:
         _meas_df = clear_measurements.get_measurement(_meas_id)
-        acc_sum_dict = get_acc_sum(_meas_df, min_h, max_h)
+        acc_sum_dict = get_sum(_meas_df, meas_type, min_h, max_h)
 
         for _key in meas_acc_sum_dict.keys():
             # acc_sum
@@ -108,6 +108,7 @@ if __name__ == "__main__":
     threshold = 5
     min_h = 7
     max_h = 23
+    meas_type = "gyr"  # acc gyr
     # for stroke_limb in ["arm", "leg", "all"]:
     #     stroke_side_list = ["all"] if stroke_limb in ["arm", "leg"] else ["right", "left", "all"]
     #     for stroke_side in stroke_side_list:
@@ -123,7 +124,7 @@ if __name__ == "__main__":
 
     for _meas_id in id_list:
         _meas_df = clear_measurements.get_measurement(_meas_id)
-        _acc_sum_dict = get_acc_sum(_meas_df)
+        _acc_sum_dict = get_sum(_meas_df, meas_type)
         print_list = [_acc_sum_dict[("right", "arm")][0] / _acc_sum_dict["right", "arm"][1],
                       _acc_sum_dict[("left", "arm")][0] / _acc_sum_dict["left", "arm"][1],
                       _acc_sum_dict[("right", "leg")][0] / _acc_sum_dict["right", "leg"][1],
