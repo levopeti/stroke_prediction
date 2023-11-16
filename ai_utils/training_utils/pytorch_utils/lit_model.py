@@ -1,7 +1,6 @@
 import torch
 from pytorch_lightning import LightningModule
 from torch.nn import Linear, ReLU, Module, ModuleList
-from torch.optim import Optimizer
 from functools import partial
 from typing import List
 from torchmetrics import Metric
@@ -12,11 +11,11 @@ class LitMLP(LightningModule):
                  input_shape: int,
                  output_shape: int,
                  layer_sizes: list,
-                 loss: Module,
+                 loss_list: List[Module],
                  accuracy_list: List[Metric],
                  optimizer: partial):
         super().__init__()
-        self.loss = loss
+        self.loss_list = loss_list
         self.accuracy_list = accuracy_list
         self.optimizer = optimizer
 
@@ -31,7 +30,6 @@ class LitMLP(LightningModule):
 
         # TODO: self.save_hyperparameters()
 
-
     def forward(self, x):
         for layer in self.layers:
             x = layer(x)
@@ -44,43 +42,38 @@ class LitMLP(LightningModule):
     def training_step(self, batch, batch_idx):
         x, y = batch
         logits = self(x)
-        loss = self.loss(logits, y)
+        loss_dict = {loss.name: loss(logits, y) for loss in self.loss_list}
+        loss_sum = sum(loss_dict.values())
 
-        log_dict = {"train_loss": loss}
+        log_dict = dict()
+        log_dict["train_loss"] = loss_sum
+
+        for name, loss in loss_dict.items():
+            log_dict["train_" + name] = loss
+
         for accuracy in self.accuracy_list:
             accuracy.update(logits, y)
             log_dict["train_" + accuracy.name] = accuracy.compute()
-        self.log_dict(log_dict, prog_bar=True, on_step=True)
 
-        return loss
+        self.log_dict(log_dict, prog_bar=True, on_step=True)
+        return sum(loss_dict.values())
 
     def on_train_epoch_end(self):
-        # log_dict = dict()
         for accuracy in self.accuracy_list:
-            # log_dict["train_" + accuracy.name + "_end"] = accuracy.compute()
             accuracy.reset()
-        # self.log_dict(log_dict, prog_bar=True, on_step=False, on_epoch=True)
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
         logits = self(x)
-        loss = self.loss(logits, y)
-
-        # log_dict = {"val_loss": loss}
         for accuracy in self.accuracy_list:
             accuracy.update(logits, y)
-        #     log_dict["val_" + accuracy.name] = accuracy(logits, y)
-        # self.log_dict(log_dict, prog_bar=True, on_step=False, on_epoch=True)
 
     def on_validation_epoch_end(self):
         log_dict = dict()
         for accuracy in self.accuracy_list:
-            log_dict["val_" + accuracy.name + "_end"] = accuracy.compute()
+            log_dict["val_" + accuracy.name] = accuracy.compute()
             accuracy.reset()
         self.log_dict(log_dict, prog_bar=True, on_step=False, on_epoch=True)
+        print("\n\n")
 
-    def on_epoch_start(self):
-        # in order to print a new pbar for every epoch
-        print(666)
-        print("\n")
 

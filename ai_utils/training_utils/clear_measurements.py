@@ -1,13 +1,30 @@
 import json
 import os
 import random
+
+import numpy as np
 import pandas as pd
 
 from glob import glob
-
-# from pympler.asizeof import asizeof
+from enum import Enum
+from typing import List, Union, Tuple
 
 from measurement_utils.measure_db import MeasureDB
+
+
+class Side(Enum):
+    LEFT = "left"
+    RIGHT = "right"
+
+
+class Limb(Enum):
+    ARM = "arm"
+    LEG = "leg"
+
+
+class MeasType(Enum):
+    ACC = "acc"
+    GYR = "gyr"
 
 
 class ClearMeasurements(object):
@@ -29,6 +46,7 @@ class ClearMeasurements(object):
 
         self.read_csv_path(folder_path)
         self.read_clear_json(clear_json_path)
+        self.collect_limb_values(print_stat=True)
 
     def get_meas_id_list(self, data_type: str) -> list:
         return sorted(self.clear_ids_dict[data_type])
@@ -42,6 +60,11 @@ class ClearMeasurements(object):
         min_class_value = min(class_value_dict.values())
         return min_class_value
 
+    def get_limb_class_value(self, meas_id: int, side: Side, limb: Limb) -> int:
+        class_value_dict = self.measDB.get_class_value_dict(meas_id=meas_id)
+        limb_class_value = class_value_dict[(side.value, limb.value)]
+        return limb_class_value
+
     def read_clear_json(self, clear_json_path: str) -> None:
         with open(clear_json_path, "r") as read_file:
             self.clear_ids_dict = json.load(read_file)
@@ -50,7 +73,7 @@ class ClearMeasurements(object):
         for meas_id in self.clear_ids_dict["train"]:
             assert meas_id in self.all_meas_ids
 
-        for meas_id in self.clear_ids_dict["test"]:
+        for meas_id in self.clear_ids_dict["validation"]:
             assert meas_id in self.all_meas_ids
 
     def read_csv_path(self, folder_path: str) -> None:
@@ -62,16 +85,53 @@ class ClearMeasurements(object):
     def drop_random_from_cache_dict(self) -> None:
         self.cache_dict.pop(random.choice(list(self.cache_dict.keys())))
 
-    def get_measurement(self, meas_id: int) -> pd.DataFrame:
+    @staticmethod
+    def read_csv(csv_path: str,
+                 side: Union[Side, Tuple[Side]],
+                 limb: Union[Limb, Tuple[Limb]],
+                 meas_type: Union[MeasType, Tuple[MeasType]]) -> pd.DataFrame:
+        if isinstance(side, tuple):
+            side_list = [inner_side.value for inner_side in side]
+        else:
+            side_list = [side.value]
+
+        if isinstance(side, tuple):
+            limb_list = [inner_limb.value for inner_limb in limb]
+        else:
+            limb_list = [limb.value]
+
+        if isinstance(side, tuple):
+            meas_types = [inner_meas_type.value for inner_meas_type in meas_type]
+        else:
+            meas_types = [meas_type.value]
+
+        usecols = ["epoch"]
+        dtype_dict = {"epoch": np.int64}
+        for side in side_list:
+            for limb in limb_list:
+                for meas_type in meas_types:
+                    for axis in ["x", "y", "z"]:
+                        # epoch, "('left', 'arm', 'acc', 'x')", ...
+                        column_name = str((side, limb, meas_type, axis))
+                        usecols.append(column_name)
+                        dtype_dict[column_name] = np.float16
+        return pd.read_csv(csv_path, usecols=usecols, dtype=dtype_dict)
+
+    def get_measurement(self,
+                        meas_id: int,
+                        side: Union[Side, Tuple[Side]] = (Side.LEFT, Side.RIGHT),
+                        limb: Union[Limb, Tuple[Limb]] = (Limb.ARM, Limb.LEG),
+                        meas_type: Union[MeasType, Tuple[MeasType]] = (MeasType.ACC, MeasType.GYR)) -> pd.DataFrame:
         csv_path = self.id_path_dict[meas_id]
         if self.cache_size == 1:
             if meas_id == self.current_meas_id:
                 df = self.current_df
             else:
-                df = pd.read_csv(csv_path)
+                df = self.read_csv(csv_path, side, limb, meas_type)
                 self.current_df = df
                 self.current_meas_id = meas_id
         else:
+            raise NotImplemented
             if meas_id in self.cache_dict:
                 df = self.cache_dict[meas_id]
             else:
@@ -82,7 +142,6 @@ class ClearMeasurements(object):
                 # assert len(self.cache_dict) <= self.cache_size, (len(self.cache_dict), self.cache_size)
                 # if len(self.cache_dict) > self.cache_size:
                 #     print("Number of cached measurements ({}) is more than the cache size ({})".format(len(self.cache_dict), self.cache_size))
-        # print(" {}: {:.2f}".format(type(self).__name__, asizeof(self) / 1e6))
         return df
 
     def collect_healthy_ids(self, data_type) -> list:
@@ -104,6 +163,29 @@ class ClearMeasurements(object):
             if min_class_value < 5:
                 stroke_ids.append(meas_id)
         return stroke_ids
+
+    def collect_limb_values(self, print_stat=False):
+        limb_values_dict = dict()
+        for type_of_set, id_list in self.clear_ids_dict.items():
+            limb_values_dict[type_of_set] = {Limb.ARM: {class_value: list() for class_value in range(6)},
+                                             Limb.LEG: {class_value: list() for class_value in range(6)}}
+            for meas_id in id_list:
+                for limb in Limb:
+                    for side in Side:
+                        class_value = self.get_limb_class_value(meas_id, side, limb)
+                        limb_values_dict[type_of_set][limb][class_value].append((meas_id, side))
+
+        if print_stat:
+            for type_of_set, limb_dict in limb_values_dict.items():
+                print("\n", type_of_set)
+                for limb, class_value_dict in limb_dict.items():
+                    total = sum([len(inside_list) for inside_list in class_value_dict.values()])
+                    print(limb)
+                    for class_value in range(6):
+                        print("{}: {} {:.1f}%".format(class_value,
+                                                      len(class_value_dict[class_value]),
+                                                      100 * len(class_value_dict[class_value]) / total))
+
 
     def print_stat(self) -> None:
         stat_dict = dict()
