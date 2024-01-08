@@ -38,15 +38,16 @@ class MSELoss(Module):
 
 class StrokeLoss(Module):
     name = "stroke_loss"
-    def __init__(self, stroke_loss_factor: float):
+    def __init__(self, stroke_loss_factor: float, healthy_class: int = 5):
         super().__init__()
         self.stroke_loss_factor = stroke_loss_factor
+        self.healthy_class = healthy_class
 
     def forward(self, predictions: Tensor, targets: Tensor):
         predictions = get_correct_predictions(predictions, round_in_regression=True)
         assert predictions.shape == targets.shape, (predictions.shape, targets.shape)
 
-        stroke_loss = torch.mean(torch.logical_xor(targets == 5, predictions == 5).float())
+        stroke_loss = torch.mean(torch.logical_xor(targets == self.healthy_class, predictions == self.healthy_class).float())
         loss = self.stroke_loss_factor * stroke_loss
         return loss
 
@@ -75,8 +76,9 @@ class StrokeAccuracy(Metric):
     """ Is it stroke or not? """
     higher_is_better = True
     name = "stroke_acc"
-    def __init__(self):
+    def __init__(self, healthy_class: int = 5):
         super().__init__()
+        self.healthy_class = healthy_class
         self.add_state("correct", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
@@ -84,7 +86,7 @@ class StrokeAccuracy(Metric):
         predictions = get_correct_predictions(predictions, round_in_regression=True)
         assert predictions.shape == targets.shape, (predictions.shape, targets.shape)
 
-        self.correct += torch.sum(torch.logical_not(torch.logical_xor(targets == 5, predictions == 5)))
+        self.correct += torch.sum(torch.logical_not(torch.logical_xor(targets == self.healthy_class, predictions == self.healthy_class)))
         self.total += targets.numel()
 
     def compute(self):
@@ -95,8 +97,9 @@ class OnlyFiveAccuracy(Metric):
     """ How many prediction were correct where the target was 5? """
     higher_is_better = True
     name = "only_5_acc"
-    def __init__(self):
+    def __init__(self, healthy_class: int = 5):
         super().__init__()
+        self.healthy_class = healthy_class
         self.add_state("correct", default=torch.tensor(0), dist_reduce_fx="sum")
         self.add_state("total", default=torch.tensor(0), dist_reduce_fx="sum")
 
@@ -104,8 +107,8 @@ class OnlyFiveAccuracy(Metric):
         predictions = get_correct_predictions(predictions, round_in_regression=True)
         assert predictions.shape == targets.shape, (predictions.shape, targets.shape)
 
-        masked_predictions = predictions[targets == 5]
-        self.correct += torch.sum(masked_predictions == 5)
+        masked_predictions = predictions[targets == self.healthy_class]
+        self.correct += torch.sum(masked_predictions == self.healthy_class)
         self.total += masked_predictions.numel()
 
     def compute(self):

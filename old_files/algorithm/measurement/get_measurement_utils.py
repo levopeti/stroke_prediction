@@ -7,12 +7,15 @@ from termcolor import colored
 def min_to_millisec(minute: Union[int, float]) -> int:
     return int(minute * 60 * 1000)
 
+
 def cut_valid_part(_meas_df, meas, only_valid):
-    if only_valid and meas.valid_start_time is not None and meas.valid_end_time is not None:
-        # _meas_df = _meas_df[_meas_df["epoch"] > self.valid_start_time.timestamp() * 1000]
-        # _meas_df = _meas_df[_meas_df["epoch"] < self.valid_end_time.timestamp() * 1000]
-        _meas_df = _meas_df[_meas_df["epoch"] > meas.valid_start_time]
-        _meas_df = _meas_df[_meas_df["epoch"] < meas.valid_end_time]
+    if only_valid:
+        if meas.valid_start_time is not None:
+            # _meas_df = _meas_df[_meas_df["epoch"] > self.valid_start_time.timestamp() * 1000]
+            _meas_df = _meas_df[_meas_df["epoch"] > meas.valid_start_time]
+        if meas.valid_end_time is not None:
+            # _meas_df = _meas_df[_meas_df["epoch"] < self.valid_end_time.timestamp() * 1000]
+            _meas_df = _meas_df[_meas_df["epoch"] < meas.valid_end_time]
     return _meas_df
 
 

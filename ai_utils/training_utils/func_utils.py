@@ -1,14 +1,24 @@
+import copy
 import json
 import os
 import random
+from enum import Enum
 
 import numpy as np
 import pandas as pd
 
-def save_params(_params: dict):
-    os.makedirs(_params["model_base_path"], exist_ok=True)
-    with open(os.path.join(_params["model_base_path"], "params.json"), "w") as f:
-        json.dump(_params, f)
+def save_params(params: dict):
+    if params["model_checkpoint_folder_path"] is not None:
+        params["model_base_path"] = params["model_checkpoint_folder_path"]
+
+    os.makedirs(params["model_base_path"], exist_ok=True)
+    params_to_save = copy.deepcopy(params)
+    for key in params_to_save.keys():
+        if isinstance(params_to_save[key], Enum):
+            params_to_save[key] = params_to_save[key].value
+
+    with open(os.path.join(params_to_save["model_base_path"], "params.json"), "w") as f:
+        json.dump(params_to_save, f)
 
 
 def calculate_diff(x_y_z, meas_type_acc) -> np.ndarray:
@@ -27,7 +37,7 @@ def get_diff(x_y_z, meas_type_acc, length=None, start_idx=None):
       if length is not None:
           assert length < len(array)
 
-          start_idx = start_idx if start_idx is not None else random.randint(0, len(array) - (length + 1))
+          # start_idx = start_idx if start_idx is not None else random.randint(0, len(array) - (length + 1))
           if start_idx > len(array) - (length + 1):
               raise ValueError("start_idx is too large")
 
@@ -66,12 +76,16 @@ def get_limb_ratio_mean(left_x_y_z, right_x_y_z, meas_type_acc,
             result = np.mean(right_diff / left_diff)
     return result
 
-def get_input_from_df(meas_df: pd.DataFrame, length: int, class_value_dict: dict) -> np.ndarray:
+def get_input_from_df(meas_df: pd.DataFrame,
+                      length: int,
+                      class_value_dict: dict,
+                      start_idx: int = None) -> np.ndarray:
     keys_in_order = (("arm", "acc"),
                      ("leg", "acc"),
                      ("arm", "gyr"),
                      ("leg", "gyr"))
-
+    array_length = len(meas_df[str(("left", "arm", "acc", "x"))].values)
+    start_idx = start_idx if start_idx is not None else random.randint(0, array_length - (length + 1))
     result = list()
     for key in keys_in_order:
         class_value_left = class_value_dict[("left", key[0])]
@@ -85,9 +99,11 @@ def get_input_from_df(meas_df: pd.DataFrame, length: int, class_value_dict: dict
                        meas_df[str(("right", key[0], key[1], "y"))].values,
                        meas_df[str(("right", key[0], key[1], "z"))].values]
         meas_type_acc = key[1] == "acc"
-        diff_mean = get_limb_diff_mean(left_x_y_z, right_x_y_z, meas_type_acc, length, start_idx=None)
-        ratio_mean_first = get_limb_ratio_mean(left_x_y_z, right_x_y_z, meas_type_acc, class_value_left, class_value_right, length, mean_first=True, start_idx=None)
-        ratio_mean = get_limb_ratio_mean(left_x_y_z, right_x_y_z, meas_type_acc, class_value_left, class_value_right, length, mean_first=False, start_idx=None)
+        # TODO: perform cut with previously defined length and start_idx
+        raise NotImplementedError
+        diff_mean = get_limb_diff_mean(left_x_y_z, right_x_y_z, meas_type_acc, length, start_idx=start_idx)
+        ratio_mean_first = get_limb_ratio_mean(left_x_y_z, right_x_y_z, meas_type_acc, class_value_left, class_value_right, length, mean_first=True, start_idx=start_idx)
+        ratio_mean = get_limb_ratio_mean(left_x_y_z, right_x_y_z, meas_type_acc, class_value_left, class_value_right, length, mean_first=False, start_idx=start_idx)
         result.extend([diff_mean, ratio_mean, ratio_mean_first])
 
     return np.expand_dims(np.array(result), axis=0)

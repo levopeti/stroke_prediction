@@ -163,7 +163,10 @@ class Measurement(object):
         if isinstance(self.valid_start_time, datetime):
             self.valid_start_time = int(self.valid_start_time.timestamp() * 1e3)
         elif isinstance(self.valid_start_time, np.datetime64):
-            self.valid_start_time = int(self.valid_start_time.astype(datetime) / 1e6)
+            if self.valid_start_time.astype(datetime) is None:
+                self.valid_start_time = None
+            else:
+                self.valid_start_time = int(self.valid_start_time.astype(datetime) / 1e6)
         else:
             raise TypeError("valid start time neither datetime nor \
             np.datetime64 ({}, {})".format(type(self.valid_start_time), self.valid_start_time))
@@ -173,10 +176,16 @@ class Measurement(object):
         if isinstance(self.valid_end_time, datetime):
             self.valid_end_time = int(self.valid_end_time.timestamp() * 1e3)
         elif isinstance(self.valid_end_time, np.datetime64):
-            self.valid_end_time = int(self.valid_end_time.astype(datetime) / 1e6)
+            if self.valid_end_time.astype(datetime) is None:
+                self.valid_end_time = None
+            else:
+                self.valid_end_time = int(self.valid_end_time.astype(datetime) / 1e6)
         else:
             raise TypeError("valid end time neither datetime nor \
             np.datetime64 ({}, {})".format(type(self.valid_start_time), self.valid_end_time))
+
+        if self.valid_start_time is not None and self.valid_end_time is not None:
+            assert self.valid_start_time < self.valid_end_time, (self.valid_start_time, self.valid_end_time)
 
     def print_log(self):
         print(colored("### {} (la: {}, ll: {}, ra: {}, rl: {}) ###".format(self.measurement_name,
@@ -232,7 +241,7 @@ class Measurement(object):
                 if not self.lightweight:
                     self.measurement_dict[key] = meas_df
 
-        assert len(meas_df) > 0
+        assert len(meas_df) > 0, (self.measurement_name, key)
         # if len(meas_df) == 0:
         #     print(self.measurement_name)
         #     print(key)

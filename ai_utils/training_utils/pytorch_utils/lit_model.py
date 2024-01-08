@@ -1,47 +1,33 @@
-import torch
+import copy
+
 from pytorch_lightning import LightningModule
-from torch.nn import Linear, ReLU, Module, ModuleList
+from torch.nn import Module
 from functools import partial
 from typing import List
 from torchmetrics import Metric
 
+from ai_utils.training_utils.pytorch_utils.loss_and_accuracy import get_correct_predictions
 
-class LitMLP(LightningModule):
+
+class LitModel(LightningModule):
     def __init__(self,
-                 input_shape: int,
-                 output_shape: int,
-                 layer_sizes: list,
+                 model: Module,
                  loss_list: List[Module],
-                 accuracy_list: List[Metric],
+                 metric_list: List[Metric],
                  optimizer: partial):
         super().__init__()
+        self.model = model
         self.loss_list = loss_list
-        self.accuracy_list = accuracy_list
+        self.train_metric_list, self.val_metric_list = metric_list, copy.deepcopy(metric_list)
         self.optimizer = optimizer
-
-        assert len(layer_sizes) > 0, layer_sizes
-        self.layers = ModuleList([Linear(input_shape, layer_sizes[0])])
-
-        for i in range(len(layer_sizes) - 1):
-            self.layers.append(ReLU())
-            self.layers.append(Linear(layer_sizes[i], layer_sizes[i + 1]))
-
-        self.layers.append(Linear(layer_sizes[-1], output_shape))
-
-        # TODO: self.save_hyperparameters()
-
-    def forward(self, x):
-        for layer in self.layers:
-            x = layer(x)
-        x = torch.squeeze(x)
-        return x
+        self.save_hyperparameters()
 
     def configure_optimizers(self):
         return self.optimizer(self.parameters())
 
     def training_step(self, batch, batch_idx):
         x, y = batch
-        logits = self(x)
+        logits = self.model(x)
         loss_dict = {loss.name: loss(logits, y) for loss in self.loss_list}
         loss_sum = sum(loss_dict.values())
 
@@ -51,28 +37,52 @@ class LitMLP(LightningModule):
         for name, loss in loss_dict.items():
             log_dict["train_" + name] = loss
 
-        for accuracy in self.accuracy_list:
-            accuracy.update(logits, y)
-            log_dict["train_" + accuracy.name] = accuracy.compute()
+        for metric in self.train_metric_list:
+            if not metric.name == "confm":
+                metric.update(logits, y)
+                log_dict["train_" + metric.name] = metric.compute()
+            else:
+                predictions = get_correct_predictions(logits, round_in_regression=True)
+                metric.update(predictions, y)
 
         self.log_dict(log_dict, prog_bar=True, on_step=True)
+
+        for name, param in self.named_parameters():
+            if param.grad is not None:
+                self.logger.experiment.add_scalar(name + ".grad_abs_mean", param.grad.abs().mean(), self.global_step)
+                self.logger.experiment.add_scalar(name + ".grad_abs_max", param.grad.abs().max(), self.global_step)
         return sum(loss_dict.values())
 
     def on_train_epoch_end(self):
-        for accuracy in self.accuracy_list:
-            accuracy.reset()
+        for metric in self.train_metric_list:
+            if metric.name == "confm":
+                val = metric.compute()
+                val = (val * 100).int()
+                fig_, ax_ = metric.plot(val=val)
+                self.logger.experiment.add_figure("train_conf_mat", fig_, self.current_epoch)
+            metric.reset()
 
     def validation_step(self, batch, batch_idx):
         x, y = batch
-        logits = self(x)
-        for accuracy in self.accuracy_list:
-            accuracy.update(logits, y)
+        logits = self.model(x)
 
+        for metric in self.val_metric_list:
+            if not metric.name == "confm":
+                metric.update(logits, y)
+            else:
+                predictions = get_correct_predictions(logits, round_in_regression=True)
+                metric.update(predictions, y)
     def on_validation_epoch_end(self):
         log_dict = dict()
-        for accuracy in self.accuracy_list:
-            log_dict["val_" + accuracy.name] = accuracy.compute()
-            accuracy.reset()
+        for metric in self.val_metric_list:
+            if not metric.name == "confm":
+                log_dict["val_" + metric.name] = metric.compute()
+            else:
+                val = metric.compute()
+                val = (val * 100).int()
+                fig_, ax_ = metric.plot(val=val)
+                self.logger.experiment.add_figure("val_conf_mat", fig_, self.current_epoch)
+            metric.reset()
         self.log_dict(log_dict, prog_bar=True, on_step=False, on_epoch=True)
         print("\n\n")
 

@@ -7,7 +7,7 @@ import pandas as pd
 
 from glob import glob
 from enum import Enum
-from typing import List, Union, Tuple
+from typing import Union, Tuple
 
 from measurement_utils.measure_db import MeasureDB
 
@@ -26,27 +26,40 @@ class MeasType(Enum):
     ACC = "acc"
     GYR = "gyr"
 
+def get_inverted_side(side: Side):
+    return Side.RIGHT if side == Side.LEFT else Side.LEFT
+
+
+Key = Tuple[Side, Limb, MeasType]
+all_key_combination = [(side, limb, meas_type) for side in Side for limb in Limb for meas_type in MeasType]
 
 class ClearMeasurements(object):
     def __init__(self,
                  measDB: MeasureDB,
                  folder_path: str,
                  clear_json_path: str,
-                 cache_size: int = 1) -> None:
+                 class_mapping: dict,
+                 invert_side: bool,
+                 cache_size: int = 1,
+                 **kwargs) -> None:
         assert cache_size > 0, "cache_size must be positive integer"
         self.measDB = measDB
+        self.class_mapping = class_mapping
+        self.invert_side = invert_side
         self.cache_size = cache_size
         self.id_path_dict = dict()
         self.cache_dict = dict()
         self.clear_ids_dict = dict()
         self.all_meas_ids = list()
 
-        self.current_meas_id = None
+        self.current_meas_key = None
         self.current_df = None
 
         self.read_csv_path(folder_path)
         self.read_clear_json(clear_json_path)
-        self.collect_limb_values(print_stat=True)
+
+        # limb_values_dict[type_of_set][limb][class_value] = [(meas_id, side), ...]
+        self.limb_values_dict = self.collect_limb_values(print_stat=True)
 
     def get_meas_id_list(self, data_type: str) -> list:
         return sorted(self.clear_ids_dict[data_type])
@@ -58,11 +71,17 @@ class ClearMeasurements(object):
     def get_min_class_value(self, meas_id: int) -> int:
         class_value_dict = self.measDB.get_class_value_dict(meas_id=meas_id)
         min_class_value = min(class_value_dict.values())
+        if self.class_mapping is not None:
+            min_class_value = self.class_mapping[min_class_value]
         return min_class_value
 
     def get_limb_class_value(self, meas_id: int, side: Side, limb: Limb) -> int:
+        if self.invert_side:
+            side = get_inverted_side(side)
         class_value_dict = self.measDB.get_class_value_dict(meas_id=meas_id)
         limb_class_value = class_value_dict[(side.value, limb.value)]
+        if self.class_mapping is not None:
+            limb_class_value = self.class_mapping[limb_class_value]
         return limb_class_value
 
     def read_clear_json(self, clear_json_path: str) -> None:
@@ -95,12 +114,12 @@ class ClearMeasurements(object):
         else:
             side_list = [side.value]
 
-        if isinstance(side, tuple):
+        if isinstance(limb, tuple):
             limb_list = [inner_limb.value for inner_limb in limb]
         else:
             limb_list = [limb.value]
 
-        if isinstance(side, tuple):
+        if isinstance(meas_type, tuple):
             meas_types = [inner_meas_type.value for inner_meas_type in meas_type]
         else:
             meas_types = [meas_type.value]
@@ -114,7 +133,7 @@ class ClearMeasurements(object):
                         # epoch, "('left', 'arm', 'acc', 'x')", ...
                         column_name = str((side, limb, meas_type, axis))
                         usecols.append(column_name)
-                        dtype_dict[column_name] = np.float16
+                        dtype_dict[column_name] = np.float32
         return pd.read_csv(csv_path, usecols=usecols, dtype=dtype_dict)
 
     def get_measurement(self,
@@ -124,12 +143,12 @@ class ClearMeasurements(object):
                         meas_type: Union[MeasType, Tuple[MeasType]] = (MeasType.ACC, MeasType.GYR)) -> pd.DataFrame:
         csv_path = self.id_path_dict[meas_id]
         if self.cache_size == 1:
-            if meas_id == self.current_meas_id:
+            if (meas_id, side, limb, meas_type) == self.current_meas_key:
                 df = self.current_df
             else:
                 df = self.read_csv(csv_path, side, limb, meas_type)
                 self.current_df = df
-                self.current_meas_id = meas_id
+                self.current_meas_key = (meas_id, side, limb, meas_type)
         else:
             raise NotImplemented
             if meas_id in self.cache_dict:
@@ -164,11 +183,12 @@ class ClearMeasurements(object):
                 stroke_ids.append(meas_id)
         return stroke_ids
 
-    def collect_limb_values(self, print_stat=False):
+    def collect_limb_values(self, print_stat=False) -> dict:
+        num_of_classes = len(set(self.class_mapping.values())) if self.class_mapping is not None else 6
         limb_values_dict = dict()
         for type_of_set, id_list in self.clear_ids_dict.items():
-            limb_values_dict[type_of_set] = {Limb.ARM: {class_value: list() for class_value in range(6)},
-                                             Limb.LEG: {class_value: list() for class_value in range(6)}}
+            limb_values_dict[type_of_set] = {Limb.ARM: {class_value: list() for class_value in range(num_of_classes)},
+                                             Limb.LEG: {class_value: list() for class_value in range(num_of_classes)}}
             for meas_id in id_list:
                 for limb in Limb:
                     for side in Side:
@@ -181,11 +201,11 @@ class ClearMeasurements(object):
                 for limb, class_value_dict in limb_dict.items():
                     total = sum([len(inside_list) for inside_list in class_value_dict.values()])
                     print(limb)
-                    for class_value in range(6):
+                    for class_value in range(num_of_classes):
                         print("{}: {} {:.1f}%".format(class_value,
                                                       len(class_value_dict[class_value]),
                                                       100 * len(class_value_dict[class_value]) / total))
-
+        return limb_values_dict
 
     def print_stat(self) -> None:
         stat_dict = dict()
