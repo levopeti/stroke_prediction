@@ -147,13 +147,14 @@ class Measurement(object):
                                                                      self.measurement_path_dict[k], e), "red"))
 
     def check_frequency(self, expected_delta, eps):
-        for df in self.measurement_dict.values():
+        for key, df in self.measurement_dict.items():
             if df is not None:
                 time_stamps = df["epoch"].values
                 deltas = np.diff(time_stamps)
                 if np.any(deltas < expected_delta - eps) or np.any(deltas > expected_delta + eps):
-                    self.log_list.append(colored("frequency is not correct,"
-                                                 " min: {}, max: {}, avg: {}".format(np.min(deltas),
+                    self.log_list.append(colored("frequency is not correct with key {},"
+                                                 " min: {}, max: {}, avg: {}".format(key,
+                                                                                     np.min(deltas),
                                                                                      np.max(deltas),
                                                                                      np.mean(deltas)), "red"))
 
@@ -273,13 +274,15 @@ class Measurement(object):
             assert self.measurement_dict[key] is not None, "self.measurement_dict[{}] is None".format(key)
             self.measurement_dict[key]["epoch"] += min_to_millisec(delay_min)
 
-    def cut_start_end_all_measurements(self, cut_min: Union[int, float]):
+    def cut_start_end_all_measurements(self, cut_min: Union[int, float], start: bool = True, end: bool = True):
         for key in self.measurement_dict.keys():
             assert self.measurement_dict[key] is not None, "self.measurement_dict[{}] is None".format(key)
-            min_value = self.measurement_dict[key]["epoch"].min() + min_to_millisec(cut_min)
-            max_value = self.measurement_dict[key]["epoch"].max() - min_to_millisec(cut_min)
-            self.measurement_dict[key] = self.measurement_dict[key][self.measurement_dict[key]["epoch"] > min_value]
-            self.measurement_dict[key] = self.measurement_dict[key][self.measurement_dict[key]["epoch"] < max_value]
+            if start:
+                min_value = self.measurement_dict[key]["epoch"].min() + min_to_millisec(cut_min)
+                self.measurement_dict[key] = self.measurement_dict[key][self.measurement_dict[key]["epoch"] > min_value]
+            if end:
+                max_value = self.measurement_dict[key]["epoch"].max() - min_to_millisec(cut_min)
+                self.measurement_dict[key] = self.measurement_dict[key][self.measurement_dict[key]["epoch"] < max_value]
 
     def calculate_diff(self, key, use_abs=True, only_valid=True):
         if not self.lightweight and self.diff_dict[key] is not None:
