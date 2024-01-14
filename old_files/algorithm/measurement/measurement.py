@@ -112,7 +112,6 @@ class Measurement(object):
         for v in self.measurement_path_dict.values():
             if v is None:
                 result += 1
-
         return result
 
     # #### checks for measurement ####
@@ -193,9 +192,33 @@ class Measurement(object):
                                                                            *[self.class_value_dict[("left", "arm")],
                                                                              self.class_value_dict[("left", "leg")],
                                                                              self.class_value_dict[("right", "arm")],
-                                                                             self.class_value_dict[("right", "leg")]]), "blue"))
+                                                                             self.class_value_dict[("right", "leg")]]),
+                      "blue"))
         for log in self.log_list:
             print(log)
+
+    def interpolate_measurements(self, min_diff: int, max_diff: int) -> None:
+        for key, df in self.measurement_dict.items():
+            if df is not None:
+                timestamps = df["epoch"].values
+                x_axis = df["x-axis"].values
+                y_axis = df["y-axis"].values
+                z_axis = df["z-axis"].values
+                diff_array = np.diff(timestamps)
+                mask = np.logical_and(diff_array > min_diff, diff_array < max_diff)
+                indices = np.where(mask)[0]  # get indices of true values
+                if len(indices) > 1:
+                    print("more then one diff is found with key {}".format(key))
+                    ind = indices[0]
+                elif len(indices) == 1:
+                    ind = indices[0]
+                else:
+                    continue
+                interpolated_ts = int((timestamps[ind] + timestamps[ind + 1]) / 2)
+                interpolated_x = int((x_axis[ind] + x_axis[ind + 1]) / 2)
+                interpolated_y = int((y_axis[ind] + y_axis[ind + 1]) / 2)
+                interpolated_z = int((z_axis[ind] + z_axis[ind + 1]) / 2)
+                df.loc[df.index[ind]] = [interpolated_ts, interpolated_x, interpolated_y, interpolated_z]
 
     def get_absolute_class_value(self, start_idx=None, length=None):
         if self.ratio is None:
