@@ -220,6 +220,19 @@ class Measurement(object):
                 interpolated_z = int((z_axis[ind] + z_axis[ind + 1]) / 2)
                 df.loc[df.index[ind]] = [interpolated_ts, interpolated_x, interpolated_y, interpolated_z]
 
+    def correct_negative_time_delta(self, expected_delta: int = 40) -> None:
+        for key, df in self.measurement_dict.items():
+            if df is not None:
+                timestamps = df["epoch"].values
+                diff_array = np.diff(timestamps)
+                min_idx = np.argmin(diff_array)
+
+                if diff_array[min_idx] < 0:
+                    # minimum time delta is negative
+                    df["epoch"][min_idx + 1:] += abs(diff_array[min_idx]) + expected_delta
+                else:
+                    continue
+
     def get_absolute_class_value(self, start_idx=None, length=None):
         if self.ratio is None:
             return min(self.class_value_dict.values())
