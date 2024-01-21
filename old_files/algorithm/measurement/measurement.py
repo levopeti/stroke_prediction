@@ -207,8 +207,9 @@ class Measurement(object):
                 diff_array = np.diff(timestamps)
                 mask = np.logical_and(diff_array > min_diff, diff_array < max_diff)
                 indices = np.where(mask)[0]  # get indices of true values
+                print("{}: {}".format(key, len(indices)))
                 if len(indices) > 1:
-                    print("more then one diff is found with key {}".format(key))
+                    print("more then one diff are found with key {}".format(key))
                     ind = indices[0]
                 elif len(indices) == 1:
                     ind = indices[0]
