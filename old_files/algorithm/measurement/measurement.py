@@ -220,6 +220,7 @@ class Measurement(object):
                 interpolated_y = int((y_axis[ind] + y_axis[ind + 1]) / 2)
                 interpolated_z = int((z_axis[ind] + z_axis[ind + 1]) / 2)
                 df.loc[df.index[ind]] = [interpolated_ts, interpolated_x, interpolated_y, interpolated_z]
+                self.measurement_dict[key] = df
 
     def correct_negative_time_delta(self, expected_delta: int = 40) -> None:
         for key, df in self.measurement_dict.items():
