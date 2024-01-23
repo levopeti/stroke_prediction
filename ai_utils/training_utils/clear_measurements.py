@@ -26,12 +26,14 @@ class MeasType(Enum):
     ACC = "acc"
     GYR = "gyr"
 
+
 def get_inverted_side(side: Side):
     return Side.RIGHT if side == Side.LEFT else Side.LEFT
 
 
 Key = Tuple[Side, Limb, MeasType]
 all_key_combination = [(side, limb, meas_type) for side in Side for limb in Limb for meas_type in MeasType]
+
 
 class ClearMeasurements(object):
     def __init__(self,

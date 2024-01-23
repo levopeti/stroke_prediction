@@ -1,7 +1,6 @@
-from typing import Union
-
 import numpy as np
 
+from typing import Union
 from datetime import datetime
 from termcolor import colored
 from random import randint
@@ -196,9 +195,10 @@ class Measurement(object):
                       "blue"))
         for log in self.log_list:
             print(log)
+        self.log_list = list()
 
-    def interpolate_measurements(self, min_diff: int, max_diff: int) -> None:
-        for key, df in self.measurement_dict.items():
+    def interpolate_measurements(_meas, min_diff: int, max_diff: int) -> None:
+        for key, df in _meas.measurement_dict.items():
             if df is not None:
                 timestamps = df["epoch"].values
                 x_axis = df["x-axis"].values
@@ -216,11 +216,14 @@ class Measurement(object):
                 else:
                     continue
                 interpolated_ts = int((timestamps[ind] + timestamps[ind + 1]) / 2)
-                interpolated_x = int((x_axis[ind] + x_axis[ind + 1]) / 2)
-                interpolated_y = int((y_axis[ind] + y_axis[ind + 1]) / 2)
-                interpolated_z = int((z_axis[ind] + z_axis[ind + 1]) / 2)
-                df.loc[df.index[ind]] = [interpolated_ts, interpolated_x, interpolated_y, interpolated_z]
-                self.measurement_dict[key] = df
+                interpolated_x = (x_axis[ind] + x_axis[ind + 1]) / 2
+                interpolated_y = (y_axis[ind] + y_axis[ind + 1]) / 2
+                interpolated_z = (z_axis[ind] + z_axis[ind + 1]) / 2
+
+                df.loc[df.index[ind] + 0.5] = [interpolated_ts, interpolated_x, interpolated_y, interpolated_z]
+                df = df.sort_index().reset_index(drop=True)
+                df["epoch"] = df["epoch"].astype("int")
+                _meas.measurement_dict[key] = df
 
     def correct_negative_time_delta(self, expected_delta: int = 40) -> None:
         for key, df in self.measurement_dict.items():
