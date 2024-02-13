@@ -1,5 +1,5 @@
 import argparse
-import random
+from random import random
 from time import sleep
 
 import pytz
@@ -23,7 +23,7 @@ key_list = [("l", "a", "a"),
 
 
 def normal_mode(id_list: list, timezone, only_zero_id_list, random_freq):
-    time_delta_to_start = timedelta(minutes=90)
+    time_delta_to_start = timedelta(minutes=2)
     start_timestamp = datetime.now(timezone) - time_delta_to_start
     print("start ts: {}".format(to_str_timestamp(start_timestamp)))
     time_stamp_dict = {m_id: {key: start_timestamp for key in key_list} for m_id in id_list}
@@ -58,9 +58,9 @@ def normal_mode(id_list: list, timezone, only_zero_id_list, random_freq):
                         "side": key[0],
                         "timestamp": timestamp_data_string,
                         "type": key[2],
-                        "x": 0 if measurement_id in only_zero_id_list else random.random(),
-                        "y": 0 if measurement_id in only_zero_id_list else random.random(),
-                        "z": 0 if measurement_id in only_zero_id_list else random.random()
+                        "x": 0 if measurement_id in only_zero_id_list else random(),
+                        "y": 0 if measurement_id in only_zero_id_list else random(),
+                        "z": 0 if measurement_id in only_zero_id_list else random()
                     })
 
             test_body = {
@@ -98,7 +98,7 @@ def normal_mode(id_list: list, timezone, only_zero_id_list, random_freq):
 
 
 def local_mode(id_list, timezone, only_zero_id_list, random_freq):
-    def get_measurements(number_of_steps, measurement_id):
+    def get_measurements(number_of_steps, measurement_id, random_multiplier=100):
         measure = list()
         for i in range(number_of_steps):
             time_stamp_dict[measurement_id] += time_delta_millis
@@ -110,9 +110,9 @@ def local_mode(id_list, timezone, only_zero_id_list, random_freq):
                     "side": key[0],
                     "timestamp": timestamp_data_string,
                     "type": key[2],
-                    "x": 0 if measurement_id in only_zero_id_list else random.random(),
-                    "y": 0 if measurement_id in only_zero_id_list else random.random(),
-                    "z": 0 if measurement_id in only_zero_id_list else random.random()
+                    "x": 0 if measurement_id in only_zero_id_list else (random() - 0.5) * random_multiplier,
+                    "y": 0 if measurement_id in only_zero_id_list else (random() - 0.5) * random_multiplier,
+                    "z": 0 if measurement_id in only_zero_id_list else (random() - 0.5) * random_multiplier
                 })
 
         _test_body = {
@@ -128,7 +128,7 @@ def local_mode(id_list, timezone, only_zero_id_list, random_freq):
     socket.bind("tcp://*:5555")
 
     while True:
-        time_delta_to_start = timedelta(minutes=90)
+        time_delta_to_start = timedelta(minutes=2)
         start_timestamp = datetime.now(timezone) - time_delta_to_start
         print("start ts: {}".format(to_str_timestamp(start_timestamp)))
         time_stamp_dict = {m_id: start_timestamp for m_id in id_list}
@@ -174,7 +174,7 @@ if __name__ == "__main__":
     parser.add_argument("--random_freq", default=None, type=int, help="Frequency is not constant.")
     args = parser.parse_args()
 
-    _id_list = [8]  # [8, 9, 10] [5, 6, 7]
+    _id_list = [5, 6]  # [8, 9, 10] [5, 6, 7]
 
     if args.mocking_mode:
         _only_zero_id_list = [_id_list[0]]

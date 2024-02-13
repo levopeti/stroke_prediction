@@ -57,6 +57,18 @@ def min_to_millisec(minute: Union[int, float]) -> int:
     return int(minute * 60 * 1000)
 
 
+def min_to_ticks(time_min: int, frequency: int) -> int:
+    # min -> sec -> sec * Hz
+    num_of_tick = int(time_min * 60 * frequency)
+    return num_of_tick
+
+
+def sec_to_ticks(time_sec: int, frequency: int) -> int:
+    # sec -> sec * Hz
+    num_of_tick = int(time_sec * frequency)
+    return num_of_tick
+
+
 def get_length_from_timestamps(start_ts: int, end_ts: int, full_format: bool = False) -> timedelta:
     start = datetime.fromtimestamp(start_ts / 1000)
     end = datetime.fromtimestamp(end_ts / 1000)

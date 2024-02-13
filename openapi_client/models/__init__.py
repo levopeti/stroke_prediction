@@ -2,10 +2,10 @@
 
 # flake8: noqa
 
-# import all models into this package
-# if you have many models here with many references from one model to another this may
+# import all trained_models into this package
+# if you have many trained_models here with many references from one model to another this may
 # raise a RecursionError
-# to avoid this, import only the models that you directly need like:
+# to avoid this, import only the trained_models that you directly need like:
 # from openapi_client.model.pet import Pet
 # or import this package, but before doing it, use:
 # import sys

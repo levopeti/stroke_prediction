@@ -21,14 +21,23 @@ class SynchronizationError(Exception):
     pass
 
 
-key_list = [("left", "arm", "acc"),
-            ("left", "arm", "gyr"),
-            ("left", "leg", "acc"),
-            ("left", "leg", "gyr"),
-            ("right", "arm", "acc"),
-            ("right", "arm", "gyr"),
-            ("right", "leg", "acc"),
-            ("right", "leg", "gyr")]
+key_list_long = [("left", "arm", "acc"),
+                 ("left", "arm", "gyr"),
+                 ("left", "leg", "acc"),
+                 ("left", "leg", "gyr"),
+                 ("right", "arm", "acc"),
+                 ("right", "arm", "gyr"),
+                 ("right", "leg", "acc"),
+                 ("right", "leg", "gyr")]
+
+key_list_short = [("l", "a", "a"),
+                  ("l", "a", "g"),
+                  ("l", "l", "a"),
+                  ("l", "l", "g"),
+                  ("r", "a", "a"),
+                  ("r", "a", "g"),
+                  ("r", "l", "a"),
+                  ("r", "l", "g")]
 
 key_map = {
     ("l", "a", "a"): ("left", "arm", "acc"),
@@ -49,15 +58,26 @@ class Measurement(object):
 
         self.log_list = list()
 
+        # self.measurement_dict = {
+        #     ("left", "arm", "acc"): None,
+        #     ("left", "arm", "gyr"): None,
+        #     ("left", "leg", "acc"): None,
+        #     ("left", "leg", "gyr"): None,
+        #     ("right", "arm", "acc"): None,
+        #     ("right", "arm", "gyr"): None,
+        #     ("right", "leg", "acc"): None,
+        #     ("right", "leg", "gyr"): None,
+        # }
+
         self.measurement_dict = {
-            ("left", "arm", "acc"): None,
-            ("left", "arm", "gyr"): None,
-            ("left", "leg", "acc"): None,
-            ("left", "leg", "gyr"): None,
-            ("right", "arm", "acc"): None,
-            ("right", "arm", "gyr"): None,
-            ("right", "leg", "acc"): None,
-            ("right", "leg", "gyr"): None,
+            ("l", "a", "a"): None,
+            ("l", "a", "g"): None,
+            # ("l", "l", "a"): None,
+            # ("l", "l", "g"): None,
+            # ("r", "a", "a"): None,
+            # ("r", "a", "g"): None,
+            # ("r", "l", "a"): None,
+            # ("r", "l", "g"): None,
         }
 
         self.diff_dict = {

@@ -5,13 +5,15 @@ import warnings
 
 warnings.simplefilter(action='ignore', category=Warning)
 
+
 class MeasureDB(object):
     def __init__(self, accdb_path: str, ucanaccess_path: str) -> None:
         self.accdb_path = accdb_path
         self.ucanaccess_path = ucanaccess_path
 
         dict_of_measureDB_df = self.get_measure_df()
-        self.neurology_df_dict = dict_of_measureDB_df["Z_3NEUROLÓGIA"][["VizsgAz", "ParStatBK", "ParStatBL", "ParStatJK", "ParStatJL"]].to_dict(orient="list")
+        self.neurology_df_dict = dict_of_measureDB_df["Z_3NEUROLÓGIA"][
+            ["VizsgAz", "ParStatBK", "ParStatBL", "ParStatJK", "ParStatJL"]].to_dict(orient="list")
 
     def get_class_value_dict(self, meas_id: int) -> dict:
         meas_idx = self.neurology_df_dict["VizsgAz"].index(meas_id)
@@ -40,7 +42,8 @@ class MeasureDB(object):
             classpath,
         )
 
-        table_names = pd.read_sql_query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='PUBLIC'", cnxn)
+        table_names = pd.read_sql_query("SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='PUBLIC'",
+                                        cnxn)
 
         if write:
             with pd.ExcelWriter("./data/accdb.xlsx") as writer:
@@ -53,4 +56,3 @@ class MeasureDB(object):
             dict_of_df[table_name] = pd.read_sql_query("SELECT * FROM {}".format(table_name), cnxn)
 
         return dict_of_df
-

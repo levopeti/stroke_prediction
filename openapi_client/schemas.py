@@ -260,7 +260,7 @@ class MetaOapgTyped:
 
 class Schema:
     """
-    the base class of all swagger/openapi schemas/models
+    the base class of all swagger/openapi schemas/trained_models
     """
     __inheritable_primitive_types_set = {decimal.Decimal, str, tuple, frozendict.frozendict, FileIO, bytes, BoolClass, NoneClass}
     _types: typing.Set[typing.Type]

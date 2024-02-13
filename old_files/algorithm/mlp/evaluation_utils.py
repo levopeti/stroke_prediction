@@ -333,7 +333,7 @@ if __name__ == "__main__":
         "m_path": "/home/levcsi/projects/stroke_prediction/old_files/data/biocal.xlsx",
         "ucanaccess_path": "/home/levcsi/projects/stroke_prediction/ucanaccess",
         "save_path": ".",
-        "model_path": "/home/levcsi/projects/stroke_prediction/models/model_90_1000000_all",
+        "model_path": "/home/levcsi/projects/stroke_prediction/trained_models/model_90_1000000_all",
     }
 
     start_evaluation(param_dict)

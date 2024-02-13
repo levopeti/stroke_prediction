@@ -58,13 +58,17 @@ def get_args() -> argparse.Namespace:
 
 def get_other_config() -> dict:
     other_config_dict = {
-        "model_path": "./models/model_90_1000000_all",
+        "model_folder": "./trained_models",
         "host_url_and_token_path": "./host_url_and_token.json",
         "log_dir_path": "./log",
         "frequency": 25,  # Hz, T = 40 ms
         "frequency_check_eps_warning": 3,  # ms
         "frequency_check_eps_error": 40,  # ms
-        "timezone": pytz.timezone("Europe/Budapest")
+        "timezone": pytz.timezone("Europe/Budapest"),
+        "batch_size": 100,
+        "step_size_sec": 20,
+        "left_arm_only": True,
+        "length_of_init_data_min": 90
     }
     return other_config_dict
 

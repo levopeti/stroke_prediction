@@ -197,8 +197,8 @@ class Measurement(object):
             print(log)
         self.log_list = list()
 
-    def interpolate_measurements(_meas, min_diff: int, max_diff: int) -> None:
-        for key, df in _meas.measurement_dict.items():
+    def interpolate_measurements(self, min_diff: int, max_diff: int) -> None:
+        for key, df in self.measurement_dict.items():
             if df is not None:
                 timestamps = df["epoch"].values
                 x_axis = df["x-axis"].values
@@ -232,9 +232,36 @@ class Measurement(object):
                 diff_array = np.diff(timestamps)
                 min_idx = np.argmin(diff_array)
 
+                mask = diff_array < 0
+                indices = np.where(mask)[0]  # get indices of true values
+                print("{}: {}".format(key, len(indices)))
+
                 if diff_array[min_idx] < 0:
                     # minimum time delta is negative
                     df["epoch"][min_idx + 1:] += abs(diff_array[min_idx]) + expected_delta
+                else:
+                    continue
+
+    def correct_too_large_time_delta(self,
+                                     max_diff: int,
+                                     correct_part_before: bool = True,
+                                     expected_delta: int = 40) -> None:
+        for key, df in self.measurement_dict.items():
+            if df is not None:
+                timestamps = df["epoch"].values
+                diff_array = np.diff(timestamps)
+                max_idx = np.argmax(diff_array)
+
+                mask = diff_array > max_diff
+                indices = np.where(mask)[0]  # get indices of true values
+                print("{}: {}".format(key, len(indices)))
+
+                if diff_array[max_idx] > max_diff:
+                    # time delta is too large
+                    if correct_part_before:
+                        df["epoch"][:max_idx + 1] += diff_array[max_idx] - expected_delta
+                    else:
+                        df["epoch"][max_idx + 1:] -= diff_array[max_idx] - expected_delta
                 else:
                     continue
 
