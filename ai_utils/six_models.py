@@ -40,7 +40,7 @@ class SixModels(Model):
         for model_path in model_paths:
             model_name = model_path.split("/")[-1].split(".")[0]
             inverted, length_min, limb, date = model_name.split("_")
-            model = torch.jit.load(model_path)
+            model = torch.jit.load(model_path, map_location=torch.device('cpu'))
             if to_cuda:
                 model.to("cuda")
             else:
