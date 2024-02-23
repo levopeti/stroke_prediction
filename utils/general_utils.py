@@ -29,9 +29,9 @@ def to_int_timestamp(timestamp_str: str) -> int:
         second case: 2023-04-28T14:47:12.123Z
     """
     if timestamp_str.find(".") == -1:
-        return int(datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M:%SZ').timestamp() * 1000)
+        return int(datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%SZ").timestamp() * 1000)
     else:
-        return int(datetime.strptime(timestamp_str, '%Y-%m-%dT%H:%M:%S.%fZ').timestamp() * 1000)
+        return int(datetime.strptime(timestamp_str, "%Y-%m-%dT%H:%M:%S.%fZ").timestamp() * 1000)
 
 
 def to_str_timestamp(timestamp: Union[int, datetime]):

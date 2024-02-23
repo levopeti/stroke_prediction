@@ -67,7 +67,7 @@ def get_other_config() -> dict:
         "timezone": pytz.timezone("Europe/Budapest"),
         "batch_size": 100,
         "step_size_sec": 20,
-        "left_arm_only": True,
+        "left_arm_only": False,
         "length_of_init_data_min": 90
     }
     return other_config_dict

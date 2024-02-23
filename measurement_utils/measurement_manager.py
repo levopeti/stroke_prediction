@@ -1,11 +1,10 @@
-from random import random
-
 import pandas as pd
 
+from random import random
 from typing import Union
 from datetime import datetime, timedelta
 
-from utils.general_utils import to_int_timestamp, min_to_ticks, to_str_timestamp
+from utils.general_utils import to_int_timestamp, min_to_ticks, to_str_timestamp, get_data_info
 from measurement_utils.measurement import key_list_short
 from utils.log_maker import write_log
 
@@ -113,8 +112,6 @@ class MeasurementManager(object):
         if measurement_id in self.all_measurement_dict:
             return self.all_measurement_dict[measurement_id]
         else:
-            # print("{} is not found in measurement manager ({})".format(measurement_id,
-            #                                                            self.all_measurement_dict.keys()))
             write_log("meas_manager.txt", "{} is not found in measurement manager ({})".format(measurement_id,
                                                                                                self.all_measurement_dict.keys()),
                       title="NotFound", print_out=True, color="red", add_date=True)

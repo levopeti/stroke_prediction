@@ -1,7 +1,6 @@
 from time import time, sleep
 from datetime import datetime, timedelta
 
-
 from utils.api_utils import get_measurement_ids, get_data_for_prediction, save_predictions
 from utils.general_utils import to_str_timestamp, from_int_to_datetime, min_to_millisec, get_data_info
 from measurement_utils.measurement_manager import MeasurementManager
@@ -21,6 +20,9 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
                                               _from=to_str_timestamp(
                                                   now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])),
                                               _interval=min_to_millisec(config_dict["meas_length_to_keep_min"]))
+        # measurement_ids = get_measurement_ids(configuration,
+        #                                       _from="2024-02-20T11:29:39.362Z",
+        #                                       _interval=min_to_millisec(config_dict["meas_length_to_keep_min"]))
 
         full_start = time()
         if measurement_ids is None:
@@ -46,6 +48,8 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
                 # measurement id is new
                 now_ts = datetime.now(timezone)
                 from_ts = now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])
+                # from_ts = datetime.strptime("2024-02-20T11:29:39.362Z", '%Y-%m-%dT%H:%M:%S.%fZ')
+                # from_ts = timezone.localize(from_ts)
             else:
                 from_ts = timezone.localize(from_ts)
 
@@ -57,9 +61,14 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
                                                                   min_to_millisec(config_dict["interval_min"]))
                 print("\nget data for prediction ({}), from {} to {} ({:.2f}s)".format(len(data_list), from_ts, to_ts,
                                                                                        elapsed_time))
+
+                key_combinations = set([(item["side"], item["limb"], item["type"]) for item in data_list])
+                write_log("main_loop.txt",
+                          "key combinations: {} from {} to {}".format(key_combinations, from_ts, to_ts),
+                          title="KeyCombinations", print_out=True, color="yellow", add_date=True, write_discord=True)
+
                 if config_dict["left_arm_only"]:
                     data_list = [item for item in data_list if item["limb"] == "a" and item["side"] == "l"]
-
 
                 print("add_data")
                 mm.add_data(measurement_id, data_list, datetime.now(timezone))
