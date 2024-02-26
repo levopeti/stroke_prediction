@@ -145,7 +145,12 @@ class Measurement(object):
         return missing_keys
 
     def check_length(self, length: int) -> bool:
-        return (self.get_last_timestamp_ms() - self.get_first_timestamp_ms()) > length
+        current_length = self.get_last_timestamp_ms() - self.get_first_timestamp_ms()
+        if current_length > length:
+            return True
+        else:
+            print("current length: {}, expected length: {}".format(current_length, length))
+            return False
 
     def print_log(self):
         for log in self.log_list:

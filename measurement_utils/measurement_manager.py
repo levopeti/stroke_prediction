@@ -52,7 +52,7 @@ class MeasurementManager(object):
         def get_init_df() -> pd.DataFrame:
             min_ts = data_df["timestamp_ms"].values.min()
             length_of_init_data_tick = min_to_ticks(self.config_dict["length_of_init_data_min"],
-                                                    self.config_dict["frequency"])
+                                                    self.config_dict["frequency"]) + 100
             init_data_list = list()
             for key in key_list_short:
                 if self.config_dict["left_arm_only"] and (key[0] != "l" or key[1] != "a"):

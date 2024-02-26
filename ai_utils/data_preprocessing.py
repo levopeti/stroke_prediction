@@ -5,13 +5,13 @@ from scipy.ndimage import uniform_filter1d
 from typing import Dict, Union
 
 
-def get_3d_arrays_from_df(meas_dict: dict) -> Dict[tuple, np.ndarray]:
+def get_3d_arrays_from_df(meas_dict: dict, keys_to_use: list) -> Dict[tuple, np.ndarray]:
     """
     :param meas_dict: dict of pandas dataframe
     :return: dict, keys: (side, limb, meas_type), values: numpy array with shape (length, 3)
     """
     array_3d_dict = dict()
-    for side, limb, meas_type in meas_dict.keys():
+    for side, limb, meas_type in keys_to_use:
         result_array = np.concatenate(
             [np.expand_dims(meas_dict[(side, limb, meas_type)]["x"].values, axis=1),
              np.expand_dims(meas_dict[(side, limb, meas_type)]["y"].values, axis=1),

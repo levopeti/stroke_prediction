@@ -13,8 +13,9 @@ from ai_utils.model_abstract import Model
 from measurement_utils.measurement import Measurement
 from utils.general_utils import min_to_ticks, sec_to_ticks
 
-only_left_arm_key_list = [("l", "a", "a"),
-                          ("l", "a", "g")]
+# TODO: r -> l
+only_left_arm_key_list = [("r", "a", "a"),
+                          ("r", "a", "g")]
 
 # risk 2
 avg_prob_threshold_dict = {"inverted": {30: 0.405, 60: 0.467, 90: 0.999},
@@ -75,7 +76,7 @@ class SixModels(Model):
     def get_inference_dict(self, measurement: Measurement) -> Tuple[dict, np.ndarray]:
         max_length_ticks = min_to_ticks(90, self.frequency)
         step_size_ticks = sec_to_ticks(self.step_size_sec, self.frequency)
-        array_3d_dict = get_3d_arrays_from_df(measurement.measurement_dict)
+        array_3d_dict = get_3d_arrays_from_df(measurement.measurement_dict, only_left_arm_key_list)
         inference_dict = dict()
         with torch.no_grad():
             for length_min in [30, 60, 90]:

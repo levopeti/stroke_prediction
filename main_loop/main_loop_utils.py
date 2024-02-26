@@ -55,30 +55,37 @@ def get_measurement(mm: MeasurementManager, measurement_id: str) -> Union[Measur
 def interpolate_measurements(meas: Measurement, min_diff: int, max_diff: int) -> None:
     for key, df in meas.measurement_dict.items():
         if df is not None:
-            timestamps = df["timestamp_ms"].values
-            x_axis = df["x"].values
-            y_axis = df["y"].values
-            z_axis = df["z"].values
-            diff_array = np.diff(timestamps)
-            mask = np.logical_and(diff_array > min_diff, diff_array < max_diff)
-            indices = np.where(mask)[0]  # get indices of true values
-            # print("{}: {}".format(key, len(indices)))
-            if len(indices) > 1:
-                print("more then one diff are found with key {}".format(key))
-                ind = indices[0]
-            elif len(indices) == 1:
-                ind = indices[0]
-            else:
-                continue
-            interpolated_ts = int((timestamps[ind] + timestamps[ind + 1]) / 2)
-            interpolated_x = (x_axis[ind] + x_axis[ind + 1]) / 2
-            interpolated_y = (y_axis[ind] + y_axis[ind + 1]) / 2
-            interpolated_z = (z_axis[ind] + z_axis[ind + 1]) / 2
+            is_it_done = False
+            while not is_it_done:
+                timestamps = df["timestamp_ms"].values
+                x_axis = df["x"].values
+                y_axis = df["y"].values
+                z_axis = df["z"].values
+                diff_array = np.diff(timestamps)
+                mask = np.logical_and(diff_array > min_diff, diff_array < max_diff)
+                indices = np.where(mask)[0]  # get indices of true values
+                # print("{}: {}".format(key, len(indices)))
+                # if len(indices) > 1:
+                #     print("more then one diff are found with key {}".format(key))
+                #     ind = indices[0]
+                # elif len(indices) == 1:
+                #     ind = indices[0]
+                # else:
+                #     is_it_done = True
+                #     continue
+                if len(indices) > 0:
+                    ind = indices[0]
+                    interpolated_ts = int((timestamps[ind] + timestamps[ind + 1]) / 2)
+                    interpolated_x = (x_axis[ind] + x_axis[ind + 1]) / 2
+                    interpolated_y = (y_axis[ind] + y_axis[ind + 1]) / 2
+                    interpolated_z = (z_axis[ind] + z_axis[ind + 1]) / 2
 
-            df.loc[df.index[ind] + 0.5] = [interpolated_ts, interpolated_x, interpolated_y, interpolated_z]
-            df = df.sort_index().reset_index(drop=True)
-            df["timestamp_ms"] = df["timestamp_ms"].astype("int")
-            meas.measurement_dict[key] = df
+                    df.loc[df.index[ind] + 0.5] = [interpolated_ts, interpolated_x, interpolated_y, interpolated_z]
+                    df = df.sort_index().reset_index(drop=True)
+                    df["timestamp_ms"] = df["timestamp_ms"].astype("int")
+                    meas.measurement_dict[key] = df
+                else:
+                    is_it_done = True
 
 
 def check_and_synch_measurement(measurement: Measurement, config_dict: dict) -> Tuple[str, str]:
@@ -99,7 +106,7 @@ def check_and_synch_measurement(measurement: Measurement, config_dict: dict) -> 
         return "missing keys: {}".format(missing_keys), "Error 2"
 
     # interpolate larger time gaps
-    interpolate_measurements(measurement, min_diff=70, max_diff=139)
+    interpolate_measurements(measurement, min_diff=70, max_diff=159)
 
     # check if frequency is okay for each key
     # warning
