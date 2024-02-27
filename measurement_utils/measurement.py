@@ -69,13 +69,14 @@ class Measurement(object):
         #     ("right", "leg", "gyr"): None,
         # }
 
+        # TODO
         self.measurement_dict = {
-            ("l", "a", "a"): None,
-            ("l", "a", "g"): None,
+            # ("l", "a", "a"): None,
+            # ("l", "a", "g"): None,
             # ("l", "l", "a"): None,
             # ("l", "l", "g"): None,
-            # ("r", "a", "a"): None,
-            # ("r", "a", "g"): None,
+            ("r", "a", "a"): None,
+            ("r", "a", "g"): None,
             # ("r", "l", "a"): None,
             # ("r", "l", "g"): None,
         }

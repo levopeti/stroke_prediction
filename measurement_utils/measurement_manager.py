@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 
 from random import random
@@ -22,7 +23,9 @@ class MeasurementManager(object):
             current_df = self.all_measurement_dict[measurement_id]
             max_list = list()
             for key in key_list_short:
-                max_list.append(current_df[current_df["keys_tuple"] == key]["timestamp_ms"].max())
+                timestamps_ms = current_df[current_df["keys_tuple"] == key]["timestamp_ms"]
+                if len(timestamps_ms) > 0:
+                    max_list.append(current_df[current_df["keys_tuple"] == key]["timestamp_ms"].max())
 
             return min(max_list)
         else:
@@ -49,13 +52,29 @@ class MeasurementManager(object):
 
     def add_data(self, measurement_id: str, data_list: list, time_of_request: datetime) -> None:
         """ columns: limb, side, timestamp, type, x, y, z"""
+
+        def cut_part_before_too_large_time_diff(_data_df: pd.DataFrame) -> pd.DataFrame:
+            timestamp_ms = _data_df["timestamp_ms"].values
+            too_large_diffs = np.diff(timestamp_ms) > self.config_dict["init_time_diff_threshold"]
+            timestamp_limits = timestamp_ms[1:][too_large_diffs]
+
+            if len(timestamp_limits) > 0:
+                limit_ts_ms = timestamp_limits.max()
+                _data_df = _data_df[_data_df["timestamp_ms"] >= limit_ts_ms]
+                write_log("meas_manager.txt",
+                          "beginning is cut at new measurement {} before timestamp {}".format(measurement_id,
+                                                                                              limit_ts_ms),
+                          title="CutBeginning", print_out=True, color="red", add_date=True)
+            return _data_df
+
         def get_init_df() -> pd.DataFrame:
             min_ts = data_df["timestamp_ms"].values.min()
             length_of_init_data_tick = min_to_ticks(self.config_dict["length_of_init_data_min"],
                                                     self.config_dict["frequency"]) + 100
             init_data_list = list()
             for key in key_list_short:
-                if self.config_dict["left_arm_only"] and (key[0] != "l" or key[1] != "a"):
+                # if self.config_dict["left_arm_only"] and (key[0] != "l" or key[1] != "a"):
+                if self.config_dict["left_arm_only"] and (key[0] != "r" or key[1] != "a"):
                     continue
                 for idx in range(length_of_init_data_tick):
                     ts_ms = int(min_ts - (idx + 1) * (1000 / self.config_dict["frequency"]))  # 40 ms
@@ -85,6 +104,7 @@ class MeasurementManager(object):
         data_df["timestamp_ms"] = data_df.apply(lambda row: to_int_timestamp(row.timestamp), axis=1)
 
         if new_meas:
+            data_df = cut_part_before_too_large_time_diff(data_df)
             init_data_df = get_init_df()
             data_df = pd.concat([init_data_df, data_df], ignore_index=True)
 

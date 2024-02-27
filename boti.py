@@ -12,12 +12,22 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
-path = "/home/ad.adasworks.com/levente.peto/projects/stroke_prediction/06399CEE-4410-42C5-AD6B-0F644104CF79_2024-02-23 13:46:25.200238+01:00.csv"
+path = "/home/ad.adasworks.com/levente.peto/projects/stroke_prediction/FA7D8946-A5D9-4D8D-9819-697E8EA9B2C9_2024-02-26 14:16:42.803824+01:00.csv"
 df = pd.read_csv(path)
 print(df.head())
-print(df[df["keys_tuple"] == str(("r", "a", "a"))].head(20))
-print(df[df["keys_tuple"] == str(("r", "a", "a"))].tail(20))
-exit()
+timestamp_ms = df["timestamp_ms"].values
+too_large_diffs = np.diff(timestamp_ms) > 1000
+limit_ts_ms = timestamp_ms[1:][too_large_diffs].max()
+df = df[df["timestamp_ms"] >= limit_ts_ms]
+
+# ts_ms_list = df[df["keys_tuple"] == str(('r', 'a', 'g'))]["timestamp_ms"]
+# ts_list = df[df["keys_tuple"] == str(('r', 'a', 'g'))]["timestamp"]
+# print(np.diff(ts_ms_list)[np.diff(ts_ms_list) > 80])
+# print(ts_list[:-1][np.diff(ts_ms_list) > 80])
+
+# print(df[df["keys_tuple"] == str(("r", "a", "a"))].head(20))
+# print(df[df["keys_tuple"] == str(("r", "a", "a"))].tail(20))
+# exit()
 time_of_requests = df["time_of_request"].unique()
 
 for key in key_list_short:
