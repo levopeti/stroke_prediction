@@ -7,11 +7,38 @@ import matplotlib.pyplot as plt
 
 from termcolor import colored
 from measurement_utils.measurement import key_list_short, Measurement
+from utils.general_utils import to_str_timestamp, to_int_timestamp
 
 pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
+path = "/home/ad.adasworks.com/levente.peto/projects/stroke_prediction/init_data/init_data.csv"
+df = pd.read_csv(path)
+
+init_data_list = list()
+for idx, row in df.iterrows():
+    for meas_type in ["acc", "gyr"]:
+        init_data_list.append({
+            "side": "r",
+            "limb": "a",
+            "type": meas_type[0],
+            "timestamp": to_str_timestamp(int(row.epoch)),
+            "timestamp_ms": row.epoch,
+            "x": row[str(("right", "arm", meas_type, "x"))],
+            "y": row[str(("right", "arm", meas_type, "y"))],
+            "z": row[str(("right", "arm", meas_type, "z"))]
+        })
+
+print(to_str_timestamp(df["epoch"].min()))
+print(to_str_timestamp(df["epoch"].max()))
+
+new_df = df[df["epoch"] > to_int_timestamp("2021-12-03T8:47:59.973Z")]
+print(to_str_timestamp(new_df["epoch"].min()))
+print(to_str_timestamp(new_df["epoch"].max()))
+exit()
+new_df.to_csv("/home/ad.adasworks.com/levente.peto/projects/stroke_prediction/init_data/init_data.csv")
+exit()
 path = "/home/ad.adasworks.com/levente.peto/projects/stroke_prediction/FA7D8946-A5D9-4D8D-9819-697E8EA9B2C9_2024-02-26 14:16:42.803824+01:00.csv"
 df = pd.read_csv(path)
 print(df.head())

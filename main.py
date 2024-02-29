@@ -16,7 +16,7 @@ if __name__ == "__main__":
     _configuration = get_configuration(_config_dict)
 
     # TODO
-    _model = SixModels(_config_dict)
+    _model = SixModels(_config_dict, to_cuda=False)
 
     _discord = DiscordBot(active=_config_dict["discord"])
 

@@ -16,14 +16,14 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
 
     while True:
         now_ts = datetime.now(timezone)
-        measurement_ids = get_measurement_ids(configuration,
-                                              _from=to_str_timestamp(
-                                                  now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])),
-                                              _interval=min_to_millisec(config_dict["meas_length_to_keep_min"]))
-        # measurement_ids = get_measurement_ids(configuration,
-        #                                       _from="2024-02-20T11:29:39.362Z",
-        #                                       _interval=min_to_millisec(config_dict["meas_length_to_keep_min"]))
+        if config_dict["start_date"] is None:
+            measurement_ids_from = to_str_timestamp(now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"]))
+        else:
+            measurement_ids_from = config_dict["start_date"]
 
+        measurement_ids = get_measurement_ids(configuration,
+                                              _from=measurement_ids_from,
+                                              _interval=min_to_millisec(config_dict["meas_length_to_keep_min"]))
         full_start = time()
         if measurement_ids is None:
             write_log("main_loop.txt",
@@ -46,10 +46,12 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
 
             if from_ts is None:
                 # measurement id is new
-                now_ts = datetime.now(timezone)
-                from_ts = now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])
-                # from_ts = datetime.strptime("2024-02-20T11:29:39.362Z", '%Y-%m-%dT%H:%M:%S.%fZ')
-                # from_ts = timezone.localize(from_ts)
+                if config_dict["start_date"] is None:
+                    now_ts = datetime.now(timezone)
+                    from_ts = now_ts - timedelta(minutes=config_dict["meas_length_to_keep_min"])
+                else:
+                    from_ts = datetime.strptime(config_dict["start_date"], '%Y-%m-%dT%H:%M:%S.%fZ')
+                    from_ts = timezone.localize(from_ts)
             else:
                 from_ts = timezone.localize(from_ts)
 
@@ -94,16 +96,26 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
                 else:
                     continue
             else:
-                print("check is ok")
+                write_log("main_loop.txt", "Check is OK",
+                          title="CheckOK", print_out=True, color="green", add_date=True, write_discord=True)
                 prediction_dict = model.compute_prediction(measurement)
                 body = make_body(prediction_dict, measurement_id)
+                from pprint import pprint
+                pprint(body)
 
-            save_predictions(configuration, body)
-            write_log("main_loop.txt",
-                      "Uploaded {} prediction(s) with measurement id {} ({:.0f}s)".format(len(body["predictions"]),
-                                                                                          measurement_id,
-                                                                                          time() - start),
-                      title="UploadInfo", print_out=True, color="blue", add_date=True, write_discord=True)
+            if mm.is_time_to_save(measurement_id):
+                save_predictions(configuration, body)
+                write_log("main_loop.txt",
+                          "Uploaded {} prediction(s) with measurement id {} ({:.0f}s)".format(len(body["predictions"]),
+                                                                                              measurement_id,
+                                                                                              time() - start),
+                          title="UploadInfo", print_out=True, color="blue", add_date=True, write_discord=True)
+            else:
+                write_log("main_loop.txt",
+                          "Prediction(s) did not uploaded with measurement id {},"
+                          " because it is too early".format(measurement_id),
+                          title="UploadInfo", print_out=True, color="blue", add_date=True, write_discord=True)
+
             write_log("main_loop.txt",
                       "Process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start),
                       title="Done", print_out=True, color="green", add_date=True, write_discord=True)

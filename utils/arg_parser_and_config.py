@@ -46,7 +46,7 @@ def get_args() -> argparse.Namespace:
     parser.add_argument('--meas_length_min', default=90, type=int, help='Considered time for prediction in minutes.')
     parser.add_argument('--inference_step_size_sec', default=30, type=int,
                         help='Time delay between two measurements in seconds.')
-    parser.add_argument('--test_mode', default=False, action='store_true',  help='Run in test mode.')
+    parser.add_argument('--verbose', default=False, action='store_true',  help='More information is printed.')
     parser.add_argument('--discord', default=False, action='store_true', help='Run discord webhook.')
     parser.add_argument('--local_mode', default=False, action='store_true', help='Local data flow through zmq.')
     parser.add_argument('--save_df', default=False, action='store_true', help='Save each measurement df into csv.')
@@ -61,6 +61,7 @@ def get_other_config() -> dict:
         "model_folder": "./trained_models",
         "host_url_and_token_path": "./host_url_and_token.json",
         "log_dir_path": "./log",
+        "init_data": "./init_data/202112020-2023-09-12-13.csv",
         "frequency": 25,  # Hz, T = 40 ms
         "frequency_check_eps_warning": 3,  # ms
         "frequency_check_eps_error": 40,  # ms
@@ -69,7 +70,8 @@ def get_other_config() -> dict:
         "step_size_sec": 20,
         "left_arm_only": True,
         "length_of_init_data_min": 90,
-        "init_time_diff_threshold": 1000
+        "init_time_diff_threshold": 1000,
+        "start_date": None,  # "2024-02-028T13:29:39.362Z", None
     }
     return other_config_dict
 

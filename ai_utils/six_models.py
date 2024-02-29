@@ -1,9 +1,8 @@
 import os
-from typing import Tuple
-
 import numpy as np
 import torch
 
+from typing import Tuple
 from glob import glob
 from numpy.lib.stride_tricks import sliding_window_view
 
@@ -41,13 +40,12 @@ class SixModels(Model):
         for model_path in model_paths:
             model_name = model_path.split("/")[-1].split(".")[0]
             inverted, length_min, limb, date = model_name.split("_")
-            model = torch.jit.load(model_path, map_location=torch.device('cpu'))
+            model = torch.jit.load(model_path, map_location=torch.device("cpu"))
             if to_cuda:
                 model.to("cuda")
             else:
                 model.to("cpu")
             model.eval()
-
             self.model_dict[inverted, int(length_min)] = model
 
     def compute_prediction(self, measurement: Measurement):
@@ -141,14 +139,19 @@ class SixModels(Model):
     @staticmethod
     def get_is_stroke_arrays(pred_is_stroke_dict):
         index_for_length = {30: 0, 60: 1, 90: 2}
-        non_inverted_array = np.zeros((len(list(pred_is_stroke_dict.values())[0]), 3))  # 3 -> (30, 60, 90)
-        inverted_array = np.zeros((len(list(pred_is_stroke_dict.values())[0]), 3))  # 3 -> (30, 60, 90)
+
+        # predictions in pred_is_stroke_dict can have different lengths
+        # but at the end we need arrays with the same length, so those are cut to the length os the shortest
+        shortest_length = min([len(pred) for pred in pred_is_stroke_dict.values()])
+
+        non_inverted_array = np.zeros((shortest_length, 3))  # 3 -> (30, 60, 90)
+        inverted_array = np.zeros((shortest_length, 3))  # 3 -> (30, 60, 90)
         for (inverted, length_min), pred_is_stroke in pred_is_stroke_dict.items():
             idx = index_for_length[length_min]
             if inverted == "inverted":
-                inverted_array[:, idx] = pred_is_stroke
+                inverted_array[:, idx] = pred_is_stroke[-shortest_length:]
             else:
-                non_inverted_array[:, idx] = pred_is_stroke
+                non_inverted_array[:, idx] = pred_is_stroke[-shortest_length:]
         return non_inverted_array, inverted_array
 
     @staticmethod

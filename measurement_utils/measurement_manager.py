@@ -16,7 +16,22 @@ class MeasurementManager(object):
     def __init__(self, config_dict: dict):
         self.config_dict = config_dict
         self.all_measurement_dict = dict()
+        self.save_prediction_time = dict()
         self.timezone = config_dict["timezone"]
+
+        # TODO:
+        self.save_prediction_delay = timedelta(minutes=30)
+
+    def is_time_to_save(self, measurement_id: str) -> bool:
+        if measurement_id in self.save_prediction_time:
+            if self.save_prediction_time[measurement_id] + self.save_prediction_delay < datetime.now(self.timezone):
+                self.save_prediction_time[measurement_id] = datetime.now(self.timezone)
+                return True
+            else:
+                return False
+        else:
+            self.save_prediction_time[measurement_id] = datetime.now(self.timezone)
+            return True
 
     def get_last_timestamp(self, measurement_id: str) -> Union[int, None]:
         if measurement_id in self.all_measurement_dict:
@@ -69,25 +84,24 @@ class MeasurementManager(object):
 
         def get_init_df() -> pd.DataFrame:
             min_ts = data_df["timestamp_ms"].values.min()
-            length_of_init_data_tick = min_to_ticks(self.config_dict["length_of_init_data_min"],
-                                                    self.config_dict["frequency"]) + 100
+            df = pd.read_csv(self.config_dict["init_data"])
+            df.sort_values(by="epoch", inplace=True, ascending=False)
+
             init_data_list = list()
-            for key in key_list_short:
-                # if self.config_dict["left_arm_only"] and (key[0] != "l" or key[1] != "a"):
-                if self.config_dict["left_arm_only"] and (key[0] != "r" or key[1] != "a"):
-                    continue
-                for idx in range(length_of_init_data_tick):
-                    ts_ms = int(min_ts - (idx + 1) * (1000 / self.config_dict["frequency"]))  # 40 ms
+            for idx, (_ , row) in enumerate(df.iterrows()):
+                ts_ms = int(min_ts - (idx + 1) * (1000 / self.config_dict["frequency"]))  # 40 ms
+                for meas_type in ["acc", "gyr"]:
                     init_data_list.append({
-                        "side": key[0],
-                        "limb": key[1],
-                        "type": key[2],
+                        "side": "r",
+                        "limb": "a",
+                        "type": meas_type[0],
                         "timestamp": to_str_timestamp(ts_ms),
                         "timestamp_ms": ts_ms,
-                        "x": random() * 4,
-                        "y": random() * 4,
-                        "z": random() * 4
+                        "x": row[str(("right", "arm", meas_type, "x"))],
+                        "y": row[str(("right", "arm", meas_type, "y"))],
+                        "z": row[str(("right", "arm", meas_type, "z"))]
                     })
+
             df = pd.DataFrame(init_data_list)
             df.sort_values(by="timestamp_ms", inplace=True)
             return df
@@ -126,7 +140,8 @@ class MeasurementManager(object):
                 self.all_measurement_dict[measurement_id].columns.difference(["time_of_request"])].duplicated(
                 keep=False)]
 
-        # get_data_info(self.all_measurement_dict, "all")
+        if self.config_dict["verbose"]:
+            get_data_info(self.all_measurement_dict, "all")
 
     def get_df(self, measurement_id: str) -> pd.DataFrame:
         if measurement_id in self.all_measurement_dict:
