@@ -61,7 +61,7 @@ def get_other_config() -> dict:
         "model_folder": "./trained_models",
         "host_url_and_token_path": "./host_url_and_token.json",
         "log_dir_path": "./log",
-        "init_data": "./init_data/202112020-2023-09-12-13.csv",
+        "init_data": "./init_data/init_data.csv",
         "frequency": 25,  # Hz, T = 40 ms
         "frequency_check_eps_warning": 3,  # ms
         "frequency_check_eps_error": 40,  # ms
