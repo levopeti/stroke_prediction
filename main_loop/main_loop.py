@@ -100,8 +100,6 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
                           title="CheckOK", print_out=True, color="green", add_date=True, write_discord=True)
                 prediction_dict = model.compute_prediction(measurement)
                 body = make_body(prediction_dict, measurement_id)
-                from pprint import pprint
-                pprint(body)
 
             if mm.is_time_to_save(measurement_id):
                 save_predictions(configuration, body)

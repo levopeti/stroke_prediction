@@ -2,6 +2,7 @@ import os
 import numpy as np
 import torch
 
+from pprint import pprint
 from typing import Tuple
 from glob import glob
 from numpy.lib.stride_tricks import sliding_window_view
@@ -17,7 +18,10 @@ only_left_arm_key_list = [("r", "a", "a"),
                           ("r", "a", "g")]
 
 # risk 2
-avg_prob_threshold_dict = {"inverted": {30: 0.405, 60: 0.467, 90: 0.999},
+"""avg_prob_threshold_dict = {"inverted": {30: 0.405, 60: 0.467, 90: 0.999},
+                           "non-inverted": {30: 0.781, 60: 0.807, 90: 0.939}}
+"""
+avg_prob_threshold_dict = {"inverted": {30: 0.5, 60: 0.8, 90: 0.999},
                            "non-inverted": {30: 0.781, 60: 0.807, 90: 0.939}}
 
 window_length_dict = {"inverted": {30: 10252, 60: 10549, 90: 10667},
@@ -48,10 +52,14 @@ class SixModels(Model):
             model.eval()
             self.model_dict[inverted, int(length_min)] = model
 
-    def compute_prediction(self, measurement: Measurement):
+    def compute_prediction(self, measurement: Measurement, debug_print: bool = False):
         inference_dict, timestamp_ms = self.get_inference_dict(measurement)
-        pred_is_stroke_dict = self.get_pred_is_stroke_dict(inference_dict)
+        pred_is_stroke_dict = self.get_pred_is_stroke_dict(inference_dict, debug_print)
         non_inverted_array, inverted_array = self.get_is_stroke_arrays(pred_is_stroke_dict)
+        if debug_print:
+            pprint(pred_is_stroke_dict)
+            print("non_inverted_array: {}, inverted_array: {}".format(non_inverted_array, inverted_array))
+
         non_inverted_array = (non_inverted_array.sum(axis=1) >= combination_threshold).astype(int)
         inverted_array = (inverted_array.sum(axis=1) >= combination_threshold).astype(int)
         timestamp_ms = timestamp_ms[-len(inverted_array):]
@@ -117,7 +125,7 @@ class SixModels(Model):
             timestamp_ms = timestamp_ms[max_length_ticks::step_size_ticks]
         return inference_dict, timestamp_ms
 
-    def get_pred_is_stroke_dict(self, inference_dict):
+    def get_pred_is_stroke_dict(self, inference_dict, debug_print: bool = False):
         pred_is_stroke_dict = dict()
         for (inverted, length_min), predictions in inference_dict.items():
             window_length = int(window_length_dict[inverted][length_min] / self.step_size_sec)
@@ -131,6 +139,9 @@ class SixModels(Model):
                 else:
                     current_window_length = window_length
                 avg_pred_is_stroke = sliding_window_view(pred_is_stroke, current_window_length).mean(axis=1)
+                if debug_print:
+                    print("{}-{}\npred_is_stroke: {}\navg_pred_is_stroke: {}".format(inverted, length_min,
+                                                                                     pred_is_stroke, avg_pred_is_stroke))
                 pred_is_stroke = (avg_pred_is_stroke >= avg_prob_threshold).astype(int)
 
             pred_is_stroke_dict[inverted, length_min] = pred_is_stroke

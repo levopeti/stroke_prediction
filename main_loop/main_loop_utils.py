@@ -106,7 +106,7 @@ def check_and_synch_measurement(measurement: Measurement, config_dict: dict) -> 
         return "missing keys: {}".format(missing_keys), "Error 2"
 
     # interpolate larger time gaps
-    interpolate_measurements(measurement, min_diff=70, max_diff=159)
+    interpolate_measurements(measurement, min_diff=70, max_diff=200)  # 159
 
     # check if frequency is okay for each key
     # warning

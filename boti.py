@@ -1,3 +1,4 @@
+from datetime import datetime
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
@@ -13,39 +14,30 @@ pd.set_option('display.max_rows', 500)
 pd.set_option('display.max_columns', 500)
 pd.set_option('display.width', 1000)
 
-path = "/home/ad.adasworks.com/levente.peto/projects/stroke_prediction/init_data/init_data.csv"
+
+def get_length_from_timestamps(start_ts: int, end_ts: int) -> str:
+    start = datetime.fromtimestamp(start_ts / 1000)
+    end = datetime.fromtimestamp(end_ts / 1000)
+    length = end - start
+    mm, ss = divmod(length.total_seconds(), 60)
+    hh, mm = divmod(mm, 60)
+    return "{}:{}".format(int(hh), int(mm))
+
+
+path = "/home/ad.adasworks.com/levente.peto/projects/stroke_prediction/98727214-2B8F-471B-A4D4-4176DB276EF8_2024-03-04 15:30:30.004253+01:00.csv"
 df = pd.read_csv(path)
-
-init_data_list = list()
-for idx, row in df.iterrows():
-    for meas_type in ["acc", "gyr"]:
-        init_data_list.append({
-            "side": "r",
-            "limb": "a",
-            "type": meas_type[0],
-            "timestamp": to_str_timestamp(int(row.epoch)),
-            "timestamp_ms": row.epoch,
-            "x": row[str(("right", "arm", meas_type, "x"))],
-            "y": row[str(("right", "arm", meas_type, "y"))],
-            "z": row[str(("right", "arm", meas_type, "z"))]
-        })
-
-print(to_str_timestamp(df["epoch"].min()))
-print(to_str_timestamp(df["epoch"].max()))
-
-new_df = df[df["epoch"] > to_int_timestamp("2021-12-03T8:47:59.973Z")]
-print(to_str_timestamp(new_df["epoch"].min()))
-print(to_str_timestamp(new_df["epoch"].max()))
-exit()
-new_df.to_csv("/home/ad.adasworks.com/levente.peto/projects/stroke_prediction/init_data/init_data.csv")
-exit()
-path = "/home/ad.adasworks.com/levente.peto/projects/stroke_prediction/FA7D8946-A5D9-4D8D-9819-697E8EA9B2C9_2024-02-26 14:16:42.803824+01:00.csv"
-df = pd.read_csv(path)
+min_ts = df["timestamp_ms"].min()
+time_series = df["timestamp_ms"].apply(lambda x: get_length_from_timestamps(min_ts, x))
+df["time"] = time_series.values
 print(df.head())
-timestamp_ms = df["timestamp_ms"].values
-too_large_diffs = np.diff(timestamp_ms) > 1000
-limit_ts_ms = timestamp_ms[1:][too_large_diffs].max()
-df = df[df["timestamp_ms"] >= limit_ts_ms]
+
+for key in [('r', 'a', 'a'), ('r', 'a', 'g')]:
+    meas_df = df[df["keys_tuple"] == str(key)]
+    meas_df[:].plot(x="time", y=["x", "y", "z"], grid=True, title="{}-{}-{}".format(*key))
+
+plt.show()
+
+exit()
 
 # ts_ms_list = df[df["keys_tuple"] == str(('r', 'a', 'g'))]["timestamp_ms"]
 # ts_list = df[df["keys_tuple"] == str(('r', 'a', 'g'))]["timestamp"]
@@ -70,7 +62,6 @@ for key in key_list_short:
     plt.show()
     continue
 
-
     # if key not in [('left', 'leg', 'acc'), ('left', 'leg', 'gyr')]:
     #     continue
 
@@ -92,7 +83,10 @@ for key in key_list_short:
         shift = filtered_df["timestamp_ms"].min() - prev_max
         prev_max = filtered_df["timestamp_ms"].max()
 
-        print(colored(key, "blue"), "min: {} ({}), max: {} ({}), min diff: {}, max diff: {}, shift: {}".format(min_ts, min_ts_ms, max_ts, max_ts_ms, min_diff_ts, max_diff_ts, shift))
+        print(colored(key, "blue"),
+              "min: {} ({}), max: {} ({}), min diff: {}, max diff: {}, shift: {}".format(min_ts, min_ts_ms, max_ts,
+                                                                                         max_ts_ms, min_diff_ts,
+                                                                                         max_diff_ts, shift))
     print()
 
 exit()
@@ -101,8 +95,10 @@ meas.fill_from_df(df)
 print(meas.check_frequency(40, eps=5))
 print(meas.log_list)
 
-filtered_acc_df = df[(df["time_of_request"] == "2023-10-30 18:13:13.654069+01:00") & (df["keys_tuple"] == str(('left', 'leg', 'acc')))]
-filtered_gyr_df = df[(df["time_of_request"] == "2023-10-30 18:13:13.654069+01:00") & (df["keys_tuple"] == str(('left', 'leg', 'gyr')))]
+filtered_acc_df = df[
+    (df["time_of_request"] == "2023-10-30 18:13:13.654069+01:00") & (df["keys_tuple"] == str(('left', 'leg', 'acc')))]
+filtered_gyr_df = df[
+    (df["time_of_request"] == "2023-10-30 18:13:13.654069+01:00") & (df["keys_tuple"] == str(('left', 'leg', 'gyr')))]
 
 print(filtered_acc_df.head())
 print(filtered_gyr_df.head())
