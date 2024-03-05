@@ -17,7 +17,7 @@ def get_length_from_timestamps(start_ts: int, end_ts: int) -> str:
 
 
 path = "./98727214-2B8F-471B-A4D4-4176DB276EF8_2024-03-04 15:30:30.004253+01:00.csv"
-df = pd.read_csv(path)
+df = pd.read_csv(path)[:-180000]
 min_ts = df["timestamp_ms"].min()
 time_series = df["timestamp_ms"].apply(lambda x: get_length_from_timestamps(min_ts, x))
 df["time"] = time_series.values

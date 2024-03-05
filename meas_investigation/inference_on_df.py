@@ -24,7 +24,7 @@ config_dict = {
     }
 
 path = "./98727214-2B8F-471B-A4D4-4176DB276EF8_2024-03-04 15:30:30.004253+01:00.csv"
-df = pd.read_csv(path)
+df = pd.read_csv(path)[:-180000]
 df["keys_tuple"] = df["keys_tuple"].apply(lambda x: eval(x))
 
 print(df.head())
