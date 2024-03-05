@@ -103,6 +103,9 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
 
             if mm.is_time_to_save(measurement_id):
                 save_predictions(configuration, body)
+                write_log("main_loop.txt", "{} prediction with measurement id {}".format(body["predictions"],
+                                                                                         measurement_id),
+                          title="Prediction", print_out=True, color="blue", add_date=True, write_discord=True)
                 write_log("main_loop.txt",
                           "Uploaded {} prediction(s) with measurement id {} ({:.0f}s)".format(len(body["predictions"]),
                                                                                               measurement_id,

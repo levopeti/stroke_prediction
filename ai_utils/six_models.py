@@ -21,8 +21,8 @@ only_left_arm_key_list = [("r", "a", "a"),
 """avg_prob_threshold_dict = {"inverted": {30: 0.405, 60: 0.467, 90: 0.999},
                            "non-inverted": {30: 0.781, 60: 0.807, 90: 0.939}}
 """
-avg_prob_threshold_dict = {"inverted": {30: 0.5, 60: 0.8, 90: 0.999},
-                           "non-inverted": {30: 0.781, 60: 0.807, 90: 0.939}}
+avg_prob_threshold_dict = {"inverted": {30: 0.95, 60: 0.95, 90: 0.999},
+                           "non-inverted": {30: 0.8, 60: 0.85, 90: 0.939}}
 
 window_length_dict = {"inverted": {30: 10252, 60: 10549, 90: 10667},
                       "non-inverted": {30: 10774, 60: 10731, 90: 6697}}
