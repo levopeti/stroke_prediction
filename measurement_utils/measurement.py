@@ -126,12 +126,12 @@ class Measurement(object):
                          range(len(more_deltas))])
 
                     log = ("frequency is not correct, with key: {} min: {}, max: {}, avg: {:.2f}\n"
-                           "less timestamps: {}\nmore timestamps: {}".format(keys,
-                                                                             np.min(deltas),
-                                                                             np.max(deltas),
-                                                                             np.mean(deltas),
-                                                                             less_timestamps,
-                                                                             more_timestamps))
+                           "timestamps of smaller: {}\ntimestamps of larger: {}".format(keys,
+                                                                                        np.min(deltas),
+                                                                                        np.max(deltas),
+                                                                                        np.mean(deltas),
+                                                                                        less_timestamps,
+                                                                                        more_timestamps))
                     write_log("main_loop.txt", log, title="SynchronizationError", print_out=True, color="red",
                               add_date=True, write_discord=True)
                     self.log_list.append(colored(log, "red"))

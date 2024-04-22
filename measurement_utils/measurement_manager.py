@@ -5,6 +5,7 @@ from random import random
 from typing import Union
 from datetime import datetime, timedelta
 
+from measurement_utils.measurement_info import MeasurementInfoManager
 from utils.general_utils import to_int_timestamp, min_to_ticks, to_str_timestamp, get_data_info
 from measurement_utils.measurement import key_list_short
 from utils.log_maker import write_log
@@ -13,8 +14,9 @@ pd.set_option('display.max_rows', 500)
 
 
 class MeasurementManager(object):
-    def __init__(self, config_dict: dict):
+    def __init__(self, config_dict: dict, meas_info_manager: MeasurementInfoManager):
         self.config_dict = config_dict
+        self.meas_info_manager = meas_info_manager
         self.all_measurement_dict = dict()
         self.save_prediction_time = dict()
         self.timezone = config_dict["timezone"]
@@ -48,6 +50,7 @@ class MeasurementManager(object):
 
     def del_measurement(self, measurement_id: str) -> None:
         del self.all_measurement_dict[measurement_id]
+        self.meas_info_manager.del_measurement(measurement_id)
 
     def drop_old_data(self):
         meas_ids_to_drop = list()
@@ -56,6 +59,7 @@ class MeasurementManager(object):
             until_ok_ts = ts_now - timedelta(minutes=self.config_dict["meas_length_to_keep_min"])
             df = self.all_measurement_dict[measurement_id]
             self.all_measurement_dict[measurement_id] = df[df["timestamp_ms"] >= until_ok_ts.timestamp() * 1000]
+            self.meas_info_manager.add_info(measurement_id, "drop_ts", until_ok_ts.timestamp() * 1000)
 
             if len(self.all_measurement_dict[measurement_id]) == 0:
                 meas_ids_to_drop.append(measurement_id)
@@ -72,6 +76,9 @@ class MeasurementManager(object):
             timestamp_ms = _data_df["timestamp_ms"].values
             too_large_diffs = np.diff(timestamp_ms) > self.config_dict["init_time_diff_threshold"]
             timestamp_limits = timestamp_ms[1:][too_large_diffs]
+            self.meas_info_manager.add_info(measurement_id, "init_delta_too_large_ts", timestamp_limits)
+            self.meas_info_manager.add_info(measurement_id, "init_ts_min", timestamp_ms.min())
+            self.meas_info_manager.add_info(measurement_id, "init_ts_max", timestamp_ms.max())
 
             if len(timestamp_limits) > 0:
                 limit_ts_ms = timestamp_limits.max()
@@ -88,13 +95,13 @@ class MeasurementManager(object):
             df.sort_values(by="epoch", inplace=True, ascending=False)
 
             init_data_list = list()
-            for idx, (_ , row) in enumerate(df.iterrows()):
+            for idx, (_, row) in enumerate(df.iterrows()):
                 ts_ms = int(min_ts - (idx + 1) * (1000 / self.config_dict["frequency"]))  # 40 ms
                 for meas_type in ["acc", "gyr"]:
                     init_data_list.append({
                         "side": "r",
                         "limb": "a",
-                        "type": meas_type[0],
+                        "type": meas_type[0],  # a/g
                         "timestamp": to_str_timestamp(ts_ms),
                         "timestamp_ms": ts_ms,
                         "x": row[str(("right", "arm", meas_type, "x"))],
@@ -104,6 +111,8 @@ class MeasurementManager(object):
 
             df = pd.DataFrame(init_data_list)
             df.sort_values(by="timestamp_ms", inplace=True)
+            self.meas_info_manager.add_info(measurement_id, "added_df_ts_min", df["timestamp_ms"].min())
+            self.meas_info_manager.add_info(measurement_id, "added_df_ts_max", df["timestamp_ms"].max())
             return df
 
         if len(data_list) == 0:
@@ -112,6 +121,7 @@ class MeasurementManager(object):
         new_meas = False
         if measurement_id not in self.all_measurement_dict:
             self.all_measurement_dict[measurement_id] = pd.DataFrame()
+            self.meas_info_manager.add_new_measurement(measurement_id)
             new_meas = True
 
         data_df = pd.DataFrame(data_list)

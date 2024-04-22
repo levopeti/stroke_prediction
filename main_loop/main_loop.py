@@ -1,6 +1,7 @@
 from time import time, sleep
 from datetime import datetime, timedelta
 
+from measurement_utils.measurement_info import MeasurementInfoManager
 from utils.api_utils import get_measurement_ids, get_data_for_prediction, save_predictions
 from utils.general_utils import to_str_timestamp, from_int_to_datetime, min_to_millisec, get_data_info
 from measurement_utils.measurement_manager import MeasurementManager
@@ -12,7 +13,8 @@ from ai_utils.model_abstract import Model
 
 def run_main_loop(model: Model, configuration: Configuration, config_dict: dict):
     timezone = config_dict["timezone"]
-    mm = MeasurementManager(config_dict)
+    mim = MeasurementInfoManager(config_dict)
+    mm = MeasurementManager(config_dict, mim)
 
     while True:
         now_ts = datetime.now(timezone)

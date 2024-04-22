@@ -11,6 +11,7 @@ from ai_utils.data_preprocessing import get_3d_arrays_from_df, cut_array_to_leng
     moving_average, divide_values, down_sampling, butter_high_pass_filter, create_multivariate_time_series
 from ai_utils.model_abstract import Model
 from measurement_utils.measurement import Measurement
+from measurement_utils.measurement_info import MeasurementInfoManager
 from utils.general_utils import min_to_ticks, sec_to_ticks
 
 # TODO: r -> l
@@ -52,8 +53,13 @@ class SixModels(Model):
             model.eval()
             self.model_dict[inverted, int(length_min)] = model
 
+        self.meas_info_manager = None
+
+    def add_meas_info_manager(self, meas_info_manager: MeasurementInfoManager):
+        self.meas_info_manager = meas_info_manager
+
     def compute_prediction(self, measurement: Measurement, debug_print: bool = False):
-        inference_dict, timestamp_ms = self.get_inference_dict(measurement)
+        inference_dict, ori_timestamp_ms = self.get_inference_dict(measurement)
         pred_is_stroke_dict = self.get_pred_is_stroke_dict(inference_dict, debug_print)
         non_inverted_array, inverted_array = self.get_is_stroke_arrays(pred_is_stroke_dict)
         if debug_print:
@@ -62,7 +68,14 @@ class SixModels(Model):
 
         non_inverted_array = (non_inverted_array.sum(axis=1) >= combination_threshold).astype(int)
         inverted_array = (inverted_array.sum(axis=1) >= combination_threshold).astype(int)
-        timestamp_ms = timestamp_ms[-len(inverted_array):]
+        timestamp_ms = ori_timestamp_ms[-len(inverted_array):]
+
+        self.meas_info_manager.add_info(measurement.measurement_id, "inference_dict", inference_dict)
+        self.meas_info_manager.add_info(measurement.measurement_id, "inference_timestamp_ms", timestamp_ms)
+        self.meas_info_manager.add_info(measurement.measurement_id, "pred_is_stroke_dict", pred_is_stroke_dict)
+        self.meas_info_manager.add_info(measurement.measurement_id, "inference_timestamp_ms", ori_timestamp_ms)
+        self.meas_info_manager.add_info(measurement.measurement_id, "non_inverted_array", non_inverted_array)
+        self.meas_info_manager.add_info(measurement.measurement_id, "inverted_array", inverted_array)
 
         # TODO
         is_stroke = np.logical_or(non_inverted_array, inverted_array)
@@ -152,7 +165,7 @@ class SixModels(Model):
         index_for_length = {30: 0, 60: 1, 90: 2}
 
         # predictions in pred_is_stroke_dict can have different lengths
-        # but at the end we need arrays with the same length, so those are cut to the length os the shortest
+        # but at the end we need arrays with the same length, so those are cut to the length of the shortest
         shortest_length = min([len(pred) for pred in pred_is_stroke_dict.values()])
 
         non_inverted_array = np.zeros((shortest_length, 3))  # 3 -> (30, 60, 90)
