@@ -150,6 +150,10 @@ class MeasurementManager(object):
                 self.all_measurement_dict[measurement_id].columns.difference(["time_of_request"])].duplicated(
                 keep=False)]
 
+        df = self.all_measurement_dict[measurement_id]
+        self.meas_info_manager.add_info(measurement_id, "current_ts_min", df["timestamp_ms"].min())
+        self.meas_info_manager.add_info(measurement_id, "current_ts_max", df["timestamp_ms"].max())
+
         if self.config_dict["verbose"]:
             get_data_info(self.all_measurement_dict, "all")
 

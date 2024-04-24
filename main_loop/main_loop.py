@@ -15,6 +15,7 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
     timezone = config_dict["timezone"]
     mim = MeasurementInfoManager(config_dict)
     mm = MeasurementManager(config_dict, mim)
+    model.add_meas_info_manager(mim)
 
     while True:
         now_ts = datetime.now(timezone)
@@ -57,6 +58,7 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
             else:
                 from_ts = timezone.localize(from_ts)
 
+            data_collector = list()
             while True:
                 to_ts = from_ts + timedelta(minutes=config_dict["interval_min"])
                 data_list, elapsed_time = get_data_for_prediction(configuration,
@@ -75,13 +77,14 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
                     # data_list = [item for item in data_list if item["limb"] == "a" and item["side"] == "l"]
                     data_list = [item for item in data_list if item["limb"] == "a" and item["side"] == "r"]
 
-                print("add_data")
-                mm.add_data(measurement_id, data_list, datetime.now(timezone))
-
+                data_collector += data_list
                 from_ts += timedelta(minutes=config_dict["interval_min"])
                 if from_ts > datetime.now(timezone):
                     # from_ts is in the future
                     break
+
+            print("add_data")
+            mm.add_data(measurement_id, data_collector, datetime.now(timezone))
 
             print("get_measurement")
             measurement = get_measurement(mm, measurement_id)
@@ -105,6 +108,7 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
 
             if mm.is_time_to_save(measurement_id):
                 save_predictions(configuration, body)
+                mim.plot_timeline(measurement_id)
                 write_log("main_loop.txt", "{} prediction with measurement id {}".format(body["predictions"],
                                                                                          measurement_id),
                           title="Prediction", print_out=True, color="blue", add_date=True, write_discord=True)
@@ -127,6 +131,7 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
             mm.save_each_measurement()
 
         mm.drop_old_data()
+        # mim.plot_all()
         get_data_info(mm.all_measurement_dict, "all")
         if time() - full_start < 60:
             print("2 minutes sleep")

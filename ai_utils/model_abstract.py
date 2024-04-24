@@ -1,7 +1,6 @@
-import numpy as np
 from abc import ABC, abstractmethod
-
 from measurement_utils.measurement import Measurement
+from measurement_utils.measurement_info import MeasurementInfoManager
 
 
 class Model(ABC):
@@ -17,6 +16,10 @@ class Model(ABC):
                       "is_stroke": list of bools,
                       "timestamps": list of ints}
         """
+        pass
+
+    @abstractmethod
+    def add_meas_info_manager(self, meas_info_manager: MeasurementInfoManager):
         pass
 
 
