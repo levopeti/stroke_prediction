@@ -161,6 +161,7 @@ def local_mode(id_list, timezone, only_zero_id_list, random_freq):
                     steps_till_now = int(time_delta_to_start / time_delta_millis)
 
                 test_body = get_measurements(steps_till_now, measurement_id=int(message))
+                print(len(test_body["measure"]))
                 socket.send_pyobj(test_body)
             else:
                 print("wrong message: {}".format(message))
@@ -174,7 +175,7 @@ if __name__ == "__main__":
     parser.add_argument("--random_freq", default=None, type=int, help="Frequency is not constant.")
     args = parser.parse_args()
 
-    _id_list = [5, 6]  # [8, 9, 10] [5, 6, 7]
+    _id_list = [6]  # [8, 9, 10] [5, 6, 7]
 
     if args.mocking_mode:
         _only_zero_id_list = [_id_list[0]]

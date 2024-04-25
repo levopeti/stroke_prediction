@@ -2,10 +2,13 @@ import zmq
 
 from time import time, sleep
 from datetime import datetime
+
+from measurement_utils.measurement_info import MeasurementInfoManager
 from utils.general_utils import get_data_info
 from measurement_utils.measurement_manager import MeasurementManager
 from main_loop.main_loop_utils import get_measurement, check_and_synch_measurement, make_error_body, make_body
 from ai_utils.model_abstract import Model
+from utils.log_maker import send_image_to_discord
 
 
 def get_sockets():
@@ -26,7 +29,9 @@ def get_sockets():
 
 def run_main_loop_local(model: Model, config_dict: dict, *args, **kwargs):
     timezone = config_dict["timezone"]
-    mm = MeasurementManager(config_dict)
+    mim = MeasurementInfoManager(config_dict)
+    mm = MeasurementManager(config_dict, mim)
+    model.add_meas_info_manager(mim)
     socket_req, socket_push = get_sockets()
 
     while True:
@@ -45,7 +50,8 @@ def run_main_loop_local(model: Model, config_dict: dict, *args, **kwargs):
             print("\nget data for prediction ({}) {:.2f} sec".format(len(data_list), time() - start))
 
             if config_dict["left_arm_only"]:
-                data_list = [item for item in data_list if item["limb"] == "a" and item["side"] == "l"]
+                # data_list = [item for item in data_list if item["limb"] == "a" and item["side"] == "l"]
+                data_list = [item for item in data_list if item["limb"] == "a" and item["side"] == "r"]
 
             print("add_data")
             mm.add_data(measurement_id, data_list, datetime.now(timezone))
@@ -64,6 +70,8 @@ def run_main_loop_local(model: Model, config_dict: dict, *args, **kwargs):
                 prediction_dict = model.compute_prediction(measurement)
                 body = make_body(prediction_dict, measurement_id)
 
+            mim.plot_timeline(measurement_id)
+            send_image_to_discord("./discord_plot.png")
             socket_push.send_pyobj(body)
             print("process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start))
 
@@ -71,5 +79,5 @@ def run_main_loop_local(model: Model, config_dict: dict, *args, **kwargs):
         get_data_info(mm.all_measurement_dict, "all")
         if time() - full_start < 60:
             print("2 minutes sleep")
-            sleep(1)
+            sleep(10)
 

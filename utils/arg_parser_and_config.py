@@ -74,17 +74,16 @@ def get_other_config() -> dict:
         "length_of_init_data_min": 90,
         "init_time_diff_threshold": 1000,
         "start_date": None,  # "2024-02-028T13:29:39.362Z", None
+        "save_prediction_delay_min": 30
     }
     return other_config_dict
 
 
 def get_config_dict() -> dict:
     config_dict = dict()
-
     args = get_args()
     config_dict.update(vars(args))
     config_dict.update(get_other_config())
-
     return config_dict
 
 

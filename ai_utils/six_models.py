@@ -71,7 +71,6 @@ class SixModels(Model):
         timestamp_ms = ori_timestamp_ms[-len(inverted_array):]
 
         self.meas_info_manager.add_info(measurement.measurement_id, "inference_dict", inference_dict)
-        self.meas_info_manager.add_info(measurement.measurement_id, "inference_timestamp_ms", timestamp_ms)
         self.meas_info_manager.add_info(measurement.measurement_id, "pred_is_stroke_dict", pred_is_stroke_dict)
         self.meas_info_manager.add_info(measurement.measurement_id, "inference_timestamp_ms", ori_timestamp_ms)
         self.meas_info_manager.add_info(measurement.measurement_id, "non_inverted_array", non_inverted_array)

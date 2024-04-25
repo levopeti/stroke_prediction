@@ -84,3 +84,4 @@ def synchronize(_measurement_dict, meas):
         if len(_df) == 0:
             print(colored("zero length of data {}, {}".format(meas.measurement_name, _k), "red"))
     return _measurement_dict
+

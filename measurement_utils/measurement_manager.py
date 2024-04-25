@@ -21,8 +21,7 @@ class MeasurementManager(object):
         self.save_prediction_time = dict()
         self.timezone = config_dict["timezone"]
 
-        # TODO:
-        self.save_prediction_delay = timedelta(minutes=30)
+        self.save_prediction_delay = timedelta(minutes=config_dict["save_prediction_delay_min"])  # 30
 
     def is_time_to_save(self, measurement_id: str) -> bool:
         if measurement_id in self.save_prediction_time:

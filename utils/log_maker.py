@@ -83,6 +83,12 @@ class LogMaker(object):
         if print_out:
             print(log)
 
+    def send_image_to_discord(self, image_path: str):
+        if self.discord.active:
+            self.discord.send_message(fields=[{"name": str(self.current_meas_id),
+                                               "value": "prediction debug plot",
+                                               "inline": True}],
+                                      file_names=[image_path])
 
 log_maker = None
 
@@ -105,6 +111,10 @@ def set_log_meas_id(meas_id: int):
         print(colored("Log maker aren't started yet, so base path will not be set..", color="red"))
         return
     log_maker.set_current_meas_id(meas_id)
+
+
+def send_image_to_discord(image_path: str):
+    log_maker.send_image_to_discord(image_path)
 
 
 def write_log(file_name: str, log_message, title: str = None, blank_line: bool = True,
