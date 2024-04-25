@@ -41,12 +41,12 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
 
         write_log("main_loop.txt",
                   "Measurement ids to process: {} ({})".format(measurement_ids, to_str_timestamp(now_ts)),
-                  title="MeasurementIds", print_out=True, color="blue", add_date=True, write_discord=True)
+                  title="MeasurementIds", print_out=True, color="blue", add_date=True, write_discord=False)
 
         for measurement_id in measurement_ids:
             set_log_meas_id(measurement_id)
             write_log("main_loop.txt", "Process measurement {}".format(measurement_id),
-                      title="Process", print_out=True, color="blue", add_date=True, write_discord=True)
+                      title="Process", print_out=True, color="blue", add_date=True, write_discord=False)
             start = time()
             from_ts = from_int_to_datetime(mm.get_last_timestamp(measurement_id))
 
@@ -135,7 +135,7 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
                     continue
             else:
                 write_log("main_loop.txt", "Check is OK",
-                          title="CheckOK", print_out=True, color="green", add_date=True, write_discord=True)
+                          title="CheckOK", print_out=True, color="green", add_date=True, write_discord=False)
                 prediction_dict = model.compute_prediction(measurement)
                 body = make_body(prediction_dict, measurement_id)
 
@@ -150,12 +150,12 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
                           "Uploaded {} prediction(s) with measurement id {} ({:.0f}s)".format(len(body["predictions"]),
                                                                                               measurement_id,
                                                                                               time() - start),
-                          title="UploadInfo", print_out=True, color="blue", add_date=True, write_discord=True)
+                          title="UploadInfo", print_out=True, color="blue", add_date=True, write_discord=False)
             else:
                 write_log("main_loop.txt",
                           "Prediction(s) did not uploaded with measurement id {},"
                           " because it is too early".format(measurement_id),
-                          title="UploadInfo", print_out=True, color="blue", add_date=True, write_discord=True)
+                          title="UploadInfo", print_out=True, color="blue", add_date=True, write_discord=False)
 
             write_log("main_loop.txt",
                       "Process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start),
