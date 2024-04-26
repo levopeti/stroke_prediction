@@ -74,7 +74,8 @@ def get_other_config() -> dict:
         "length_of_init_data_min": 90,
         "init_time_diff_threshold": 1000,
         "start_date": None,  # "2024-02-028T13:29:39.362Z", None
-        "save_prediction_delay_min": 30
+        "save_prediction_delay_min": 30,
+        "interpolation_max_diff": 10000
     }
     return other_config_dict
 
