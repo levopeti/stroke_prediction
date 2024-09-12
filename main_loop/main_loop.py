@@ -107,8 +107,8 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
                           title="KeyCombinations", print_out=True, color="yellow", add_date=True, write_discord=False)
 
                 if config_dict["left_arm_only"]:
-                    # data_list = [item for item in data_list if item["limb"] == "a" and item["side"] == "l"]
-                    data_list = [item for item in data_list if item["limb"] == "a" and item["side"] == "r"]
+                    data_list = [item for item in data_list if item["limb"] == "a" and item["side"] == "l"]
+                    # data_list = [item for item in data_list if item["limb"] == "a" and item["side"] == "r"]
 
                 data_collector += data_list
                 from_ts += timedelta(minutes=config_dict["interval_min"])
