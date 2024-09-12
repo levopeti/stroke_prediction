@@ -71,12 +71,12 @@ class Measurement(object):
 
         # TODO
         self.measurement_dict = {
-            # ("l", "a", "a"): None,
-            # ("l", "a", "g"): None,
+            ("l", "a", "a"): None,
+            ("l", "a", "g"): None,
             # ("l", "l", "a"): None,
             # ("l", "l", "g"): None,
-            ("r", "a", "a"): None,
-            ("r", "a", "g"): None,
+            # ("r", "a", "a"): None,
+            # ("r", "a", "g"): None,
             # ("r", "l", "a"): None,
             # ("r", "l", "g"): None,
         }
@@ -180,7 +180,6 @@ class Measurement(object):
             for _k, meas in _measurement_dict.items():
                 # print(len(meas[(meas["epoch"] >= min_ts) & (meas["epoch"] <= max_ts)]))
                 _measurement_dict[_k] = meas[(meas["timestamp_ms"] >= min_ts) & (meas["timestamp_ms"] <= max_ts)]
-
             return _measurement_dict
 
         def synchronize(_measurement_dict):
@@ -224,8 +223,10 @@ class Measurement(object):
 
     def get_last_timestamp_ms(self) -> Union[None, int]:
         for keys in self.measurement_dict.keys():
-            if self.measurement_dict[keys] is not None:
+            if self.measurement_dict[keys] is not None and len(self.measurement_dict[keys]) > 0:
                 return self.measurement_dict[keys]["timestamp_ms"].max()
+            else:
+                return
 
     # def get_all_measurements_df(self, only_valid=True):
     #     result_dict = dict()

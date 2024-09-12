@@ -130,7 +130,12 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
                 write_log("main_loop.txt", "Error message: {}, {}".format(check_message, error_code),
                           title="Error", print_out=True, color="red", add_date=True, write_discord=True)
                 if error_code != "Error 1":
-                    body = make_error_body(error_code, measurement_id, measurement.get_last_timestamp_ms())
+                    last_timestamp = measurement.get_last_timestamp_ms()
+                    if last_timestamp is not None:
+                        body = make_error_body(error_code, measurement_id, measurement.get_last_timestamp_ms())
+                    else:
+                        write_log("main_loop.txt", "Last timestamp is None (Zero length df)",
+                                  title="ZeroLengthDf", print_out=True, color="red", add_date=True, write_discord=True)
                 else:
                     continue
             else:

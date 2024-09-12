@@ -98,7 +98,7 @@ class MeasurementManager(object):
                 ts_ms = int(min_ts - (idx + 1) * (1000 / self.config_dict["frequency"]))  # 40 ms
                 for meas_type in ["acc", "gyr"]:
                     init_data_list.append({
-                        "side": "r",
+                        "side": "l",
                         "limb": "a",
                         "type": meas_type[0],  # a/g
                         "timestamp": to_str_timestamp(ts_ms),

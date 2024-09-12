@@ -64,9 +64,9 @@ def get_other_config() -> dict:
         "host_url_and_token_path": "./host_url_and_token.json",
         "log_dir_path": "./log",
         "init_data": "./init_data/init_data.csv",
-        "frequency": 25,  # Hz, T = 40 ms
+        "frequency": 5,  # Hz, T = 40 ms, 25
         "frequency_check_eps_warning": 3,  # ms
-        "frequency_check_eps_error": 40,  # ms
+        "frequency_check_eps_error": 200,  # ms 40
         "timezone": pytz.timezone("Europe/Budapest"),
         "batch_size": 100,
         "step_size_sec": 20,

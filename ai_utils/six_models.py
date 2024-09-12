@@ -14,9 +14,8 @@ from measurement_utils.measurement import Measurement
 from measurement_utils.measurement_info import MeasurementInfoManager
 from utils.general_utils import min_to_ticks, sec_to_ticks
 
-# TODO: r -> l
-only_left_arm_key_list = [("r", "a", "a"),
-                          ("r", "a", "g")]
+only_left_arm_key_list = [("l", "a", "a"),
+                          ("l", "a", "g")]
 
 # risk 2
 """avg_prob_threshold_dict = {"inverted": {30: 0.405, 60: 0.467, 90: 0.999},
