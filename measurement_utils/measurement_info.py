@@ -26,11 +26,11 @@ class MeasurementInfoManager(object):
         self.config_dict = config_dict
         self.measurement_dict = dict()
 
-    @staticmethod
-    def collect_info(measurement: Measurement, keys: List[tuple]) -> None:
-        for key in keys:
-            # "timestamp_ms", "x", "y", "z"
-            df = measurement.measurement_dict[key]
+    # @staticmethod
+    # def collect_info(measurement: Measurement, keys: List[tuple]) -> None:
+    #     for key in keys:
+    #         # "timestamp_ms", "x", "y", "z"
+    #         df = measurement.measurement_dict[key]
 
     def add_new_measurement(self, measurement_id: str) -> None:
         assert measurement_id not in self.measurement_dict

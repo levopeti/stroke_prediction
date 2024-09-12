@@ -90,6 +90,7 @@ class LogMaker(object):
                                                "inline": True}],
                                       file_names=[image_path])
 
+
 log_maker = None
 
 

@@ -11,7 +11,7 @@ configuration = get_configuration(_config_dict)
 timezone = pytz.timezone("Europe/Budapest")
 now_ts = datetime.now(timezone)
 
-_from = "2024-02-20T11:29:39.362Z"  # to_str_timestamp(now_ts - timedelta(minutes=90))  "2023-10-05T13:29:39.362Z"
+_from = "2024-09-11T17:39:00.362Z"  # to_str_timestamp(now_ts - timedelta(minutes=90))  "2023-10-05T13:29:39.362Z"
 _interval = min_to_millisec(300)
 
 measurement_ids = get_measurement_ids(configuration,
@@ -39,4 +39,5 @@ for meas_id in measurement_ids:
                                                       _from=_from,
                                                       _interval=_interval,
                                                       _meas_id=meas_id)
+    print(data_list[0])
     print(len(data_list))
