@@ -116,55 +116,60 @@ def run_main_loop(model: Model, configuration: Configuration, config_dict: dict)
                     # from_ts is in the future
                     break
 
-            print("add_data")
-            mm.add_data(measurement_id, data_collector, datetime.now(timezone))
+            if len(data_collector) > 0:
+                print("add_data")
+                mm.add_data(measurement_id, data_collector, datetime.now(timezone))
 
-            print("get_measurement")
-            measurement = get_measurement(mm, measurement_id)
-            # get_meas_info(measurement)
+                print("get_measurement")
+                measurement = get_measurement(mm, measurement_id)
+                # get_meas_info(measurement)
 
-            # keys_ok, frequency_ok, synchron_ok, length_ok
-            print("check")
-            check_message, error_code = check_and_synch_measurement(measurement, config_dict)
-            if check_message != "OK":
-                write_log("main_loop.txt", "Error message: {}, {}".format(check_message, error_code),
-                          title="Error", print_out=True, color="red", add_date=True, write_discord=True)
-                if error_code != "Error 1":
-                    last_timestamp = measurement.get_last_timestamp_ms()
-                    if last_timestamp is not None:
-                        body = make_error_body(error_code, measurement_id, measurement.get_last_timestamp_ms())
+                # keys_ok, frequency_ok, synchron_ok, length_ok
+                print("check")
+                check_message, error_code = check_and_synch_measurement(measurement, config_dict)
+                if check_message != "OK":
+                    write_log("main_loop.txt", "Error message: {}, {}".format(check_message, error_code),
+                              title="Error", print_out=True, color="red", add_date=True, write_discord=True)
+                    if error_code != "Error 1":
+                        last_timestamp = measurement.get_last_timestamp_ms()
+                        if last_timestamp is not None:
+                            body = make_error_body(error_code, measurement_id, measurement.get_last_timestamp_ms())
+                        else:
+                            write_log("main_loop.txt", "Last timestamp is None (Zero length df)",
+                                      title="ZeroLengthDf", print_out=True, color="red", add_date=True, write_discord=True)
                     else:
-                        write_log("main_loop.txt", "Last timestamp is None (Zero length df)",
-                                  title="ZeroLengthDf", print_out=True, color="red", add_date=True, write_discord=True)
+                        continue
                 else:
-                    continue
-            else:
-                write_log("main_loop.txt", "Check is OK",
-                          title="CheckOK", print_out=True, color="green", add_date=True, write_discord=False)
-                prediction_dict = model.compute_prediction(measurement)
-                body = make_body(prediction_dict, measurement_id)
+                    write_log("main_loop.txt", "Check is OK",
+                              title="CheckOK", print_out=True, color="green", add_date=True, write_discord=False)
+                    prediction_dict = model.compute_prediction(measurement)
+                    body = make_body(prediction_dict, measurement_id)
 
-            if mm.is_time_to_save(measurement_id):
-                save_predictions(configuration, body)
-                mim.plot_timeline(measurement_id)
-                send_image_to_discord("./discord_plot.png")
-                write_log("main_loop.txt", "{} prediction with measurement id {}".format(body["predictions"],
-                                                                                         measurement_id),
-                          title="Prediction", print_out=True, color="blue", add_date=True, write_discord=True)
+                if mm.is_time_to_save(measurement_id):
+                    save_predictions(configuration, body)
+                    mim.plot_timeline(measurement_id)
+                    send_image_to_discord("./discord_plot.png")
+                    write_log("main_loop.txt", "{} prediction with measurement id {}".format(body["predictions"],
+                                                                                             measurement_id),
+                              title="Prediction", print_out=True, color="blue", add_date=True, write_discord=True)
+                    write_log("main_loop.txt",
+                              "Uploaded {} prediction(s) with measurement id {} ({:.0f}s)".format(len(body["predictions"]),
+                                                                                                  measurement_id,
+                                                                                                  time() - start),
+                              title="UploadInfo", print_out=True, color="blue", add_date=True, write_discord=False)
+                else:
+                    write_log("main_loop.txt",
+                              "Prediction(s) did not uploaded with measurement id {},"
+                              " because it is too early".format(measurement_id),
+                              title="UploadInfo", print_out=True, color="blue", add_date=True, write_discord=False)
+
                 write_log("main_loop.txt",
-                          "Uploaded {} prediction(s) with measurement id {} ({:.0f}s)".format(len(body["predictions"]),
-                                                                                              measurement_id,
-                                                                                              time() - start),
-                          title="UploadInfo", print_out=True, color="blue", add_date=True, write_discord=False)
+                          "Process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start),
+                          title="Done", print_out=True, color="green", add_date=True, write_discord=False)
             else:
                 write_log("main_loop.txt",
-                          "Prediction(s) did not uploaded with measurement id {},"
-                          " because it is too early".format(measurement_id),
-                          title="UploadInfo", print_out=True, color="blue", add_date=True, write_discord=False)
-
-            write_log("main_loop.txt",
-                      "Process measurement {} is done ({:.0f}s)".format(measurement_id, time() - start),
-                      title="Done", print_out=True, color="green", add_date=True, write_discord=False)
+                          "No new data for measurement {} ({:.0f}s)".format(measurement_id, time() - start),
+                          title="NoNewData", print_out=True, color="yellow", add_date=True, write_discord=False)
 
         if config_dict["save_df"]:
             mm.save_each_measurement()
